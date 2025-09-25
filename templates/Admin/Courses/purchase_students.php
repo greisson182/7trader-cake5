@@ -1,6 +1,7 @@
 <?php
 $title = 'Comprar Curso: ' . htmlspecialchars($course['title']) . ' - 7 Trader';
 $description = 'Adquira acesso completo ao curso ' . htmlspecialchars($course['title']);
+$csrfToken = $this->request->getAttribute('csrfToken');
 ?>
 
 <div class="container-fluid bg-dark text-white min-vh-100">
@@ -116,7 +117,8 @@ $description = 'Adquira acesso completo ao curso ' . htmlspecialchars($course['t
                         </div>
 
                         <!-- Payment Form -->
-                        <form method="post" action="/admin/courses/purchase-students/<?= $course['id'] ?>">
+                        <form method="post" action="/admin/courses/purchase_students/<?= $course['id'] ?>">
+                            <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
                                 <strong>Modo de Desenvolvimento:</strong> 

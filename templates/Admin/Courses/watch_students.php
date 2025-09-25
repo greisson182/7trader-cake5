@@ -1,11 +1,7 @@
 <?php
 $title = htmlspecialchars($video['title']) . ' - ' . htmlspecialchars($course['title']) . ' - 7 Trader';
 $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
-
 ?>
-
-
-
 <div class="container-fluid py-3" style="background: #000; min-height: 100vh;">
     <div class="container-fluid">
         <!-- Breadcrumb -->
@@ -26,7 +22,6 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
                 </li>
             </ol>
         </nav>
-
         <div class="row">
             <!-- Player de Vídeo -->
             <div class="col-lg-9 mb-4">
@@ -52,12 +47,7 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
                         } else {
                             $embedUrl = $video['video_url'];
                         }
-
-
                         ?>
-
-
-
                         <?php if ($embedUrl): ?>
                             <div class="ratio ratio-16x9">
                                 <iframe id="videoPlayer"
@@ -78,11 +68,6 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
                             </div>
                         <?php endif; ?>
                     </div>
-
-
-
-
-
                     <!-- Informações do Vídeo -->
                     <div class="card-body">
                         <div class="row">
@@ -122,7 +107,6 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
                                     </div>
                                 <?php endif; ?>
                             </div>
-
                             <div class="col-md-4">
                                 <!-- Controles de Progresso -->
                                 <div class="card bg-secondary">
@@ -134,7 +118,7 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
                                                 <div id="videoProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
                                             </div>
                                             <small class="text-white">
-                                                <span id="watchTime">0:00</span> /
+                                                <span id="watchTime"><?= $currentProgress ? $currentProgress->watch_time : '0:00' ?></span> /
                                                 <span id="totalTime">
                                                     <?php
                                                     $minutes = floor($video['duration_seconds'] / 60);
@@ -145,14 +129,15 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
                                             </small>
                                         </div>
 
+                                        <?php 
 
-                                        <?php if ($currentProgress && $currentProgress->completed_at): ?>
+                                        if ($currentProgress && $currentProgress->completed): ?>
                                             <div class="alert alert-success py-2">
                                                 <i class="fas fa-check-circle me-1"></i>
                                                 <small>Vídeo Concluído!</small>
                                             </div>
                                         <?php else: ?>
-                                            <button id="markCompleted" class="btn btn-success btn-sm" disabled>
+                                            <button id="markCompleted" class="btn btn-success btn-sm">
                                                 <i class="fas fa-check me-1"></i>Marcar como Concluído
                                             </button>
                                         <?php endif; ?>
@@ -163,9 +148,6 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
                     </div>
                 </div>
             </div>
-
-
-
             <!-- Lista de Vídeos -->
             <div class="col-lg-3">
                 <div class="card bg-dark border-secondary">
@@ -176,11 +158,6 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
                     </div>
                     <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
                         <div class="list-group list-group-flush">
-
-                            <?php
-                            
-                            ?>
-
                             <?php foreach ($allVideos as $index => $courseVideo): ?>
                                 <?php
                                 $canWatch = true; // Já verificado no controller
@@ -289,8 +266,8 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         let watchStartTime = Date.now();
-        let totalWatchTime = <?= $currentProgress->watch_time_seconds ?? 0 ?>;
-        let isCompleted = <?= $currentProgress && $currentProgress->completed_at ? 'true' : 'false' ?>;
+        let totalWatchTime = <?= $currentProgress->watched_seconds ?? 0 ?>;
+        let isCompleted = <?= $currentProgress && $currentProgress->completed ? 'true' : 'false' ?>;
         let updateInterval;
 
         const markCompletedBtn = document.getElementById('markCompleted');

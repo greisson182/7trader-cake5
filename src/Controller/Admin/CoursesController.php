@@ -829,50 +829,51 @@ class CoursesController extends AppController
     /**
      * Página de compra do curso
      */
-    public function purchaseStudents($courseId = null)
+    public function purchase_students($courseId = null)
     {
         try {
             if (!$this->isStudent()) {
                 $this->Flash->error('Apenas estudantes podem comprar cursos.');
                 return $this->redirect(['action' => 'courses-students']);
             }
-
+            
             $studentId = $this->getCurrentStudentId();
-
+            
             // Verificar se curso existe e está ativo usando ORM
             $course = $this->fetchTable('Courses')->find()
-                ->where(['id' => $courseId, 'is_active' => 1])
-                ->first();
-
+            ->where(['id' => $courseId, 'is_active' => 1])
+            ->first();
+            
             if (!$course) {
                 $this->Flash->error('Curso não encontrado.');
                 return $this->redirect(['action' => 'courses-students']);
             }
-
+            
             // Verificar se já está inscrito usando ORM
             $existingEnrollment = $this->fetchTable('CourseEnrollments')->find()
-                ->where(['student_id' => $studentId, 'course_id' => $courseId])
-                ->first();
-
+            ->where(['student_id' => $studentId, 'course_id' => $courseId])
+            ->first();
+            
             if ($existingEnrollment) {
                 $this->Flash->info('Você já possui acesso a este curso.');
                 return $this->redirect(['action' => 'view-students', $courseId]);
             }
-
+            
             // Se for curso gratuito, redirecionar para inscrição
             if ($course->is_free) {
                 return $this->redirect(['action' => 'enroll', $courseId]);
             }
-
+            
             // Para desenvolvimento, simular compra automática
             if ($this->request->is('post')) {
+                
                 // Simular processamento de pagamento usando ORM
                 $courseEnrollmentsTable = $this->fetchTable('CourseEnrollments');
                 $enrollment = $courseEnrollmentsTable->newEmptyEntity();
                 $enrollmentData = [
                     'student_id' => $studentId,
                     'course_id' => $courseId,
-                    'enrolled_at' => new \DateTime()
+                    'enrolled_at' => date('Y-m-d H:i:s')
                 ];
                 $enrollment = $courseEnrollmentsTable->patchEntity($enrollment, $enrollmentData);
 

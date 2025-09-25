@@ -132,7 +132,7 @@ $description = htmlspecialchars(substr($course['description'], 0, 160));
                                         <i class="fas fa-graduation-cap me-2"></i>Inscrever-se Gratuitamente
                                     </a>
                                 <?php else: ?>
-                                    <a href="/admin/courses/purchase-students/<?= $course['id'] ?>" class="btn btn-primary btn-lg">
+                                    <a href="/admin/courses/purchase_students/<?= $course['id'] ?>" class="btn btn-primary btn-lg">
                                         <i class="fas fa-credit-card me-2"></i>Comprar Curso - R$ <?= number_format($course['price'], 2, ',', '.') ?>
                                     </a>
                                     <div class="mt-2">

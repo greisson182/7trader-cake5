@@ -1,3 +1,6 @@
+<?php
+$csrfToken = $this->request->getAttribute('csrfToken');
+?>
 <div class="courses edit content fade-in-up">
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-5">

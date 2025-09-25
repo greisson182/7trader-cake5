@@ -1,19 +1,3 @@
-<?php
-/**
- * @var \App\View\AppView $this
- * @var array $student
- * @var array $studies
- * @var string $year
- * @var string $month
- * @var string $monthName
- * @var int $totalStudies
- * @var int $totalWins
- * @var int $totalLosses
- * @var int $totalTrades
- * @var float $totalProfitLoss
- * @var float $winRate
- */
-?>
 
 <div class="container-fluid">
     <div class="row">

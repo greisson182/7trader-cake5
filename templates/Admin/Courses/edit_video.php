@@ -1,5 +1,5 @@
 <?php
-$title = 'Editar Vídeo';
+$csrfToken = $this->request->getAttribute('csrfToken');
 ?>
 
 <div class="container-fluid">
@@ -31,6 +31,7 @@ $title = 'Editar Vídeo';
                 </div>
                 <div class="card-body">
                     <form method="POST">
+                        <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label for="title" class="form-label">Título *</label>

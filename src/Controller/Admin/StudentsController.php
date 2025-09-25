@@ -6,31 +6,457 @@ namespace App\Controller\Admin;
 
 use App\Controller\AppController;
 use Cake\Event\EventInterface;
+use Cake\Http\Response;
+use Cake\ORM\TableRegistry;
+use Cake\Datasource\Exception\RecordNotFoundException;
+use Exception;
 
 class StudentsController extends AppController
 {
     public function initialize(): void
     {
         parent::initialize();
-
-        $this->Users = $this->fetchTable('Users');
-        $this->Markets = $this->fetchTable('Markets');
-        $this->Studies = $this->fetchTable('Studies');
+        $this->loadComponent('Flash');
     }
 
-    public function beforeFilter(EventInterface $event)
+    public function beforeFilter(EventInterface $event): ?Response
     {
         parent::beforeFilter($event);
-        // Comentar temporariamente para teste
-        // $this->checkSession();
+
+        $this->checkSession();
+
+        // Verificar se é admin ou estudante
+        if (!$this->isAdmin() && !$this->isStudent()) {
+            $this->Flash->error(__('Acesso negado.'));
+            return $this->redirect(['controller' => 'Users', 'action' => 'login']);
+        }
+
+        return null;
     }
 
     public function index()
     {
-        $query = $this->Students->find();
-        $students = $this->paginate($query);
+        try {
+            $studentsTable = $this->fetchTable('Students');
 
-        $this->set(compact('students'));
+            // Se for estudante, redirecionar para seu próprio dashboard
+            if ($this->isStudent()) {
+                $currentStudentId = $this->getCurrentStudentId();
+                return $this->redirect(['action' => 'dashboard', $currentStudentId]);
+            }
+
+            // Buscar estudantes com dados do usuário associado
+            $students = $studentsTable->find()
+                ->contain(['Users'])
+                ->where(['Users.active' => 1])
+                ->orderBy(['Students.name' => 'ASC'])
+                ->toArray();
+
+            $this->set(compact('students'));
+        } catch (Exception $e) {
+            $this->Flash->error(__('Erro ao carregar estudantes: ' . $e->getMessage()));
+            return $this->redirect(['controller' => 'Dashboard', 'action' => 'index']);
+        }
+    }
+
+    public function view(int $id)
+    {
+        try {
+            $studentsTable = $this->fetchTable('Students');
+
+            // Verificar se estudante pode acessar este registro
+            if ($this->isStudent()) {
+                $currentStudentId = $this->getCurrentStudentId();
+                if ($currentStudentId != $id) {
+                    $this->Flash->error(__('Acesso negado. Você só pode visualizar seus próprios dados.'));
+                    return $this->redirect(['action' => 'index']);
+                }
+            }
+
+            $student = $studentsTable->find()
+                ->contain(['Users'])
+                ->where(['Students.id' => $id])
+                ->first();
+
+            if (!$student) {
+                throw new RecordNotFoundException(__('Estudante não encontrado.'));
+            }
+
+            $this->set(compact('student'));
+        } catch (RecordNotFoundException $e) {
+            $this->Flash->error($e->getMessage());
+            return $this->redirect(['action' => 'index']);
+        } catch (Exception $e) {
+            $this->Flash->error(__('Erro ao carregar estudante: ' . $e->getMessage()));
+            return $this->redirect(['action' => 'index']);
+        }
+    }
+
+    public function add()
+    {
+        $studentsTable = $this->fetchTable('Students');
+        $usersTable = $this->fetchTable('Users');
+
+        $student = $studentsTable->newEmptyEntity();
+        $user = $usersTable->newEmptyEntity();
+
+        if ($this->request->is('post')) {
+            $data = $this->request->getData();
+
+            // Validação básica
+            if (empty($data['name']) || empty($data['username']) || empty($data['email']) || empty($data['password'])) {
+                $this->Flash->error(__('Todos os campos são obrigatórios.'));
+                $this->set(compact('student', 'user'));
+            }
+
+            // Validação de email
+            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                $this->Flash->error(__('Email inválido.'));
+                $this->set(compact('student', 'user'));
+            }
+
+            try {
+                // Validar dados únicos
+                $existingUser = $usersTable->find()
+                    ->where([
+                        'OR' => [
+                            ['email' => $data['email']],
+                            ['username' => $data['username']]
+                        ]
+                    ])
+                    ->first();
+
+                if ($existingUser) {
+                    if ($existingUser->email === $data['email']) {
+                        $this->Flash->error(__('Este email já está em uso.'));
+                    } else {
+                        $this->Flash->error(__('Este nome de usuário já está em uso.'));
+                    }
+                    $this->set(compact('student', 'user'));
+                }
+
+                // Usar transação
+                $connection = $studentsTable->getConnection();
+                $connection->transactional(function () use ($data, $usersTable, $studentsTable, &$user, &$student) {
+                    // Criar usuário
+                    $userData = [
+                        'username' => $data['username'],
+                        'email' => $data['email'],
+                        'password' => password_hash($data['password'], PASSWORD_DEFAULT),
+                        'role' => 'student',
+                        'active' => 1
+                    ];
+
+                    $user = $usersTable->patchEntity($user, $userData, [
+                        'validate' => 'default',
+                        'fieldList' => ['username', 'email', 'password', 'role', 'active']
+                    ]);
+
+                    if ($user->hasErrors()) {
+                        $errors = [];
+                        foreach ($user->getErrors() as $field => $error) {
+                            $errors[] = is_array($error) ? implode(', ', $error) : $error;
+                        }
+                        throw new Exception(__('Erro de validação: ' . implode(', ', $errors)));
+                    }
+
+                    if (!$usersTable->save($user)) {
+                        throw new Exception(__('Erro ao criar usuário.'));
+                    }
+
+                    // Criar estudante
+                    $studentData = [
+                        'name' => $data['name'],
+                        'user_id' => $user->id
+                    ];
+
+                    $student = $studentsTable->patchEntity($student, $studentData, [
+                        'validate' => 'default',
+                        'fieldList' => ['name', 'user_id']
+                    ]);
+
+                    if ($student->hasErrors()) {
+                        $errors = [];
+                        foreach ($student->getErrors() as $field => $error) {
+                            $errors[] = is_array($error) ? implode(', ', $error) : $error;
+                        }
+                        throw new Exception(__('Erro de validação: ' . implode(', ', $errors)));
+                    }
+
+                    if (!$studentsTable->save($student)) {
+                        throw new Exception(__('Erro ao criar estudante.'));
+                    }
+
+                    // Atualizar student_id no usuário
+                    $user->student_id = $student->id;
+                    if (!$usersTable->save($user)) {
+                        throw new Exception(__('Erro ao atualizar referência do estudante.'));
+                    }
+                });
+
+                $this->Flash->success(__('Estudante criado com sucesso.'));
+                return $this->redirect(['action' => 'index']);
+            } catch (Exception $e) {
+                $this->Flash->error(__('Erro ao criar estudante: ' . $e->getMessage()));
+            }
+        }
+
+        $this->set(compact('student', 'user'));
+    }
+
+    public function edit(int $id)
+    {
+        $studentsTable = $this->fetchTable('Students');
+        $usersTable = $this->fetchTable('Users');
+
+        try {
+            $student = $studentsTable->find()
+                ->contain(['Users'])
+                ->where(['Students.id' => $id])
+                ->first();
+
+            if (!$student) {
+                throw new RecordNotFoundException(__('Estudante não encontrado.'));
+            }
+
+            if ($this->request->is(['patch', 'post', 'put'])) {
+                $data = $this->request->getData();
+
+                // Verificar dados únicos (excluindo o usuário atual)
+                $existingUser = $usersTable->find()
+                    ->where([
+                        'OR' => [
+                            ['email' => $data['email']],
+                            ['username' => $data['username']]
+                        ],
+                        'id !=' => $student->user->id
+                    ])
+                    ->first();
+
+                if ($existingUser) {
+                    if ($existingUser->email === $data['email']) {
+                        $this->Flash->error(__('Este email já está em uso.'));
+                    } else {
+                        $this->Flash->error(__('Este nome de usuário já está em uso.'));
+                    }
+                    $this->set(compact('student'));
+                }
+
+                // Usar transação
+                $connection = $studentsTable->getConnection();
+                $connection->transactional(function () use ($data, $usersTable, $studentsTable, $student) {
+                    // Atualizar estudante
+                    $studentData = [
+                        'name' => $data['name']
+                    ];
+                    $student = $studentsTable->patchEntity($student, $studentData);
+                    if (!$studentsTable->save($student)) {
+                        throw new Exception(__('Erro ao atualizar estudante.'));
+                    }
+
+                    // Atualizar usuário
+                    $userData = [
+                        'username' => $data['username'],
+                        'email' => $data['email'],
+                        'active' => isset($data['active']) ? 1 : 0
+                    ];
+
+                    // Atualizar senha se fornecida
+                    if (!empty($data['password'])) {
+                        $userData['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+                    }
+
+                    $student->user = $usersTable->patchEntity($student->user, $userData);
+                    if (!$usersTable->save($student->user)) {
+                        throw new Exception(__('Erro ao atualizar usuário.'));
+                    }
+                });
+
+                $this->Flash->success(__('Estudante atualizado com sucesso.'));
+                return $this->redirect(['action' => 'index']);
+            }
+
+            $this->set(compact('student'));
+        } catch (RecordNotFoundException $e) {
+            $this->Flash->error($e->getMessage());
+            return $this->redirect(['action' => 'index']);
+        } catch (Exception $e) {
+            $this->Flash->error(__('Erro ao atualizar estudante: ' . $e->getMessage()));
+            $this->set(compact('student'));
+        }
+    }
+
+    public function delete(int $id): Response
+    {
+        $this->request->allowMethod(['post', 'delete']);
+
+        $studentsTable = $this->fetchTable('Students');
+        $usersTable = $this->fetchTable('Users');
+        $studiesTable = $this->fetchTable('Studies');
+
+        try {
+            $student = $studentsTable->find()
+                ->contain(['Users'])
+                ->where(['Students.id' => $id])
+                ->first();
+
+            if (!$student) {
+                throw new RecordNotFoundException(__('Estudante não encontrado.'));
+            }
+
+            // Verificar se há estudos associados
+            $studiesCount = $studiesTable->find()
+                ->where(['student_id' => $id])
+                ->count();
+
+            if ($studiesCount > 0) {
+                $this->Flash->error(__('Não é possível excluir este estudante pois ele possui estudos associados.'));
+                return $this->redirect(['action' => 'index']);
+            }
+
+            // Usar transação para deletar estudante e usuário
+            $connection = $studentsTable->getConnection();
+            $connection->transactional(function () use ($studentsTable, $usersTable, $student) {
+                // Deletar usuário associado
+                if ($student->user) {
+                    if (!$usersTable->delete($student->user)) {
+                        throw new Exception(__('Erro ao deletar usuário associado.'));
+                    }
+                }
+
+                // Deletar estudante
+                if (!$studentsTable->delete($student)) {
+                    throw new Exception(__('Erro ao deletar estudante.'));
+                }
+            });
+
+            $this->Flash->success(__('Estudante deletado com sucesso.'));
+            return $this->redirect(['action' => 'index']);
+        } catch (RecordNotFoundException $e) {
+            $this->Flash->error($e->getMessage());
+            return $this->redirect(['action' => 'index']);
+        } catch (Exception $e) {
+            $this->Flash->error(__('Erro ao deletar estudante: ' . $e->getMessage()));
+            return $this->redirect(['action' => 'index']);
+        }
+    }
+
+    public function metrics()
+    {
+        try {
+            $studentsTable = $this->fetchTable('Students');
+            $studiesTable = $this->fetchTable('Studies');
+            $usersTable = $this->fetchTable('Users');
+
+            // Se for estudante, mostrar apenas suas métricas
+            if ($this->isStudent()) {
+                $currentStudentId = $this->getCurrentStudentId();
+                return $this->redirect(['action' => 'dashboard', $currentStudentId]);
+            }
+
+            // Métricas gerais
+            $totalStudents = $studentsTable->find()
+                ->innerJoinWith('Users', function ($q) {
+                    return $q->where(['Users.active' => 1]);
+                })
+                ->count();
+
+            $activeStudents = $studentsTable->find()
+                ->innerJoinWith('Users', function ($q) {
+                    return $q->where(['Users.active' => 1]);
+                })
+                ->count();
+
+            $totalStudies = $studiesTable->find()->count();
+
+            // Estudantes com mais estudos
+            $topStudentsByStudies = $studentsTable->find()
+                ->select([
+                    'Students.id',
+                    'Students.name',
+                    'total_studies' => $studentsTable->find()->func()->count('Studies.id')
+                ])
+                ->leftJoinWith('Studies')
+                ->innerJoinWith('Users', function ($q) {
+                    return $q->where(['Users.active' => 1]);
+                })
+                ->groupBy(['Students.id', 'Students.name'])
+                ->orderByDesc('total_studies')
+                ->limit(10)
+                ->toArray();
+
+            // Estudantes com melhor performance (profit/loss)
+            $topStudentsByProfit = $studentsTable->find()
+                ->select([
+                    'Students.id',
+                    'Students.name',
+                    'total_profit_loss' => $studentsTable->find()->func()->sum('Studies.profit_loss'),
+                    'total_studies' => $studentsTable->find()->func()->count('Studies.id'),
+                    'total_wins' => $studentsTable->find()->func()->sum('Studies.wins'),
+                    'total_losses' => $studentsTable->find()->func()->sum('Studies.losses')
+                ])
+                ->leftJoinWith('Studies')
+                ->innerJoinWith('Users', function ($q) {
+                    return $q->where(['Users.active' => 1]);
+                })
+                ->groupBy(['Students.id', 'Students.name'])
+                ->orderByDesc('total_profit_loss')
+                ->limit(10)
+                ->toArray();
+
+            // Estudos recentes
+            $recentStudies = $studiesTable->find()
+                ->contain(['Students'])
+                ->orderByDesc('Studies.study_date')
+                ->limit(20)
+                ->toArray();
+
+            // Estatísticas gerais dos estudos
+            $overallStatsQuery = $studiesTable->find()
+                ->select([
+                    'total_studies' => $studiesTable->find()->func()->count('*'),
+                    'total_wins' => $studiesTable->find()->func()->sum('wins'),
+                    'total_losses' => $studiesTable->find()->func()->sum('losses'),
+                    'total_profit_loss' => $studiesTable->find()->func()->sum('profit_loss'),
+                    'avg_profit_loss' => $studiesTable->find()->func()->avg('profit_loss')
+                ])
+                ->first();
+
+            $overallStats = $overallStatsQuery ? $overallStatsQuery->toArray() : [
+                'total_studies' => 0,
+                'total_wins' => 0,
+                'total_losses' => 0,
+                'total_profit_loss' => 0,
+                'avg_profit_loss' => 0
+            ];
+
+            // Calcular métricas adicionais
+            $overallStats['total_trades'] = $overallStats['total_wins'] + $overallStats['total_losses'];
+            $overallStats['overall_win_rate'] = $overallStats['total_trades'] > 0
+                ? round(($overallStats['total_wins'] / $overallStats['total_trades']) * 100, 2)
+                : 0;
+
+            // Data atual para contexto
+            $currentDate = date('Y-m-d');
+            $currentYear = date('Y');
+            $currentMonth = date('m');
+
+            $this->set(compact(
+                'totalStudents',
+                'activeStudents',
+                'totalStudies',
+                'topStudentsByStudies',
+                'topStudentsByProfit',
+                'recentStudies',
+                'overallStats',
+                'currentDate',
+                'currentYear',
+                'currentMonth'
+            ));
+        } catch (Exception $e) {
+            $this->Flash->error(__('Erro ao carregar métricas: ' . $e->getMessage()));
+            return $this->redirect(['controller' => 'Dashboard', 'action' => 'index']);
+        }
     }
 
     public function dashboard($id = null)
@@ -263,78 +689,86 @@ class StudentsController extends AppController
         }
     }
 
-    /**
-     * View method
-     *
-     * @param string|null $id Student id.
-     * @return \Cake\Http\Response|null|void Renders view
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
-    public function view($id = null)
+    public function monthlyStudies(?int $studentId = null, ?int $year = null, ?int $month = null)
     {
-        $student = $this->Students->get($id, contain: ['CourseEnrollments', 'StudentProgress', 'Studies', 'Users']);
-        $this->set(compact('student'));
-    }
+        try {
 
-    /**
-     * Add method
-     *
-     * @return \Cake\Http\Response|null|void Redirects on successful add, renders view otherwise.
-     */
-    public function add()
-    {
-        $student = $this->Students->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $student = $this->Students->patchEntity($student, $this->request->getData());
-            if ($this->Students->save($student)) {
-                $this->Flash->success(__('The student has been saved.'));
+            $studentsTable = $this->fetchTable('Students');
+            $studiesTable = $this->fetchTable('Studies');
 
-                return $this->redirect(['action' => 'index']);
+            // Verificar se estudante pode acessar este registro
+            if ($this->isStudent()) {
+                $currentStudentId = $this->getCurrentStudentId();
+                if ($currentStudentId != $studentId) {
+                    $this->Flash->error(__('Acesso negado. Você só pode visualizar seus próprios dados.'));
+                    return $this->redirect(['action' => 'index']);
+                }
             }
-            $this->Flash->error(__('The student could not be saved. Please, try again.'));
-        }
-        $this->set(compact('student'));
-    }
 
-    /**
-     * Edit method
-     *
-     * @param string|null $id Student id.
-     * @return \Cake\Http\Response|null|void Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
-    public function edit($id = null)
-    {
-        $student = $this->Students->get($id, contain: []);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $student = $this->Students->patchEntity($student, $this->request->getData());
-            if ($this->Students->save($student)) {
-                $this->Flash->success(__('The student has been saved.'));
+            // Buscar dados do estudante
+            $student = $studentsTable->find()
+                ->contain(['Users'])
+                ->where(['Students.id' => $studentId])
+                ->first();
 
-                return $this->redirect(['action' => 'index']);
+            if (!$student) {
+                throw new RecordNotFoundException(__('Estudante não encontrado.'));
             }
-            $this->Flash->error(__('The student could not be saved. Please, try again.'));
-        }
-        $this->set(compact('student'));
-    }
 
-    /**
-     * Delete method
-     *
-     * @param string|null $id Student id.
-     * @return \Cake\Http\Response|null Redirects to index.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
-    public function delete($id = null)
-    {
-        $this->request->allowMethod(['post', 'delete']);
-        $student = $this->Students->get($id);
-        if ($this->Students->delete($student)) {
-            $this->Flash->success(__('The student has been deleted.'));
-        } else {
-            $this->Flash->error(__('The student could not be deleted. Please, try again.'));
-        }
+            // Buscar estudos do mês específico
+            $studies = $studiesTable->find()
+                ->where([
+                    'student_id' => $studentId,
+                    'YEAR(study_date)' => $year,
+                    'MONTH(study_date)' => $month
+                ])
+                ->orderByDesc('study_date')
+                ->toArray();
 
-        return $this->redirect(['action' => 'index']);
+            // Calcular estatísticas do mês
+            $totalStudies = count($studies);
+            $totalWins = array_sum(array_column($studies, 'wins'));
+            $totalLosses = array_sum(array_column($studies, 'losses'));
+            $totalTrades = $totalWins + $totalLosses;
+            $totalProfitLoss = array_sum(array_column($studies, 'profit_loss'));
+            $winRate = $totalTrades > 0 ? ($totalWins / $totalTrades) * 100 : 0;
+
+            // Nome do mês em português
+            $monthNames = [
+                1 => 'Janeiro',
+                2 => 'Fevereiro',
+                3 => 'Março',
+                4 => 'Abril',
+                5 => 'Maio',
+                6 => 'Junho',
+                7 => 'Julho',
+                8 => 'Agosto',
+                9 => 'Setembro',
+                10 => 'Outubro',
+                11 => 'Novembro',
+                12 => 'Dezembro'
+            ];
+            $monthName = $monthNames[(int)$month] ?? 'Mês';
+
+            $this->set(compact(
+                'student',
+                'studies',
+                'year',
+                'month',
+                'monthName',
+                'totalStudies',
+                'totalWins',
+                'totalLosses',
+                'totalTrades',
+                'totalProfitLoss',
+                'winRate'
+            ));
+        } catch (RecordNotFoundException $e) {
+            $this->Flash->error($e->getMessage());
+            return $this->redirect(['action' => 'index']);
+        } catch (Exception $e) {
+            $this->Flash->error(__('Erro ao carregar estudos mensais: ' . $e->getMessage()));
+            return $this->redirect(['action' => 'index']);
+        }
     }
 }

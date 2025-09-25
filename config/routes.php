@@ -42,6 +42,8 @@ return function (RouteBuilder $routes): void {
         $routes->connect('/courses/watch-students/*', ['controller' => 'courses', 'action' => 'watchStudents']);
         $routes->connect('/courses/purchase-students/*', ['controller' => 'courses', 'action' => 'purchaseStudents']);
 
+        $routes->connect('/students/monthly-studies/*', ['controller' => 'students', 'action' => 'monthlyStudies']);
+
         //$routes->applyMiddleware('csrf');
         $routes->setExtensions(['json', 'xml']);
 

@@ -1,3 +1,6 @@
+<?php
+$csrfToken = $this->request->getAttribute('csrfToken');
+?>
 <div class="courses add content fade-in-up">
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-5">
@@ -18,6 +21,7 @@
     <div class="card glass">
         <div class="card-body">
             <?= $this->Form->create($course) ?>
+            <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
             <div class="row g-4">
                 <!-- Basic Information -->
                 <div class="col-12">

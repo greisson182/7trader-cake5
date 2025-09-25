@@ -1,8 +1,5 @@
 <?php
-/**
- * @var \App\View\AppView $this
- * @var array $course
- */
+$csrfToken = $this->request->getAttribute('csrfToken');
 ?>
 <div class="add-video content fade-in-up">
     <!-- Header Section -->
@@ -30,6 +27,7 @@
     <div class="card glass">
         <div class="card-body">
             <form method="post" action="/admin/courses/add-video/<?= $course['id'] ?>">
+                <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
                 <div class="row g-4">
                     <!-- Video Information -->
                     <div class="col-12">
