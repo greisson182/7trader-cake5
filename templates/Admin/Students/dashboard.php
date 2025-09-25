@@ -35,7 +35,21 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         <?php endif; ?>
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <label for="accountFilter" class="form-label fw-semibold">
+                        <i class="bi bi-bank me-2"></i>
+                        Tipo de Conta
+                    </label>
+                    <select id="accountFilter" class="form-select">
+                        <option value="">Todas as contas</option>
+                        <?php if (!empty($accounts)): ?>
+                            <?php foreach ($accounts as $account): ?>
+                                <option value="<?= h($account['id']) ?>"><?= h($account['name']) ?></option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                </div>
+                <div class="col-md-3">
                     <label for="yearFilter" class="form-label fw-semibold">
                         <i class="bi bi-calendar me-2"></i>
                         Filtrar por Ano
@@ -52,7 +66,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         <?php endfor; ?>
                     </select>
                 </div>
-                <div class="col-md-4 text-end">
+                <div class="col-md-2 text-end">
                     <button type="button" id="clearFilter" class="btn btn-outline-secondary">
                         <i class="bi bi-x-circle me-1"></i>
                         Limpar
@@ -338,7 +352,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         </thead>
                         <tbody>
                             <?php foreach ($monthlyData as $data): ?>
-                            <tr class="table-row-hover clickable-row dashboard-row" data-year="<?= h($data['year']) ?>" data-month="<?= h($data['month']) ?>" data-market-ids="<?= h($data['market_ids'] ?? '') ?>" style="cursor: pointer;">
+                            <tr class="table-row-hover clickable-row dashboard-row" data-year="<?= h($data['year']) ?>" data-month="<?= h($data['month']) ?>" data-market-ids="<?= h($data['market_ids'] ?? '') ?>" data-account-ids="<?= h($data['account_ids'] ?? '') ?>" style="cursor: pointer;">
                                 <td class="fw-semibold">
                                     <div class="d-flex align-items-center">
                                         <div class="month-indicator me-2"></div>
@@ -1089,6 +1103,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Market filter functionality
     const marketFilter = document.getElementById('marketFilter');
+    const accountFilter = document.getElementById('accountFilter');
     const yearFilter = document.getElementById('yearFilter');
     const clearFilter = document.getElementById('clearFilter');
     const dashboardRows = document.querySelectorAll('.dashboard-row');
@@ -1100,12 +1115,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function filterDashboard() {
         const selectedMarket = marketFilter.value;
+        const selectedAccount = accountFilter.value;
         let visibleRows = 0;
 
         dashboardRows.forEach(row => {
             const marketIds = row.getAttribute('data-market-ids');
+            const accountIds = row.getAttribute('data-account-ids');
             
-            if (!selectedMarket || (marketIds && marketIds.split(',').includes(selectedMarket))) {
+            let showRow = true;
+            
+            // Filter by market
+            if (selectedMarket && (!marketIds || !marketIds.split(',').includes(selectedMarket))) {
+                showRow = false;
+            }
+            
+            // Filter by account
+            if (selectedAccount && (!accountIds || !accountIds.split(',').includes(selectedAccount))) {
+                showRow = false;
+            }
+            
+            if (showRow) {
                 row.style.display = '';
                 visibleRows++;
             } else {
@@ -1115,15 +1144,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Show/hide no data message
         const tableBody = document.querySelector('.modern-table tbody');
-        if (visibleRows === 0 && selectedMarket) {
+        if (visibleRows === 0 && (selectedMarket || selectedAccount)) {
             if (!document.getElementById('no-dashboard-data')) {
                 const noDataRow = document.createElement('tr');
                 noDataRow.id = 'no-dashboard-data';
+                let message = 'Nenhum dado encontrado';
+                if (selectedMarket && selectedAccount) {
+                    message += ' para o mercado e tipo de conta selecionados';
+                } else if (selectedMarket) {
+                    message += ' para o mercado selecionado';
+                } else if (selectedAccount) {
+                    message += ' para o tipo de conta selecionado';
+                }
                 noDataRow.innerHTML = `
                     <td colspan="8" class="text-center py-4">
                         <div class="text-muted">
                             <i class="bi bi-search me-2"></i>
-                            Nenhum dado encontrado para o mercado selecionado
+                            ${message}
                         </div>
                     </td>
                 `;
@@ -1137,10 +1174,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Filter charts
-        filterCharts(selectedMarket);
+        filterCharts(selectedMarket, selectedAccount);
     }
 
-    function filterCharts(selectedMarket, retryCount = 0) {
+    function filterCharts(selectedMarket, selectedAccount, retryCount = 0) {
         const maxRetries = 10; // Limite máximo de tentativas
         
         // Verificação mais robusta - checando se as variáveis existem E se são instâncias válidas do Chart
@@ -1154,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             console.log(`Charts not initialized yet, retry ${retryCount + 1}/${maxRetries}...`);
             // Retry after charts are initialized
-            setTimeout(() => filterCharts(selectedMarket, retryCount + 1), 200);
+            setTimeout(() => filterCharts(selectedMarket, selectedAccount, retryCount + 1), 200);
             return;
         }
 
@@ -1166,13 +1203,13 @@ document.addEventListener('DOMContentLoaded', function() {
         let totalWins = 0;
         let totalLosses = 0;
 
-        if (!selectedMarket) {
+        if (!selectedMarket && !selectedAccount) {
             // Show all data
             filteredLabels = [...window.originalChartLabels];
             filteredProfitLoss = [...window.originalChartProfitLoss];
             filteredWinRate = [...window.originalChartWinRate];
             
-            console.log('Showing all markets data:', {
+            console.log('Showing all data:', {
                 originalDataDetailed: window.originalChartDataDetailed,
                 filteredLabels,
                 filteredProfitLoss,
@@ -1187,29 +1224,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
             
-            console.log('Calculated totals for all markets:', {
+            console.log('Calculated totals for all data:', {
                 totalWins,
                 totalLosses,
                 totalTrades: totalWins + totalLosses
             });
         } else {
-            // Filter by selected market
+            // Filter by selected market and/or account
             window.originalChartDataDetailed.forEach((monthData, index) => {
                 let monthProfitLoss = 0;
                 let monthWins = 0;
                 let monthLosses = 0;
-                let hasMarketData = false;
+                let hasData = false;
 
                 monthData.markets.forEach(market => {
-                    if (market.market_id == selectedMarket) {
+                    let includeMarket = true;
+                    
+                    // Filter by market if selected
+                    if (selectedMarket && market.market_id != selectedMarket) {
+                        includeMarket = false;
+                    }
+                    
+                    // Filter by account if selected
+                    if (selectedAccount && market.account_id != selectedAccount) {
+                        includeMarket = false;
+                    }
+                    
+                    if (includeMarket) {
                         monthProfitLoss += parseFloat(market.profit_loss);
                         monthWins += parseInt(market.wins);
                         monthLosses += parseInt(market.losses);
-                        hasMarketData = true;
+                        hasData = true;
                     }
                 });
 
-                if (hasMarketData) {
+                if (hasData) {
                     filteredLabels.push(window.originalChartLabels[index]);
                     filteredProfitLoss.push(monthProfitLoss);
                     
@@ -1319,6 +1368,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listeners
     marketFilter.addEventListener('change', filterDashboard);
+    accountFilter.addEventListener('change', function() {
+        filterDashboard();
+        loadCalendarData(); // Atualizar calendário quando conta mudar
+    });
     
     yearFilter.addEventListener('change', function() {
         const selectedYear = yearFilter.value;
@@ -1329,6 +1382,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     clearFilter.addEventListener('click', function() {
         marketFilter.value = '';
+        accountFilter.value = '';
         yearFilter.value = '<?= date('Y') ?>';
         const currentUrl = new URL(window.location);
         currentUrl.searchParams.delete('year');
@@ -1365,7 +1419,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load calendar data via AJAX
     function loadCalendarData() {
-        const url = `/admin/students/calendar-data/${studentId}/${currentCalendarYear}/${currentCalendarMonth}`;
+        const selectedAccount = accountFilter.value;
+        let url = `/admin/students/calendar-data/${studentId}/${currentCalendarYear}/${currentCalendarMonth}`;
+        
+        // Adicionar parâmetro de conta se selecionada
+        if (selectedAccount) {
+            url += `?account_id=${selectedAccount}`;
+        }
         
         fetch(url, {
             method: 'GET',
@@ -1611,3 +1671,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+
+
+
+

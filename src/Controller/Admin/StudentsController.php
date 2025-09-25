@@ -516,8 +516,11 @@ class StudentsController extends AppController
                     'total_profit_loss' => 'SUM(profit_loss)',
                     'first_study' => 'MIN(study_date)',
                     'last_study' => 'MAX(study_date)',
-                    'market_ids' => 'GROUP_CONCAT(DISTINCT market_id)'
+                    'market_ids' => 'GROUP_CONCAT(DISTINCT market_id)',
+                    'account_ids' => 'GROUP_CONCAT(DISTINCT Studies.account_id)',
+                    'account_names' => 'GROUP_CONCAT(DISTINCT Accounts.name)'
                 ])
+                ->contain(['Accounts'])
                 ->where([
                     'student_id' => $id,
                     'YEAR(study_date)' => $selectedYear
@@ -567,16 +570,18 @@ class StudentsController extends AppController
                     'wins' => 'SUM(Studies.wins)',
                     'losses' => 'SUM(Studies.losses)',
                     'Studies.market_id',
+                    'Studies.account_id',
                     'Markets.currency',
                     'market_name' => 'Markets.name',
-                    'market_code' => 'Markets.code'
+                    'market_code' => 'Markets.code',
+                    'account_name' => 'Accounts.name'
                 ])
-                ->contain(['Markets'])
+                ->contain(['Markets', 'Accounts'])
                 ->where([
                     'Studies.student_id' => $id,
                     'YEAR(Studies.study_date)' => $selectedYear
                 ])
-                ->groupBy(['YEAR(Studies.study_date)', 'MONTH(Studies.study_date)', 'Studies.market_id'])
+                ->groupBy(['YEAR(Studies.study_date)', 'MONTH(Studies.study_date)', 'Studies.market_id', 'Studies.account_id'])
                 ->orderBy(['year' => 'ASC', 'month' => 'ASC', 'Markets.name' => 'ASC'])
                 ->toArray();
 
@@ -599,9 +604,11 @@ class StudentsController extends AppController
                 $chartDataByMonth[$monthKey]['losses'] += $data['losses'];
                 $chartDataByMonth[$monthKey]['markets'][] = [
                     'market_id' => $data['market_id'],
+                    'account_id' => $data['account_id'],
                     'currency' => $data['currency'],
                     'market_name' => $data['market_name'],
                     'market_code' => $data['market_code'],
+                    'account_name' => $data['account_name'],
                     'profit_loss' => $data['profit_loss'],
                     'wins' => $data['wins'],
                     'losses' => $data['losses']
@@ -675,6 +682,13 @@ class StudentsController extends AppController
             
             $calendarData = $this->getCalendarData($id, $currentYear, $currentMonth);
 
+            // Buscar contas ativas para o filtro
+            $accountsTable = $this->fetchTable('Accounts');
+            $accounts = $accountsTable->find()
+                ->where(['active' => 1])
+                ->orderBy(['name' => 'ASC'])
+                ->toArray();
+
             $this->set(compact(
                 'student',
                 'monthlyData',
@@ -685,6 +699,7 @@ class StudentsController extends AppController
                 'chartWinRate',
                 'chartDataDetailed',
                 'markets',
+                'accounts',
                 'selectedYear',
                 'topStudents',
                 'worstStudents',
@@ -701,17 +716,24 @@ class StudentsController extends AppController
     /**
      * Método para buscar dados do calendário
      */
-    private function getCalendarData(int $studentId, int $year, int $month): array
+    private function getCalendarData(int $studentId, int $year, int $month, int $accountId = null): array
     {
         $studiesTable = $this->fetchTable('Studies');
         
         // Buscar todos os estudos do mês
+        $conditions = [
+            'student_id' => $studentId,
+            'YEAR(study_date)' => $year,
+            'MONTH(study_date)' => $month
+        ];
+        
+        // Adicionar filtro por conta se especificado
+        if ($accountId !== null) {
+            $conditions['account_id'] = $accountId;
+        }
+        
         $studies = $studiesTable->find()
-            ->where([
-                'student_id' => $studentId,
-                'YEAR(study_date)' => $year,
-                'MONTH(study_date)' => $month
-            ])
+            ->where($conditions)
             ->orderBy(['study_date' => 'ASC'])
             ->toArray();
 
@@ -819,6 +841,7 @@ class StudentsController extends AppController
         $studentId = $studentId ?: $this->request->getParam('pass.0');
         $year = (int)($year ?: $this->request->getParam('pass.1', date('Y')));
         $month = (int)($month ?: $this->request->getParam('pass.2', date('n')));
+        $accountId = $this->request->getQuery('account_id');
         
         if (!$studentId) {
             $currentUser = $this->getCurrentUser();
@@ -837,7 +860,7 @@ class StudentsController extends AppController
         }
         
         try {
-            $calendarData = $this->getCalendarData((int)$studentId, $year, $month);
+            $calendarData = $this->getCalendarData((int)$studentId, $year, $month, $accountId ? (int)$accountId : null);
             
             $this->set([
                 'success' => true,
