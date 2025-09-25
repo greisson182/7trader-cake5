@@ -187,7 +187,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 </button>
                             </div>
                             <div class="calendar-summary">
-                                <span class="badge bg-success me-2" id="monthlyTotal">
+                                <span class="badge me-2" id="monthlyTotal">
                                     Total: R$ <?php 
                                     $monthlyTotal = 0;
                                     if (isset($calendarData['daily'])) {

@@ -273,7 +273,7 @@ class StudiesController extends AppController
 
                 if ($studiesTable->save($study)) {
                     $this->Flash->success(__('Estudo criado com sucesso!', 'success'));
-                    return $this->redirect(['action' => 'edit', $study->id]);
+                    return $this->redirect(['action' => 'index']);
                 } else {
                     $this->Flash->error(__('The study could not be saved. Please, try again.', 'error'));
                 }
@@ -364,7 +364,7 @@ class StudiesController extends AppController
                 
                 if ($studiesTable->save($study)) {
                     $this->Flash->success(__('Estudo atualizado com sucesso!', 'success'));
-                    return $this->redirect(['action' => 'edit', $study->id]);
+                    return $this->redirect(['action' => 'index']);
                 } else {
                     $this->Flash->error(__('O estudo não pôde ser atualizado. Tente novamente.', 'error'));
                 }
