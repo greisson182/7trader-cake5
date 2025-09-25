@@ -121,6 +121,15 @@ mb_internal_encoding(Configure::read('App.encoding'));
 ini_set('intl.default_locale', Configure::read('App.defaultLocale'));
 
 /*
+ * Configure PHP error display when debug is enabled
+ */
+if (Configure::read('debug')) {
+    ini_set('display_errors', '1');
+    ini_set('display_startup_errors', '1');
+    error_reporting(E_ALL);
+}
+
+/*
  * Register application error and exception handlers.
  */
 (new ErrorTrap(Configure::read('Error')))->register();
@@ -230,5 +239,5 @@ ServerRequest::addDetector('tablet', function ($request) {
 // set a custom date and time format
 // see https://book.cakephp.org/5/en/core-libraries/time.html#setting-the-default-locale-and-format-string
 // and https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax
-// \Cake\I18n\Date::setToStringFormat('dd.MM.yyyy');
-// \Cake\I18n\Time::setToStringFormat('dd.MM.yyyy HH:mm');
+ \Cake\I18n\Date::setToStringFormat('dd.MM.yyyy');
+ \Cake\I18n\Time::setToStringFormat('dd.MM.yyyy HH:mm');

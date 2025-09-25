@@ -499,6 +499,125 @@ class StudiesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    public function importCsv()
+    {
+        $this->request->allowMethod(['post']);
+        
+        try {
+            if (!$this->request->getData('csv_file')) {
+                throw new Exception('Nenhum arquivo CSV foi enviado.');
+            }
+
+            $csvFile = $this->request->getData('csv_file');
+            
+            // Verificar se é um arquivo CSV
+            if ($csvFile->getClientMediaType() !== 'text/csv' && 
+                pathinfo($csvFile->getClientFilename(), PATHINFO_EXTENSION) !== 'csv') {
+                throw new Exception('O arquivo deve ser um CSV válido.');
+            }
+
+            // Ler o arquivo CSV
+            $csvContent = file_get_contents($csvFile->getStream()->getMetadata('uri'));
+            $lines = explode("\n", $csvContent);
+            
+            if (empty($lines)) {
+                throw new Exception('O arquivo CSV está vazio.');
+            }
+
+            $operationsTable = $this->fetchTable('Operations');
+            $studiesTable = $this->fetchTable('Studies');
+            
+            $importedCount = 0;
+            $errors = [];
+            
+            // Processar as linhas do CSV
+            $headerProcessed = false;
+            $csvData = [];
+            
+            foreach ($lines as $lineIndex => $line) {
+                $line = trim($line);
+                if (empty($line)) continue;
+                
+                // Pular linhas de cabeçalho até encontrar os dados das operações
+                if (!$headerProcessed) {
+                    if (strpos($line, 'Ativo') !== false) {
+                        $headerProcessed = true;
+                        continue; // Pular a linha do cabeçalho
+                    }
+                    // Capturar informações do cabeçalho
+                    if (strpos($line, 'Conta:') !== false) {
+                        $csvData['conta'] = trim(str_replace('Conta:', '', $line));
+                    } elseif (strpos($line, 'Titular:') !== false) {
+                        $csvData['titular'] = trim(str_replace('Titular:', '', $line));
+                    } elseif (strpos($line, 'Data Inicial:') !== false) {
+                        $csvData['data_inicial'] = trim(str_replace('Data Inicial:', '', $line));
+                    } elseif (strpos($line, 'Data Final:') !== false) {
+                        $csvData['data_final'] = trim(str_replace('Data Final:', '', $line));
+                    }
+                    continue;
+                }
+                
+                // Processar linha de dados
+                $data = str_getcsv($line, ';');
+                
+                if (count($data) < 5) {
+                    continue; // Pular linhas incompletas
+                }
+                
+                try {
+                    // Criar nova operação
+                    $operation = $operationsTable->newEmptyEntity();
+                    $operation = $operationsTable->patchEntity($operation, [
+                        'study_id' => $this->request->getData('study_id'),
+                        'asset' => $data[0] ?? null,
+                        'open_time' => !empty($data[1]) ? date('Y-m-d H:i:s', strtotime($data[1])) : null,
+                        'close_time' => !empty($data[2]) ? date('Y-m-d H:i:s', strtotime($data[2])) : null,
+                        'operation_result' => $data[3] ?? null,
+                        'operation_result_percent' => $data[4] ?? null,
+                        'conta' => $csvData['conta'] ?? null,
+                        'titular' => $csvData['titular'] ?? null,
+                        'data_inicial' => !empty($csvData['data_inicial']) ? date('Y-m-d', strtotime($csvData['data_inicial'])) : null,
+                        'data_final' => !empty($csvData['data_final']) ? date('Y-m-d', strtotime($csvData['data_final'])) : null,
+                    ]);
+                    
+                    if ($operationsTable->save($operation)) {
+                        $importedCount++;
+                    } else {
+                        $errors[] = "Linha " . ($lineIndex + 1) . ": Erro ao salvar operação";
+                    }
+                    
+                } catch (Exception $e) {
+                    $errors[] = "Linha " . ($lineIndex + 1) . ": " . $e->getMessage();
+                }
+            }
+            
+            $message = "$importedCount operações importadas com sucesso.";
+            if (!empty($errors)) {
+                $message .= " Erros: " . implode(', ', array_slice($errors, 0, 3));
+                if (count($errors) > 3) {
+                    $message .= " e mais " . (count($errors) - 3) . " erros.";
+                }
+            }
+            
+            $this->response = $this->response->withType('application/json');
+            $this->set([
+                'success' => true,
+                'message' => $message,
+                'imported_count' => $importedCount,
+                'errors_count' => count($errors)
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'message', 'imported_count', 'errors_count']);
+            
+        } catch (Exception $e) {
+            $this->response = $this->response->withType('application/json');
+            $this->set([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'message']);
+        }
+    }
+
     public function byStudent($studentId = null)
     {
         if (!$studentId) {

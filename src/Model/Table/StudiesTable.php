@@ -30,6 +30,9 @@ class StudiesTable extends Table
         $this->belongsTo('Accounts', [
             'foreignKey' => 'account_id',
         ]);
+        $this->hasMany('Operations', [
+            'foreignKey' => 'study_id',
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator

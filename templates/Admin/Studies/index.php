@@ -6,9 +6,14 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 <div class="studies index content">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3><i class="fas fa-chart-bar gradient-text"></i> Estudos de Mercado</h3>
-        <a href="/admin/studies/add" class="btn btn-primary btn-with-icon">
-            <i class="fas fa-plus me-2"></i>Novo Estudo
-        </a>
+        <div class="d-flex gap-2">
+            <button id="importCsvBtn" class="btn btn-success btn-with-icon">
+                <i class="fas fa-file-csv me-2"></i>Importar CSV
+            </button>
+            <a href="/admin/studies/add" class="btn btn-primary btn-with-icon">
+                <i class="fas fa-plus me-2"></i>Novo Estudo
+            </a>
+        </div>
     </div>
 
     <!-- Filtros -->
@@ -261,6 +266,73 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         const autoUpdate = document.getElementById('autoUpdate');
         let autoUpdateInterval;
 
+        // Função para recalcular valores do month-header baseado nos estudos visíveis
+        function updateMonthHeaderValues(card) {
+            const visibleRows = card.querySelectorAll('.study-row[style=""], .study-row:not([style*="display: none"])');
+            
+            let totalStudies = 0;
+            let totalWins = 0;
+            let totalLosses = 0;
+            let totalProfitLoss = 0;
+
+            visibleRows.forEach(row => {
+                // Extrair valores das células da tabela
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 9) {
+                    const wins = parseInt(cells[5].textContent.trim()) || 0;
+                    const losses = parseInt(cells[6].textContent.trim()) || 0;
+                    
+                    // Extrair P&L da célula (remover formatação de moeda)
+                    const profitLossText = cells[8].textContent.trim();
+                    const profitLossValue = parseFloat(profitLossText.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+                    
+                    totalStudies++;
+                    totalWins += wins;
+                    totalLosses += losses;
+                    totalProfitLoss += profitLossValue;
+                }
+            });
+
+            // Calcular taxa de acerto
+            const totalTrades = totalWins + totalLosses;
+            const winRate = totalTrades > 0 ? (totalWins / totalTrades * 100).toFixed(2) : 0;
+
+            // Atualizar valores no header
+            const header = card.querySelector('.month-header');
+            
+            // Atualizar estudos
+            const studiesValue = header.querySelector('.stat-item:nth-child(1) .stat-value');
+            if (studiesValue) studiesValue.textContent = totalStudies;
+
+            // Atualizar gains
+            const gainsValue = header.querySelector('.stat-item:nth-child(2) .stat-value');
+            if (gainsValue) gainsValue.textContent = totalWins;
+
+            // Atualizar losses
+            const lossesValue = header.querySelector('.stat-item:nth-child(3) .stat-value');
+            if (lossesValue) lossesValue.textContent = totalLosses;
+
+            // Atualizar taxa de acerto
+            const winRateValue = header.querySelector('.stat-item:nth-child(4) .stat-value');
+            if (winRateValue) {
+                winRateValue.textContent = winRate + '%';
+                winRateValue.className = 'stat-value ' + (winRate >= 50 ? 'text-success' : 'text-warning');
+            }
+
+            // Atualizar P&L
+            const profitLossElement = header.querySelector('.row.mt-2 .stat-value');
+            if (profitLossElement) {
+                // Formatar valor com moeda
+                const formattedValue = new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(totalProfitLoss);
+                
+                profitLossElement.textContent = formattedValue;
+                profitLossElement.className = 'stat-value ' + (totalProfitLoss >= 0 ? 'text-success' : 'text-danger');
+            }
+        }
+
         function filterStudies() {
             const selectedMarketId = marketFilter.value;
             const selectedAccountId = accountFilter.value;
@@ -312,6 +384,9 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
                         row.style.display = showRow ? '' : 'none';
                     });
+
+                    // Recalcular valores do month-header baseado nos estudos visíveis
+                    updateMonthHeaderValues(card);
                 } else {
                     card.style.display = 'none';
                 }
@@ -384,11 +459,29 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             yearFilter.addEventListener('change', filterStudies);
         }
 
+        // Função para restaurar valores originais do month-header
+        function restoreOriginalValues() {
+            const monthCards = document.querySelectorAll('.month-card');
+            monthCards.forEach(card => {
+                // Mostrar todas as linhas
+                const studyRows = card.querySelectorAll('.study-row');
+                studyRows.forEach(row => {
+                    row.style.display = '';
+                });
+                
+                // Recalcular com todos os estudos visíveis
+                updateMonthHeaderValues(card);
+            });
+        }
+
         if (clearFilters) {
             clearFilters.addEventListener('click', function() {
                 if (marketFilter) marketFilter.value = '';
                 if (accountFilter) accountFilter.value = '';
                 if (yearFilter) yearFilter.value = '';
+                
+                // Restaurar valores originais antes de aplicar filtros
+                restoreOriginalValues();
                 filterStudies();
             });
         }
@@ -418,6 +511,116 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         }
         if (yearParam && yearFilter) {
             yearFilter.value = yearParam;
+        }
+
+        // Botão de importar CSV
+        const importCsvBtn = document.getElementById('importCsvBtn');
+        if (importCsvBtn) {
+            importCsvBtn.addEventListener('click', function() {
+                showStudySelectionModal();
+            });
+        }
+
+        function showStudySelectionModal() {
+            // Criar modal para seleção de estudo
+            const modalHtml = `
+                <div class="modal fade" id="csvImportModal" tabindex="-1" aria-labelledby="csvImportModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="csvImportModalLabel">Importar CSV de Operações</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="studySelect" class="form-label">Selecione o Estudo:</label>
+                                    <select class="form-select" id="studySelect" required>
+                                        <option value="">Escolha um estudo...</option>
+                                        <?php foreach ($studies as $study): ?>
+                                            <option value="<?= $study['id'] ?>"><?= h($study['title'] ?? 'Estudo sem título') ?> - <?= is_string($study['study_date']) ? date('d/m/Y', strtotime($study['study_date'])) : $study['study_date']->format('d/m/Y') ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="csvFileInput" class="form-label">Arquivo CSV:</label>
+                                    <input type="file" class="form-control" id="csvFileInput" accept=".csv" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="confirmImportBtn">Importar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remover modal existente se houver
+            const existingModal = document.getElementById('csvImportModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Adicionar modal ao DOM
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('csvImportModal'));
+            modal.show();
+
+            // Evento do botão confirmar
+            document.getElementById('confirmImportBtn').addEventListener('click', function() {
+                const studyId = document.getElementById('studySelect').value;
+                const fileInput = document.getElementById('csvFileInput');
+                const file = fileInput.files[0];
+
+                if (!studyId) {
+                    alert('Por favor, selecione um estudo.');
+                    return;
+                }
+
+                if (!file) {
+                    alert('Por favor, selecione um arquivo CSV.');
+                    return;
+                }
+
+                modal.hide();
+                importCsvFile(file, studyId);
+            });
+        }
+
+        function importCsvFile(file, studyId) {
+            const formData = new FormData();
+            formData.append('csv_file', file);
+            formData.append('study_id', studyId);
+            formData.append('_csrfToken', '<?= $csrfToken ?>');
+
+            // Mostrar loading
+            importCsvBtn.disabled = true;
+            importCsvBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Importando...';
+
+            fetch('/admin/studies/import-csv', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('CSV importado com sucesso! ' + data.message);
+                    location.reload(); // Recarregar a página para mostrar os novos dados
+                } else {
+                    alert('Erro ao importar CSV: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao importar CSV. Verifique o console para mais detalhes.');
+            })
+            .finally(() => {
+                // Restaurar botão
+                importCsvBtn.disabled = false;
+                importCsvBtn.innerHTML = '<i class="fas fa-file-csv me-2"></i>Importar CSV';
+            });
         }
 
         // Aplicar filtros iniciais
