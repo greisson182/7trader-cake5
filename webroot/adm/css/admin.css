@@ -1,0 +1,463 @@
+/* Admin Dashboard Styles */
+.admin-sidebar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.admin-sidebar.collapsed {
+    width: 70px;
+}
+
+.admin-sidebar .sidebar-header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.admin-sidebar .sidebar-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.admin-sidebar.collapsed .sidebar-header h3 {
+    display: none;
+}
+
+.admin-sidebar .nav-link {
+    color: rgba(255,255,255,0.8);
+    padding: 12px 20px;
+    border-radius: 0;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.admin-sidebar .nav-link:hover {
+    color: white;
+    background: rgba(255,255,255,0.1);
+    border-left-color: #fff;
+}
+
+.admin-sidebar .nav-link.active {
+    color: white;
+    background: rgba(255,255,255,0.2);
+    border-left-color: #fff;
+}
+
+.admin-sidebar .nav-link i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.admin-sidebar.collapsed .nav-link span {
+    display: none;
+}
+
+.admin-main {
+    margin-left: 250px;
+    transition: all 0.3s ease;
+    min-height: 100vh;
+    background: #f8f9fa;
+}
+
+.admin-main.expanded {
+    margin-left: 70px;
+}
+
+.admin-topbar {
+    background: white;
+    padding: 15px 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-content {
+    padding: 30px;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-left: 4px solid #667eea;
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-card .stats-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 5px;
+}
+
+.stats-card .stats-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stats-card .stats-icon {
+    font-size: 3rem;
+    color: rgba(102, 126, 234, 0.2);
+    float: right;
+    margin-top: -20px;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.quick-actions {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.quick-actions .btn {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: #667eea;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.sidebar-toggle:hover {
+    color: #5a6fd8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin-sidebar {
+        width: 70px;
+    }
+    
+    .admin-main {
+        margin-left: 70px;
+    }
+    
+    .admin-sidebar .nav-link span {
+        display: none;
+    }
+    
+    .admin-sidebar .sidebar-header h3 {
+        display: none;
+    }
+}
+
+/* Enhanced Admin Table Styles with Perfect Alignment */
+.admin-table {
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-table:hover {
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.admin-table .table {
+    margin-bottom: 0;
+    background: transparent;
+    width: 100%;
+    table-layout: fixed; /* Ensures consistent column widths */
+}
+
+.admin-table .table thead th {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+    font-weight: 700;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 20px 16px;
+    font-size: 0.875rem;
+    position: relative;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    text-align: center; /* Center align headers */
+    vertical-align: middle;
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-table .table thead th::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #667eea, transparent);
+    opacity: 0.6;
+}
+
+.admin-table .table tbody tr {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    position: relative;
+}
+
+.admin-table .table tbody tr::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    transition: width 0.3s ease;
+    z-index: 1;
+}
+
+.admin-table .table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.08);
+    transform: translateX(8px) scale(1.005);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+}
+
+.admin-table .table tbody tr:hover::before {
+    width: 4px;
+}
+
+.admin-table .table tbody td {
+    padding: 18px 16px;
+    border: none;
+    color: #495057;
+    font-weight: 500;
+    position: relative;
+    z-index: 2;
+    vertical-align: middle;
+    text-align: center; /* Center align all content */
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* First column (usually names/dates) should be left-aligned */
+.admin-table .table tbody td:first-child,
+.admin-table .table thead th:first-child {
+    text-align: left;
+    padding-left: 24px;
+}
+
+/* Last column (usually actions) should be right-aligned */
+.admin-table .table tbody td:last-child,
+.admin-table .table thead th:last-child {
+    text-align: right;
+    padding-right: 24px;
+}
+
+/* Dark Mode Admin Tables */
+[data-theme="dark"] .admin-table {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .admin-table .table thead th {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+    color: #ffffff;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .admin-table .table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .admin-table .table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.1);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+}
+
+[data-theme="dark"] .admin-table .table tbody td {
+    color: #ffffff;
+}
+
+/* Enhanced Badge Styles for Admin */
+.admin-table .badge {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.admin-table .badge:hover {
+    transform: scale(1.1);
+}
+
+.admin-table .badge.bg-success {
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.admin-table .badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545, #e74c3c) !important;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Clickable Rows Enhancement */
+.admin-table .table tbody tr.clickable-row {
+    cursor: pointer;
+}
+
+.admin-table .table tbody tr.clickable-row:hover {
+    transform: translateX(8px) scale(1.005);
+    box-shadow: 0 6px 24px rgba(102, 126, 234, 0.2);
+}
+
+/* Empty State */
+.admin-table .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+}
+
+.admin-table .empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    color: #667eea;
+}
+
+/* Table Action Buttons */
+.admin-table .btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.admin-table .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Admin Tables */
+@media (max-width: 768px) {
+    .admin-table .table {
+        font-size: 0.875rem;
+    }
+    
+    .admin-table .table thead th,
+    .admin-table .table tbody td {
+        padding: 12px 8px;
+    }
+    
+    .admin-table .badge {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+    }
+}
+
+/* Form Styles */
+.admin-form {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.admin-form .form-group {
+    margin-bottom: 20px;
+}
+
+.admin-form .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.admin-form .form-control {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.admin-form .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Buttons */
+.btn-admin-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-admin-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Alerts */
+.alert-admin {
+    border-radius: 10px;
+    border: none;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+}
+
+.alert-admin.alert-success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    color: white;
+}
+
+.alert-admin.alert-danger {
+    background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+    color: white;
+}
+
+.alert-admin.alert-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.alert-admin.alert-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}

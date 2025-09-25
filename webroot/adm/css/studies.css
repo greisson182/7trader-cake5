@@ -1,0 +1,267 @@
+/* Studies Page - Monthly View Styles */
+
+/* Month Cards */
+.month-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 255, 136, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.month-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #00ff88, #00cc6a, #00ff88);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+.month-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0, 255, 136, 0.08) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.month-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 20px 60px rgba(0, 255, 136, 0.15), 0 8px 32px rgba(0, 0, 0, 0.4);
+    border-color: rgba(0, 255, 136, 0.3);
+}
+
+.month-card:hover::after {
+    opacity: 1;
+}
+
+.month-card.expanded {
+    border-color: rgba(0, 255, 136, 0.4);
+    box-shadow: 0 12px 48px rgba(0, 255, 136, 0.2);
+}
+
+/* Month Header */
+.month-header {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 204, 106, 0.05) 100%);
+    border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.month-header:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.15) 0%, rgba(0, 204, 106, 0.08) 100%);
+}
+
+.month-header h5 {
+    color: #00ff88;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.month-header .fas.fa-calendar-alt {
+    color: #00ff88;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+/* Statistics Items */
+.stat-item {
+    text-align: center;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+}
+
+.stat-label {
+    display: block;
+    color: #a0a0a0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.stat-value.text-success {
+    color: #00ff88 !important;
+    text-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+}
+
+.stat-value.text-danger {
+    color: #ff5722 !important;
+    text-shadow: 0 0 15px rgba(255, 87, 34, 0.4);
+}
+
+.stat-value.text-warning {
+    color: #ffc107 !important;
+    text-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
+}
+
+/* Expand Icon */
+.expand-icon {
+    color: #00ff88;
+    font-size: 1.2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.expand-icon:hover {
+    transform: scale(1.2);
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+}
+
+/* Month Studies Body */
+.month-studies {
+    padding: 0;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(0, 255, 136, 0.1);
+    animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        max-height: 1000px;
+        transform: translateY(0);
+    }
+}
+
+/* Month Studies Table - Using unified table system from style.css */
+.month-studies .table {
+    margin: 0;
+    border-radius: 0 0 16px 16px;
+    overflow: hidden;
+}
+
+/* Estilos removidos - usando novo sistema de tabelas do style.css */
+
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, #00ff88, #00cc6a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+/* Transition Utilities */
+.transition-all {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-state i {
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+.empty-state h5 {
+    color: #a0a0a0;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .month-header {
+        padding: 1rem;
+    }
+    
+    .month-header .row {
+        text-align: center;
+    }
+    
+    .month-header .col-md-3,
+    .month-header .col-md-2,
+    .month-header .col-md-1 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-item {
+        padding: 0.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1rem;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+    }
+    
+    .month-studies .table {
+        font-size: 0.875rem;
+    }
+    
+    .month-studies .actions .btn {
+        padding: 0.3rem 0.5rem;
+        margin: 0.1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .month-header .row > div {
+        flex: 0 0 50%;
+        max-width: 50%;
+        margin-bottom: 0.75rem;
+    }
+    
+    .month-header .col-md-1 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .month-studies .table-responsive {
+        font-size: 0.8rem;
+    }
+}
