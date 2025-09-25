@@ -820,6 +820,54 @@ setTimeout(function() {
     const profitLossCtx = document.getElementById('profitLossChart');
     if (profitLossCtx) {
         console.log('Creating P&L chart...');
+        
+        // Function to create gradient based on data values
+        function createGradient(ctx, chartArea, data) {
+            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+            
+            // Find min and max values to calculate proportions
+            const minValue = Math.min(...data);
+            const maxValue = Math.max(...data);
+            const range = maxValue - minValue;
+            
+            if (minValue < 0 && maxValue > 0) {
+                // Mixed positive and negative values
+                const zeroPosition = Math.abs(minValue) / range;
+                
+                // Red gradient for negative values (bottom)
+                gradient.addColorStop(0, 'rgba(255, 59, 48, 0.3)');
+                gradient.addColorStop(zeroPosition - 0.01, 'rgba(255, 59, 48, 0.1)');
+                
+                // Transition at zero line
+                gradient.addColorStop(zeroPosition, 'rgba(255, 255, 255, 0.05)');
+                
+                // Green gradient for positive values (top)
+                gradient.addColorStop(zeroPosition + 0.01, 'rgba(0, 255, 136, 0.1)');
+                gradient.addColorStop(1, 'rgba(0, 255, 136, 0.3)');
+            } else if (maxValue <= 0) {
+                // All negative values - red gradient
+                gradient.addColorStop(0, 'rgba(255, 59, 48, 0.3)');
+                gradient.addColorStop(1, 'rgba(255, 59, 48, 0.1)');
+            } else {
+                // All positive values - green gradient
+                gradient.addColorStop(0, 'rgba(0, 255, 136, 0.1)');
+                gradient.addColorStop(1, 'rgba(0, 255, 136, 0.3)');
+            }
+            
+            return gradient;
+        }
+        
+        // Function to get border color based on overall trend
+        function getBorderColor(data) {
+            const lastValue = data[data.length - 1] || 0;
+            return lastValue >= 0 ? '#00ff88' : '#ff3b30';
+        }
+        
+        // Function to get point colors based on individual values
+        function getPointColors(data) {
+            return data.map(value => value >= 0 ? '#00ff88' : '#ff3b30');
+        }
+        
         window.profitLossChart = new Chart(profitLossCtx, {
             type: 'line',
             data: {
@@ -827,17 +875,27 @@ setTimeout(function() {
                 datasets: [{
                     label: 'P&L ($)',
                     data: chartProfitLoss,
-                    borderColor: '#00ff88',
-                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                    borderColor: '#6c757d', // Cor neutra (cinza)
+                    backgroundColor: function(context) {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) {
+                            return null;
+                        }
+                        return createGradient(ctx, chartArea, chartProfitLoss);
+                    },
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
-                    pointBackgroundColor: '#00ff88',
+                    pointBackgroundColor: getPointColors(chartProfitLoss),
                     pointBorderColor: '#fff',
                     pointBorderWidth: 3,
                     pointRadius: 6,
                     pointHoverRadius: 10,
-                    pointHoverBackgroundColor: '#00cc6a',
+                    pointHoverBackgroundColor: function(context) {
+                        const value = context.parsed.y;
+                        return value >= 0 ? '#00cc6a' : '#cc2e24';
+                    },
                     pointHoverBorderColor: '#fff',
                     pointHoverBorderWidth: 3
                 }]
@@ -851,9 +909,15 @@ setTimeout(function() {
                     },
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                        titleColor: '#00ff88',
+                        titleColor: function(context) {
+                            const value = context[0].parsed.y;
+                            return value >= 0 ? '#00ff88' : '#ff3b30';
+                        },
                         bodyColor: '#fff',
-                        borderColor: '#00ff88',
+                        borderColor: function(context) {
+                            const value = context[0].parsed.y;
+                            return value >= 0 ? '#00ff88' : '#ff3b30';
+                        },
                         borderWidth: 2,
                         cornerRadius: 12,
                         displayColors: false,
@@ -867,7 +931,9 @@ setTimeout(function() {
                         padding: 12,
                         callbacks: {
                             label: function(context) {
-                                return 'P&L: $' + context.parsed.y.toFixed(2);
+                                const value = context.parsed.y;
+                                const prefix = value >= 0 ? '+' : '';
+                                return 'P&L: ' + prefix + '$' + value.toFixed(2);
                             }
                         }
                     }
@@ -890,20 +956,35 @@ setTimeout(function() {
                     },
                     y: {
                         grid: {
-                            color: 'rgba(0, 255, 136, 0.1)',
-                            lineWidth: 1
+                            color: function(context) {
+                                if (context.tick.value === 0) {
+                                    return 'rgba(255, 255, 255, 0.3)'; // Zero line more visible
+                                }
+                                return context.tick.value > 0 ? 
+                                    'rgba(0, 255, 136, 0.1)' : 
+                                    'rgba(255, 59, 48, 0.1)';
+                            },
+                            lineWidth: function(context) {
+                                return context.tick.value === 0 ? 2 : 1;
+                            }
                         },
                         border: {
                             display: false
                         },
                         ticks: {
-                            color: '#a0a0a0',
+                            color: function(context) {
+                                if (context.tick.value === 0) {
+                                    return '#ffffff';
+                                }
+                                return context.tick.value > 0 ? '#00ff88' : '#ff3b30';
+                            },
                             font: {
                                 size: 12,
                                 weight: '500'
                             },
                             callback: function(value) {
-                                return '$' + value.toFixed(0);
+                                const prefix = value > 0 ? '+' : '';
+                                return prefix + '$' + value.toFixed(0);
                             }
                         }
                     }
@@ -1283,6 +1364,10 @@ document.addEventListener('DOMContentLoaded', function() {
         window.profitLossChart.data.labels = filteredLabels;
         window.profitLossChart.data.datasets[0].data = filteredProfitLoss;
         
+        // Update colors based on new data
+        window.profitLossChart.data.datasets[0].borderColor = '#6c757d'; // Cor neutra (cinza)
+        window.profitLossChart.data.datasets[0].pointBackgroundColor = getPointColors(filteredProfitLoss);
+        
         // Get selected market currency for chart formatting
         let chartCurrency = 'BRL'; // Default currency
         if (selectedMarket) {
@@ -1309,19 +1394,21 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update tooltip callback for currency formatting
         window.profitLossChart.options.plugins.tooltip.callbacks.label = function(context) {
             const value = context.parsed.y;
+            const prefix = value >= 0 ? '+' : '';
             if (chartCurrency === 'USD') {
-                return `P&L: $${value.toFixed(2)}`;
+                return `P&L: ${prefix}$${value.toFixed(2)}`;
             } else {
-                return `P&L: R$ ${value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                return `P&L: ${prefix}R$ ${value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             }
         };
         
         // Update Y-axis tick callback for currency formatting
         window.profitLossChart.options.scales.y.ticks.callback = function(value) {
+            const prefix = value > 0 ? '+' : '';
             if (chartCurrency === 'USD') {
-                return `$${value.toFixed(0)}`;
+                return `${prefix}$${value.toFixed(0)}`;
             } else {
-                return `R$ ${value.toFixed(0)}`;
+                return `${prefix}R$ ${value.toFixed(0)}`;
             }
         };
         
