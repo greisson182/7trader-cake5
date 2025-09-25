@@ -36,6 +36,12 @@ return function (RouteBuilder $routes): void {
         $routes->connect('/login', ['controller' => 'users', 'action' => 'view']);
         $routes->connect('/admin', ['controller' => 'users', 'action' => 'view']);
         $routes->connect('/logout', ['controller' => 'users', 'action' => 'logout']);
+        $routes->connect('/courses/courses-students', ['controller' => 'courses', 'action' => 'indexStudents']);
+        $routes->connect('/courses/view-students/*', ['controller' => 'courses', 'action' => 'viewStudents']);
+        $routes->connect('/courses/watch-students/*', ['controller' => 'courses', 'action' => 'watchStudents']);
+        $routes->connect('/courses/purchase-students/*', ['controller' => 'courses', 'action' => 'purchaseStudents']);
+        $routes->connect('/courses/update-progress', ['controller' => 'courses', 'action' => 'updateProgress']);
+
         //$routes->applyMiddleware('csrf');
         $routes->setExtensions(['json', 'xml']);
 

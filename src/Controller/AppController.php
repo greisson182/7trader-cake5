@@ -381,29 +381,26 @@ class AppController extends Controller
 	protected function isAdmin()
 	{
 		$user = $this->getCurrentUser();
-		return $user->role === 'admin';
+		return $user && $user->role === 'admin';
 	}
 
 	protected function isStudent()
 	{
 		$user = $this->getCurrentUser();
-
-		return $user->role === 'student';
+		return $user && $user->role === 'student';
 	}
 
 	protected function getCurrentUser()
 	{
 		$session = $this->request->getSession();
-
 		$logado = $session->read('logado');
-
 		return $logado;
 	}
 
 	protected function getCurrentStudentId()
 	{
 		$user = $this->getCurrentUser();
-		if ($user->role === 'student') {
+		if ($user && $user->role === 'student') {
 			return $user->student_id;
 		}
 		return null;

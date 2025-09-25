@@ -9,7 +9,7 @@ $description = htmlspecialchars(substr($course['description'], 0, 160));
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb bg-dark border-secondary">
                 <li class="breadcrumb-item">
-                    <a href="/site/courses" class="text-success text-decoration-none">
+                    <a href="/admin/courses/courses-students" class="text-success text-decoration-none">
                         <i class="fas fa-graduation-cap me-1"></i>Cursos
                     </a>
                 </li>
@@ -127,12 +127,12 @@ $description = htmlspecialchars(substr($course['description'], 0, 160));
                         <?php if (!$isEnrolled): ?>
                             <div class="d-grid gap-2 d-md-flex">
                                 <?php if ($course['is_free']): ?>
-                                    <a href="/site/courses/enroll/<?= $course['id'] ?>" 
+                                    <a href="/admin/courses/enroll/<?= $course['id'] ?>" 
                                        class="btn btn-success btn-lg">
                                         <i class="fas fa-graduation-cap me-2"></i>Inscrever-se Gratuitamente
                                     </a>
                                 <?php else: ?>
-                                    <a href="/site/courses/purchase/<?= $course['id'] ?>" class="btn btn-primary btn-lg">
+                                    <a href="/admin/courses/purchase-students/<?= $course['id'] ?>" class="btn btn-primary btn-lg">
                                         <i class="fas fa-credit-card me-2"></i>Comprar Curso - R$ <?= number_format($course['price'], 2, ',', '.') ?>
                                     </a>
                                     <div class="mt-2">
@@ -205,7 +205,7 @@ $description = htmlspecialchars(substr($course['description'], 0, 160));
                                             
                                             <?php if ($canWatch): ?>
                                                 <div class="mt-2">
-                                                    <a href="/site/courses/watch/<?= $course['id'] ?>/<?= $video['id'] ?>" 
+                                                    <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $video['id'] ?>" 
                                                        class="btn btn-sm btn-outline-success">
                                                         <i class="fas fa-play me-1"></i>Assistir
                                                     </a>

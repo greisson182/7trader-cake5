@@ -23,7 +23,7 @@ class WelcomeController extends AppController
     {
 
         if ($this->isStudent()) {
-            $this->redirect('admin/students/dashboard');
+            return $this->redirect(['controller' => 'Students', 'action' => 'dashboard']);
         }
 
         // Load necessary tables

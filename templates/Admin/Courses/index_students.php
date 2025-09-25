@@ -1,7 +1,3 @@
-<?php
-$title = 'Cursos Disponíveis - 7 Trader';
-$description = 'Explore nossa biblioteca de cursos de trading e análise técnica';
-?>
 
 <div class="container-fluid py-5" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); min-height: 100vh;">
     <div class="container">

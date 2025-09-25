@@ -212,7 +212,7 @@ class UsersController extends AppController
         $session = $this->request->getSession();
 
         if ($session->check('logado')) {
-            $this->redirect('/admin/');
+            return $this->redirect(['controller' => 'Welcome', 'action' => 'index']);
         }
 
         if ($this->request->is('post')) {
@@ -260,7 +260,7 @@ class UsersController extends AppController
                         if ($this->request->getQuery('r')) {
                             $this->redirectApp(base64_decode($this->request->getQuery('r')));
                         } else {
-                            $this->redirect('/admin/');
+                            return $this->redirect(['controller' => 'Welcome', 'action' => 'index']);
                         }
                     } else {
                         $this->Flash->error(__('Dados inválidos.'));
@@ -416,6 +416,6 @@ class UsersController extends AppController
         $this->autoRender = false;
 
         $session->delete('logado');
-        $this->redirect('/login');
+        return $this->redirect(['controller' => 'Users', 'action' => 'login']);
     }
 }

@@ -1,11 +1,5 @@
 <?php
-/**
- * @var \App\View\AppView $this
- * @var \App\Model\Entity\User $user
- * @var \Cake\Collection\CollectionInterface|string[] $students
- * @var \Cake\Collection\CollectionInterface|string[] $groupps
- * @var \Cake\Collection\CollectionInterface|string[] $profiles
- */
+$csrfToken = $this->request->getAttribute('csrfToken');
 ?>
 <div class="row">
     <aside class="column">

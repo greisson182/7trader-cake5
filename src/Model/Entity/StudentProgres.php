@@ -45,5 +45,7 @@ class StudentProgres extends Entity
         'student' => true,
         'course' => true,
         'video' => true,
+        'completed_at' => true,
+        'watched_at' => true,
     ];
 }
