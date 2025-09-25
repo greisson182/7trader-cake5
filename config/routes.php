@@ -43,6 +43,7 @@ return function (RouteBuilder $routes): void {
         $routes->connect('/courses/purchase-students/*', ['controller' => 'courses', 'action' => 'purchaseStudents']);
 
         $routes->connect('/students/monthly-studies/*', ['controller' => 'students', 'action' => 'monthlyStudies']);
+        $routes->connect('/students/calendar-data/*', ['controller' => 'students', 'action' => 'getCalendarDataAjax']);
 
         //$routes->applyMiddleware('csrf');
         $routes->setExtensions(['json', 'xml']);

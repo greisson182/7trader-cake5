@@ -669,6 +669,12 @@ class StudentsController extends AppController
                 ];
             }
 
+            // Buscar dados do calendário para o mês atual
+            $currentMonth = (int)$this->request->getQuery('month', date('n'));
+            $currentYear = (int)$this->request->getQuery('year', date('Y'));
+            
+            $calendarData = $this->getCalendarData($id, $currentYear, $currentMonth);
+
             $this->set(compact(
                 'student',
                 'monthlyData',
@@ -681,11 +687,169 @@ class StudentsController extends AppController
                 'markets',
                 'selectedYear',
                 'topStudents',
-                'worstStudents'
+                'worstStudents',
+                'calendarData',
+                'currentMonth',
+                'currentYear'
             ));
         } catch (\Exception $e) {
             $this->Flash->error(__('Erro ao carregar dashboard: ' . $e->getMessage(), 'error'));
             return $this->redirect(['action' => 'index']);
+        }
+    }
+
+    /**
+     * Método para buscar dados do calendário
+     */
+    private function getCalendarData(int $studentId, int $year, int $month): array
+    {
+        $studiesTable = $this->fetchTable('Studies');
+        
+        // Buscar todos os estudos do mês
+        $studies = $studiesTable->find()
+            ->where([
+                'student_id' => $studentId,
+                'YEAR(study_date)' => $year,
+                'MONTH(study_date)' => $month
+            ])
+            ->orderBy(['study_date' => 'ASC'])
+            ->toArray();
+
+        // Organizar dados por dia
+        $dailyData = [];
+        foreach ($studies as $study) {
+            $day = (int)$study->study_date->format('j');
+            if (!isset($dailyData[$day])) {
+                $dailyData[$day] = [
+                    'profit_loss' => 0,
+                    'wins' => 0,
+                    'losses' => 0,
+                    'trades' => 0,
+                    'studies_count' => 0
+                ];
+            }
+            
+            $dailyData[$day]['profit_loss'] += $study->profit_loss;
+            $dailyData[$day]['wins'] += $study->wins;
+            $dailyData[$day]['losses'] += $study->losses;
+            $dailyData[$day]['trades'] += ($study->wins + $study->losses);
+            $dailyData[$day]['studies_count']++;
+        }
+
+        // Calcular métricas adicionais e converter para array
+        $dailyArray = [];
+        foreach ($dailyData as $day => &$data) {
+            $data['day'] = $day;
+            $data['win_rate'] = $data['trades'] > 0 ? round(($data['wins'] / $data['trades']) * 100, 2) : 0;
+            $data['r_risk_return'] = $data['losses'] > 0 ? round($data['wins'] / $data['losses'], 2) : ($data['wins'] > 0 ? 999 : 0);
+            $data['total_trades'] = $data['trades']; // Alias for JavaScript compatibility
+            $data['r_risk'] = $data['r_risk_return']; // Alias for JavaScript compatibility
+            $dailyArray[] = $data;
+        }
+
+        // Calcular resumo semanal
+        $weeklyData = $this->calculateWeeklyData($dailyData, $year, $month);
+
+        return [
+            'daily' => $dailyArray,
+            'weekly' => $weeklyData,
+            'month' => $month,
+            'year' => $year
+        ];
+    }
+
+    /**
+     * Calcular dados semanais
+     */
+    private function calculateWeeklyData(array $dailyData, int $year, int $month): array
+    {
+        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        $firstDayOfWeek = date('w', mktime(0, 0, 0, $month, 1, $year));
+        
+        $weeks = [];
+        $currentWeek = 1;
+        $weekStart = 1 - $firstDayOfWeek;
+        
+        for ($week = 1; $week <= 6; $week++) {
+            $weekEnd = $weekStart + 6;
+            $weekData = [
+                'week' => $week,
+                'profit_loss' => 0,
+                'trades' => 0,
+                'wins' => 0,
+                'losses' => 0,
+                'days_count' => 0,
+                'active_days' => 0
+            ];
+            
+            for ($day = max(1, $weekStart); $day <= min($daysInMonth, $weekEnd); $day++) {
+                $weekData['days_count']++;
+                if (isset($dailyData[$day])) {
+                    $weekData['profit_loss'] += $dailyData[$day]['profit_loss'];
+                    $weekData['trades'] += $dailyData[$day]['trades'];
+                    $weekData['wins'] += $dailyData[$day]['wins'];
+                    $weekData['losses'] += $dailyData[$day]['losses'];
+                    $weekData['active_days']++;
+                }
+            }
+            
+            $weekData['win_rate'] = $weekData['trades'] > 0 ? round(($weekData['wins'] / $weekData['trades']) * 100, 2) : 0;
+            $weekData['days'] = $weekData['active_days']; // Alias for JavaScript compatibility
+            
+            if ($weekData['days_count'] > 0) {
+                $weeks[] = $weekData;
+            }
+            
+            $weekStart = $weekEnd + 1;
+            if ($weekStart > $daysInMonth) break;
+        }
+        
+        return $weeks;
+    }
+
+    /**
+     * AJAX endpoint para buscar dados do calendário
+     */
+    public function getCalendarDataAjax($studentId = null, $year = null, $month = null)
+    {
+        $this->request->allowMethod(['get']);
+        $this->viewBuilder()->setClassName('Json');
+        
+        // Obter parâmetros da URL
+        $studentId = $studentId ?: $this->request->getParam('pass.0');
+        $year = (int)($year ?: $this->request->getParam('pass.1', date('Y')));
+        $month = (int)($month ?: $this->request->getParam('pass.2', date('n')));
+        
+        if (!$studentId) {
+            $currentUser = $this->getCurrentUser();
+            if ($currentUser && $currentUser->role === 'student') {
+                $studentId = $currentUser->student_id;
+            }
+        }
+        
+        if (!$studentId) {
+            $this->set([
+                'success' => false,
+                'message' => 'ID do estudante não fornecido'
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'message']);
+            return;
+        }
+        
+        try {
+            $calendarData = $this->getCalendarData((int)$studentId, $year, $month);
+            
+            $this->set([
+                'success' => true,
+                'data' => $calendarData
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'data']);
+        } catch (\Exception $e) {
+            $this->set([
+                'success' => false,
+                'message' => 'Erro ao buscar dados: ' . $e->getMessage()
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'message']);
         }
     }
 

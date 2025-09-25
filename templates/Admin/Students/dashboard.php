@@ -1,4 +1,8 @@
 
+<?php
+$csrfToken = $this->request->getAttribute('csrfToken');
+?>
+
 <div class="students dashboard content fade-in-up">
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-5">
@@ -125,6 +129,103 @@
                         <small class="<?= ($overallStats['total_profit_loss'] ?? 0) >= 0 ? 'text-success' : 'text-danger' ?>">
                             <?= ($overallStats['total_profit_loss'] ?? 0) >= 0 ? 'Lucro' : 'Prejuízo' ?>
                         </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trading Calendar Section -->
+    <div class="row g-4 mb-5">
+        <div class="col-12">
+            <div class="card glass">
+                <div class="card-header border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-1">
+                                <i class="bi bi-calendar3 me-2"></i>
+                                Calendário de Trading
+                            </h5>
+                            <p class="text-muted small mb-0">Resultados diários de trades com métricas detalhadas</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="calendar-navigation">
+                                <button id="prevMonth" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                                <span id="currentMonthYear" class="mx-3 fw-bold">
+                                    <?php 
+                                    $monthNames = [
+                                        1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+                                        5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+                                        9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
+                                    ];
+                                    echo $monthNames[$currentMonth] . ' ' . $currentYear;
+                                    ?>
+                                </span>
+                                <button id="nextMonth" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="calendar-summary">
+                                <span class="badge bg-success me-2" id="monthlyTotal">
+                                    Total: R$ <?php 
+                                    $monthlyTotal = 0;
+                                    if (isset($calendarData['daily'])) {
+                                        foreach ($calendarData['daily'] as $dayData) {
+                                            $monthlyTotal += $dayData['profit_loss'];
+                                        }
+                                    }
+                                    echo number_format($monthlyTotal, 2, ',', '.');
+                                    ?>
+                                </span>
+                                <span class="badge bg-info" id="activeDays">
+                                    <?= isset($calendarData['daily']) ? count($calendarData['daily']) : 0 ?> dias ativos
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Calendar Grid -->
+                        <div class="col-lg-9">
+                            <div class="trading-calendar">
+                                <!-- Calendar Header -->
+                                <div class="calendar-header">
+                                    <div class="calendar-day-header">Dom</div>
+                                    <div class="calendar-day-header">Seg</div>
+                                    <div class="calendar-day-header">Ter</div>
+                                    <div class="calendar-day-header">Qua</div>
+                                    <div class="calendar-day-header">Qui</div>
+                                    <div class="calendar-day-header">Sex</div>
+                                    <div class="calendar-day-header">Sáb</div>
+                                </div>
+                                
+                                <!-- Calendar Body -->
+                                <div class="calendar-body" id="calendarBody">
+                                    <!-- Calendar days will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Weekly Summary Sidebar -->
+                        <div class="col-lg-3">
+                            <div class="weekly-summary">
+                                <h6 class="mb-3">
+                                    <i class="bi bi-bar-chart me-2"></i>
+                                    Resumo Semanal
+                                </h6>
+                                
+                                <div id="weeklySummaryContent">
+                                    <!-- Weekly summary will be populated by JavaScript -->
+                                </div>
+                                
+                                <div class="summary-footer mt-3 pt-3 border-top" id="summaryFooter">
+                                    <!-- Summary footer will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -423,6 +524,243 @@
     
     .modern-table {
         font-size: 0.875rem;
+    }
+}
+
+/* Trading Calendar Styles */
+.trading-calendar {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-weight: 600;
+    color: var(--bs-gray-600);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.5rem;
+}
+
+.calendar-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.calendar-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px;
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-day.empty {
+    border: none;
+    background: transparent;
+    cursor: default;
+}
+
+.calendar-day.profit {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 255, 136, 0.05));
+    border-color: rgba(0, 255, 136, 0.3);
+}
+
+.calendar-day.loss {
+    background: linear-gradient(135deg, rgba(255, 59, 48, 0.15), rgba(255, 59, 48, 0.05));
+    border-color: rgba(255, 59, 48, 0.3);
+}
+
+.calendar-day:hover:not(.empty) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--bs-primary);
+}
+
+.day-number {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--bs-gray-600);
+    margin-bottom: 4px;
+}
+
+.trade-result {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+
+.trade-value {
+    font-size: 0.875rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.calendar-day.profit .trade-value {
+    color: #00ff88;
+}
+
+.calendar-day.loss .trade-value {
+    color: #ff3b30;
+}
+
+.trade-details {
+    font-size: 0.625rem;
+    color: var(--bs-gray-500);
+    margin-bottom: 2px;
+}
+
+.trade-metrics {
+    font-size: 0.625rem;
+    color: var(--bs-gray-400);
+    font-weight: 500;
+}
+
+/* Weekly Summary Styles */
+.weekly-summary {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    height: fit-content;
+}
+
+.week-summary-item {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.week-summary-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(4px);
+}
+
+.week-summary-item.best-week {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+.week-summary-item.worst-week {
+    background: rgba(108, 117, 125, 0.1);
+    border-color: rgba(108, 117, 125, 0.2);
+}
+
+.week-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--bs-gray-300);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.week-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.week-value.profit {
+    color: #00ff88;
+}
+
+.week-value.loss {
+    color: #ff3b30;
+}
+
+.week-value.neutral {
+    color: var(--bs-gray-500);
+}
+
+.week-days {
+    font-size: 0.75rem;
+    color: var(--bs-gray-500);
+}
+
+.summary-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.calendar-summary .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+}
+
+/* Responsive Calendar */
+@media (max-width: 992px) {
+    .calendar-day {
+        min-height: 70px;
+        padding: 6px;
+    }
+    
+    .trade-value {
+        font-size: 0.75rem;
+    }
+    
+    .trade-details, .trade-metrics {
+        font-size: 0.5rem;
+    }
+    
+    .weekly-summary {
+        margin-top: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .calendar-day {
+        min-height: 60px;
+        padding: 4px;
+    }
+    
+    .day-number {
+        font-size: 0.625rem;
+    }
+    
+    .trade-value {
+        font-size: 0.625rem;
+    }
+    
+    .trade-details, .trade-metrics {
+        display: none;
+    }
+    
+    .calendar-summary {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .calendar-summary .badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
     }
 }
 </style>
@@ -996,5 +1334,280 @@ document.addEventListener('DOMContentLoaded', function() {
         currentUrl.searchParams.delete('year');
         window.location.href = currentUrl.toString();
     });
+
+    // Trading Calendar functionality
+    let currentCalendarMonth = <?= $currentMonth ?>;
+    let currentCalendarYear = <?= $currentYear ?>;
+    const studentId = <?= $student['id'] ?>;
+
+    // Initialize calendar with current data
+    const initialCalendarData = <?= json_encode($calendarData) ?>;
+    renderCalendar(initialCalendarData);
+
+    // Month navigation event listeners
+    document.getElementById('prevMonth').addEventListener('click', function() {
+        currentCalendarMonth--;
+        if (currentCalendarMonth < 1) {
+            currentCalendarMonth = 12;
+            currentCalendarYear--;
+        }
+        loadCalendarData();
+    });
+
+    document.getElementById('nextMonth').addEventListener('click', function() {
+        currentCalendarMonth++;
+        if (currentCalendarMonth > 12) {
+            currentCalendarMonth = 1;
+            currentCalendarYear++;
+        }
+        loadCalendarData();
+    });
+
+    // Load calendar data via AJAX
+    function loadCalendarData() {
+        const url = `/admin/students/calendar-data/${studentId}/${currentCalendarYear}/${currentCalendarMonth}`;
+        
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '<?= $csrfToken ?>',
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderCalendar(data.data);
+                    updateMonthYearDisplay();
+                } else {
+                    console.error('Error loading calendar data:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    // Update month/year display
+    function updateMonthYearDisplay() {
+        const monthNames = [
+            '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+        document.getElementById('currentMonthYear').textContent = 
+            monthNames[currentCalendarMonth] + ' ' + currentCalendarYear;
+    }
+
+    // Render calendar with data
+    function renderCalendar(calendarData) {
+        const calendarBody = document.getElementById('calendarBody');
+        const weeklySummaryContent = document.getElementById('weeklySummaryContent');
+        const summaryFooter = document.getElementById('summaryFooter');
+        
+        // Clear existing content
+        calendarBody.innerHTML = '';
+        weeklySummaryContent.innerHTML = '';
+        summaryFooter.innerHTML = '';
+
+        // Calculate days in month and first day of week
+        const daysInMonth = new Date(currentCalendarYear, currentCalendarMonth, 0).getDate();
+        const firstDayOfWeek = new Date(currentCalendarYear, currentCalendarMonth - 1, 1).getDay();
+
+        // Create calendar weeks
+        let currentWeek = document.createElement('div');
+        currentWeek.className = 'calendar-week';
+        
+        // Add empty cells for days before the first day of the month
+        for (let i = 0; i < firstDayOfWeek; i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.className = 'calendar-day empty';
+            currentWeek.appendChild(emptyDay);
+        }
+
+        // Add days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'calendar-day';
+            
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'day-number';
+            dayNumber.textContent = day;
+            dayElement.appendChild(dayNumber);
+
+            // Check if there's trading data for this day
+            const dayData = calendarData.daily ? calendarData.daily.find(d => parseInt(d.day) === day) : null;
+            
+            if (dayData) {
+                const profitLoss = parseFloat(dayData.profit_loss);
+                dayElement.classList.add(profitLoss >= 0 ? 'profit' : 'loss');
+                
+                const tradeResult = document.createElement('div');
+                tradeResult.className = 'trade-result';
+                
+                const tradeValue = document.createElement('div');
+                tradeValue.className = 'trade-value';
+                tradeValue.textContent = (profitLoss >= 0 ? '+' : '') + 'R$ ' + 
+                    Math.abs(profitLoss).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                
+                const tradeDetails = document.createElement('div');
+                tradeDetails.className = 'trade-details';
+                tradeDetails.textContent = dayData.total_trades + ' trade' + (dayData.total_trades > 1 ? 's' : '');
+                
+                const tradeMetrics = document.createElement('div');
+                tradeMetrics.className = 'trade-metrics';
+                const rRisk = dayData.r_risk ? parseFloat(dayData.r_risk).toFixed(1) + 'R' : '0.0R';
+                const winRate = dayData.win_rate ? parseFloat(dayData.win_rate).toFixed(0) + '%' : '0%';
+                tradeMetrics.textContent = rRisk + ', ' + winRate;
+                
+                tradeResult.appendChild(tradeValue);
+                tradeResult.appendChild(tradeDetails);
+                tradeResult.appendChild(tradeMetrics);
+                dayElement.appendChild(tradeResult);
+
+                // Add tooltip
+                const dateStr = day + ' de ' + getMonthName(currentCalendarMonth);
+                const tooltipText = `${dateStr}: ${tradeValue.textContent} em ${dayData.total_trades} trade${dayData.total_trades > 1 ? 's' : ''} (${rRisk}, ${winRate})`;
+                dayElement.setAttribute('data-bs-toggle', 'tooltip');
+                dayElement.setAttribute('data-bs-placement', 'top');
+                dayElement.setAttribute('title', tooltipText);
+            }
+
+            currentWeek.appendChild(dayElement);
+
+            // Start new week on Sunday (day 0)
+            if ((firstDayOfWeek + day) % 7 === 0) {
+                calendarBody.appendChild(currentWeek);
+                currentWeek = document.createElement('div');
+                currentWeek.className = 'calendar-week';
+            }
+        }
+
+        // Add remaining empty cells to complete the last week
+        const remainingCells = 7 - currentWeek.children.length;
+        for (let i = 0; i < remainingCells; i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.className = 'calendar-day empty';
+            currentWeek.appendChild(emptyDay);
+        }
+        
+        if (currentWeek.children.length > 0) {
+            calendarBody.appendChild(currentWeek);
+        }
+
+        // Render weekly summary
+        renderWeeklySummary(calendarData.weekly || []);
+
+        // Update monthly stats
+        updateMonthlyStats(calendarData);
+
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
+    // Render weekly summary
+    function renderWeeklySummary(weeklyData) {
+        const weeklySummaryContent = document.getElementById('weeklySummaryContent');
+        const summaryFooter = document.getElementById('summaryFooter');
+        
+        let bestWeek = null;
+        let worstWeek = null;
+        let bestValue = -Infinity;
+        let worstValue = Infinity;
+
+        weeklyData.forEach((week, index) => {
+            const weekItem = document.createElement('div');
+            weekItem.className = 'week-summary-item';
+            
+            const profitLoss = parseFloat(week.profit_loss);
+            
+            if (profitLoss > bestValue) {
+                bestValue = profitLoss;
+                bestWeek = { ...week, number: index + 1 };
+            }
+            if (profitLoss < worstValue) {
+                worstValue = profitLoss;
+                worstWeek = { ...week, number: index + 1 };
+            }
+
+            const weekLabel = document.createElement('div');
+            weekLabel.className = 'week-label';
+            weekLabel.textContent = `Semana ${index + 1}`;
+            
+            if (profitLoss === bestValue && profitLoss > 0) {
+                weekItem.classList.add('best-week');
+                weekLabel.innerHTML += ' <i class="bi bi-star-fill text-warning ms-1" title="Melhor semana"></i>';
+            }
+
+            const weekValue = document.createElement('div');
+            weekValue.className = 'week-value';
+            if (profitLoss > 0) {
+                weekValue.classList.add('profit');
+            } else if (profitLoss < 0) {
+                weekValue.classList.add('loss');
+            } else {
+                weekValue.classList.add('neutral');
+            }
+            weekValue.textContent = 'R$ ' + profitLoss.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            const weekDays = document.createElement('div');
+            weekDays.className = 'week-days';
+            weekDays.textContent = week.days + ' dia' + (week.days !== 1 ? 's' : '');
+
+            weekItem.appendChild(weekLabel);
+            weekItem.appendChild(weekValue);
+            weekItem.appendChild(weekDays);
+            weeklySummaryContent.appendChild(weekItem);
+        });
+
+        // Update summary footer
+        if (bestWeek && worstWeek) {
+            const bestDiv = document.createElement('div');
+            bestDiv.className = 'd-flex justify-content-between';
+            bestDiv.innerHTML = `
+                <span class="text-muted small">Melhor:</span>
+                <span class="text-success small fw-bold">Semana ${bestWeek.number} (R$ ${bestValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})})</span>
+            `;
+
+            const worstDiv = document.createElement('div');
+            worstDiv.className = 'd-flex justify-content-between';
+            worstDiv.innerHTML = `
+                <span class="text-muted small">Pior:</span>
+                <span class="text-muted small">Semana ${worstWeek.number} (R$ ${worstValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})})</span>
+            `;
+
+            summaryFooter.appendChild(bestDiv);
+            summaryFooter.appendChild(worstDiv);
+        }
+    }
+
+    // Update monthly statistics
+    function updateMonthlyStats(calendarData) {
+        let monthlyTotal = 0;
+        let activeDays = 0;
+        
+        if (calendarData.daily) {
+            calendarData.daily.forEach(day => {
+                monthlyTotal += parseFloat(day.profit_loss);
+                activeDays++;
+            });
+        }
+
+        document.getElementById('monthlyTotal').textContent = 
+            'Total: R$ ' + monthlyTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('activeDays').textContent = 
+            activeDays + ' dias ativos';
+    }
+
+    // Helper function to get month name
+    function getMonthName(month) {
+        const monthNames = [
+            '', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+            'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+        ];
+        return monthNames[month];
+    }
 });
 </script>
