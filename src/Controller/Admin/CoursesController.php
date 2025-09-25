@@ -761,8 +761,6 @@ class CoursesController extends AppController
             $studentId = $this->getCurrentStudentId();
             $data = $this->request->getData();
 
-            pr($data);die;
-
             $videoId = $data['video_id'] ?? null;
             $courseId = $data['course_id'] ?? null;
             $watchTime = $data['watch_time'] ?? 0;

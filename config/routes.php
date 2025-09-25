@@ -2,9 +2,10 @@
 
 use Cake\Routing\Route\DashedRoute;
 use Cake\Routing\RouteBuilder;
+use Cake\Http\Middleware\CsrfProtectionMiddleware;
 
 return function (RouteBuilder $routes): void {
-  
+
     $routes->setRouteClass(DashedRoute::class);
 
     $routes->scope('/', function (RouteBuilder $builder): void {
@@ -27,10 +28,10 @@ return function (RouteBuilder $routes): void {
         $builder->fallbacks();
     });
 
-   $routes->prefix('Admin', function ($routes) {
-        /* $routes->registerMiddleware('csrf', new CsrfProtectionMiddleware([
+    $routes->prefix('Admin', function ($routes) {
+        $routes->registerMiddleware('csrf', new CsrfProtectionMiddleware([
             'httpOnly' => true,
-        ]));*/
+        ]));
 
         $routes->connect('/', ['controller' => 'Welcome']);
         $routes->connect('/login', ['controller' => 'users', 'action' => 'view']);
@@ -40,7 +41,6 @@ return function (RouteBuilder $routes): void {
         $routes->connect('/courses/view-students/*', ['controller' => 'courses', 'action' => 'viewStudents']);
         $routes->connect('/courses/watch-students/*', ['controller' => 'courses', 'action' => 'watchStudents']);
         $routes->connect('/courses/purchase-students/*', ['controller' => 'courses', 'action' => 'purchaseStudents']);
-        $routes->connect('/courses/update-progress', ['controller' => 'courses', 'action' => 'updateProgress']);
 
         //$routes->applyMiddleware('csrf');
         $routes->setExtensions(['json', 'xml']);
@@ -48,13 +48,12 @@ return function (RouteBuilder $routes): void {
         $routes->fallbacks('InflectedRoute');
     });
 
-     // API routes
+    // API routes
     $routes->prefix("Api", function (RouteBuilder $builder) {
 
         $builder->setExtensions(["json"]);
 
         $builder->connect("/authorization", ["controller" => "Access", "action" => "authorization"]);
         $builder->connect("/validation", ["controller" => "Access", "action" => "validation"]);
-
     });
 };

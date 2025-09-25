@@ -189,17 +189,11 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
                                 $isWatched = isset($progress[$courseVideo['id']]) && $progress[$courseVideo['id']]->completed_at;
                                 $isInProgress = isset($progress[$courseVideo['id']]) && !$progress[$courseVideo['id']]->completed_at;
 
-
                                 // Duração formatada
                                 $minutes = floor($courseVideo['duration_seconds'] / 60);
                                 $seconds = $courseVideo['duration_seconds'] % 60;
                                 $durationText = sprintf('%d:%02d', $minutes, $seconds);
                                 ?>
-
-
-
-
-
 
                                 <div class="list-group-item bg-dark border-secondary text-white <?= $isCurrentVideo ? 'border-success' : '' ?>">
                                     <div class="d-flex align-items-center">
@@ -232,7 +226,6 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
                                                 </div>
                                                 <small class="text-muted ms-2"><?= $durationText ?></small>
                                             </div>
-
 
                                             <?php if (!$isCurrentVideo): ?>
                                                 <div class="mt-1">
@@ -327,17 +320,18 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
             }
 
             // Enviar progresso para o servidor a cada 30 segundos
-            if (currentWatchTime % 30 === 0) {
+            if (currentWatchTime % 20 === 0) {
                 saveProgress(currentWatchTime, progressPercent >= 95);
             }
         }
 
         // Função para salvar progresso
         function saveProgress(watchTime, completed = false) {
-            fetch('/admin/courses/update-progress', {
+            fetch('/admin/courses/updateProgress', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
                 },
                 body: JSON.stringify({
                     video_id: <?= $video['id'] ?>,

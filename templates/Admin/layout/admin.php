@@ -1,3 +1,6 @@
+<?php
+$csrfToken = $this->request->getAttribute('csrfToken');
+?>
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">
 
@@ -23,6 +26,10 @@
 
     <!-- Custom Styles -->
     <link href="/adm/css/style.css" rel="stylesheet">
+
+    <script>
+        const csrfToken = '<?= $csrfToken ?>';
+    </script>
 </head>
 
 <body class="fade-in-up">
