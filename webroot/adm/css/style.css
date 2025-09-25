@@ -184,12 +184,23 @@ span.text-danger {
 }
 
 
+
+[data-theme="light"] #currentMonthYear {
+  background: #0f422a !important;
+  color: #fff !important;
+}
+
 /* Ensure span and div text are harmonized in dark mode */
 
 
 [data-theme="dark"] div {
   color: #ffffff !important;
   /* #000 - texto preto */
+}
+
+[data-theme="dark"] #currentMonthYear {
+  background: #0f422a !important;
+  color: #fff !important;
 }
 
 /* Special cases for better harmony */
@@ -1024,6 +1035,104 @@ span.text-danger {
   height: 85px;
 }
 
+/* Calendar Navigation Styles */
+.calendar-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 1050;
+}
+
+.calendar-navigation .btn {
+  border-radius: 8px;
+  border: none;
+  background: rgb(14 63 40);
+  color: #ffffff;
+  transition: all 0.3s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-navigation .btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+}
+
+.calendar-navigation .dropdown {
+  margin: 0 16px;
+  position: relative;
+  z-index: 1060;
+}
+
+.calendar-navigation #currentMonthYear {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 204, 106, 0.1));
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: #00ff88;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  text-align: center;
+  display: inline-block;
+}
+
+.calendar-navigation #currentMonthYear:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 204, 106, 0.15));
+  border-color: rgba(0, 255, 136, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2);
+}
+
+.calendar-navigation .dropdown-menu {
+  background: rgba(20, 20, 20, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  max-height: 300px;
+  overflow-y: auto;
+  min-width: 180px;
+  position: absolute;
+  z-index: 1070;
+}
+
+.calendar-navigation .dropdown-item {
+  color: #a0a0a0;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+  margin: 2px 8px;
+}
+
+.calendar-navigation .dropdown-item:hover {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+}
+
+.calendar-navigation .dropdown-item.active {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 204, 106, 0.2));
+  color: #00ff88;
+  font-weight: 600;
+}
+
+.calendar-navigation .dropdown-divider {
+  border-color: rgba(0, 255, 136, 0.2);
+  margin: 8px 0;
+}
+
 .navbar-brand {
   background: linear-gradient(135deg, #00ff88, #00cc6a);
   -webkit-background-clip: text;
@@ -1344,6 +1453,14 @@ span.text-danger {
 
 [data-theme="dark"] .sub-menu {
   background-color: #000;
+}
+
+[data-theme="dark"] .dropdown-menu.show {
+  background-color: #000 !important;
+}
+
+[data-theme="light"] .dropdown-menu.show {
+  background-color: #ffffff !important;
 }
 
 /* Classe moderna para tabelas especiais */

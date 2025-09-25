@@ -31,7 +31,7 @@ class StudiesController extends AppController
                     return $this->redirect(['action' => 'index']);
                 }
 
-                $studies = $studiesTable->find()
+                $studies = $studiesTable->find()->contain(['Accounts'])
                     ->select([
                         'Studies.id',
                         'Studies.student_id',
@@ -46,6 +46,7 @@ class StudiesController extends AppController
                         'Studies.modified',
                         'student_name' => 'Students.name',
                         'market_name' => 'Markets.name',
+                        'account_name' => 'Accounts.name',
                         'currency' => 'Markets.currency'
                     ])
                     ->leftJoinWith('Students')
@@ -55,7 +56,7 @@ class StudiesController extends AppController
                     ->toArray();
             } else {
                 // Admin vê todos os estudos
-                $studies = $studiesTable->find()
+                $studies = $studiesTable->find()->contain(['Accounts'])
                     ->select([
                         'Studies.id',
                         'Studies.student_id',
@@ -68,6 +69,7 @@ class StudiesController extends AppController
                         'Studies.notes',
                         'Studies.created',
                         'Studies.modified',
+                        'account_name' => 'Accounts.name',
                         'student_name' => 'Students.name',
                         'market_name' => 'Markets.name',
                         'currency' => 'Markets.currency'
@@ -138,9 +140,17 @@ class StudiesController extends AppController
                 ->orderBy(['name' => 'ASC'])
                 ->toArray();
 
+            // Buscar contas para o filtro
+            $accountsTable = $this->fetchTable('Accounts');
+            $accounts = $accountsTable->find()
+                ->select(['id', 'name'])
+                ->orderByDesc('name')
+                ->toArray();
+
             $this->set('studiesByMonth', $studiesByMonth);
             $this->set('studies', $studies); // Manter compatibilidade
             $this->set('markets', $markets); // Para o filtro
+            $this->set('accounts', $accounts); // Para o filtro de conta
 
 
         } catch (Exception $e) {

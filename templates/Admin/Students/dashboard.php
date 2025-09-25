@@ -167,16 +167,21 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 <button id="prevMonth" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-chevron-left"></i>
                                 </button>
-                                <span id="currentMonthYear" class="mx-3 fw-bold">
-                                    <?php 
-                                    $monthNames = [
-                                        1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
-                                        5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
-                                        9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
-                                    ];
-                                    echo $monthNames[$currentMonth] . ' ' . $currentYear;
-                                    ?>
-                                </span>
+                                <div class="dropdown">
+                                    <span id="currentMonthYear" class="mx-3 fw-bold dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+                                        <?php 
+                                        $monthNames = [
+                                            1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+                                            5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+                                            9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
+                                        ];
+                                        echo $monthNames[$currentMonth] . ' ' . $currentYear;
+                                        ?>
+                                    </span>
+                                    <ul class="dropdown-menu" id="monthSelector">
+                                        <!-- Meses serão preenchidos dinamicamente via JavaScript -->
+                                    </ul>
+                                </div>
                                 <button id="nextMonth" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-chevron-right"></i>
                                 </button>
@@ -547,6 +552,8 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     border-radius: 12px;
     padding: 1rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 1;
 }
 
 .calendar-header {
@@ -1398,6 +1405,77 @@ document.addEventListener('DOMContentLoaded', function() {
     const initialCalendarData = <?= json_encode($calendarData) ?>;
     renderCalendar(initialCalendarData);
 
+    // Populate month selector dropdown
+    function populateMonthSelector() {
+        const monthSelector = document.getElementById('monthSelector');
+        const monthNames = [
+            '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+        
+        monthSelector.innerHTML = '';
+        
+        // Adicionar meses do ano atual
+        for (let month = 1; month <= 12; month++) {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.className = 'dropdown-item';
+            a.href = '#';
+            a.textContent = `${monthNames[month]} ${currentCalendarYear}`;
+            a.dataset.month = month;
+            a.dataset.year = currentCalendarYear;
+            
+            // Destacar o mês atual
+            if (month === currentCalendarMonth) {
+                a.classList.add('active');
+            }
+            
+            a.addEventListener('click', function(e) {
+                e.preventDefault();
+                selectMonth(parseInt(this.dataset.month), parseInt(this.dataset.year));
+            });
+            
+            li.appendChild(a);
+            monthSelector.appendChild(li);
+        }
+        
+        // Adicionar separador
+        const separator = document.createElement('li');
+        separator.innerHTML = '<hr class="dropdown-divider">';
+        monthSelector.appendChild(separator);
+        
+        // Adicionar meses do próximo ano
+        const nextYear = currentCalendarYear + 1;
+        for (let month = 1; month <= 12; month++) {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.className = 'dropdown-item';
+            a.href = '#';
+            a.textContent = `${monthNames[month]} ${nextYear}`;
+            a.dataset.month = month;
+            a.dataset.year = nextYear;
+            
+            a.addEventListener('click', function(e) {
+                e.preventDefault();
+                selectMonth(parseInt(this.dataset.month), parseInt(this.dataset.year));
+            });
+            
+            li.appendChild(a);
+            monthSelector.appendChild(li);
+        }
+    }
+
+    // Function to select a specific month
+    function selectMonth(month, year) {
+        currentCalendarMonth = month;
+        currentCalendarYear = year;
+        loadCalendarData();
+        populateMonthSelector(); // Atualizar o dropdown
+    }
+
+    // Initialize month selector
+    populateMonthSelector();
+
     // Month navigation event listeners
     document.getElementById('prevMonth').addEventListener('click', function() {
         currentCalendarMonth--;
@@ -1406,6 +1484,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentCalendarYear--;
         }
         loadCalendarData();
+        populateMonthSelector(); // Atualizar o dropdown
     });
 
     document.getElementById('nextMonth').addEventListener('click', function() {
@@ -1415,6 +1494,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentCalendarYear++;
         }
         loadCalendarData();
+        populateMonthSelector(); // Atualizar o dropdown
     });
 
     // Load calendar data via AJAX

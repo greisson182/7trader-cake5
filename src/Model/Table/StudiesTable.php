@@ -8,37 +8,8 @@ use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-/**
- * Studies Model
- *
- * @property \App\Model\Table\StudentsTable&\Cake\ORM\Association\BelongsTo $Students
- * @property \App\Model\Table\MarketsTable&\Cake\ORM\Association\BelongsTo $Markets
- * @property \App\Model\Table\AccountsTable&\Cake\ORM\Association\BelongsTo $Accounts
- *
- * @method \App\Model\Entity\Study newEmptyEntity()
- * @method \App\Model\Entity\Study newEntity(array $data, array $options = [])
- * @method array<\App\Model\Entity\Study> newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\Study get(mixed $primaryKey, array|string $finder = 'all', \Psr\SimpleCache\CacheInterface|string|null $cache = null, \Closure|string|null $cacheKey = null, mixed ...$args)
- * @method \App\Model\Entity\Study findOrCreate($search, ?callable $callback = null, array $options = [])
- * @method \App\Model\Entity\Study patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method array<\App\Model\Entity\Study> patchEntities(iterable $entities, array $data, array $options = [])
- * @method \App\Model\Entity\Study|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
- * @method \App\Model\Entity\Study saveOrFail(\Cake\Datasource\EntityInterface $entity, array $options = [])
- * @method iterable<\App\Model\Entity\Study>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Study>|false saveMany(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\Study>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Study> saveManyOrFail(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\Study>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Study>|false deleteMany(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\Study>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Study> deleteManyOrFail(iterable $entities, array $options = [])
- *
- * @mixin \Cake\ORM\Behavior\TimestampBehavior
- */
 class StudiesTable extends Table
 {
-    /**
-     * Initialize method
-     *
-     * @param array<string, mixed> $config The configuration for the Table.
-     * @return void
-     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -61,12 +32,6 @@ class StudiesTable extends Table
         ]);
     }
 
-    /**
-     * Default validation rules.
-     *
-     * @param \Cake\Validation\Validator $validator Validator instance.
-     * @return \Cake\Validation\Validator
-     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
