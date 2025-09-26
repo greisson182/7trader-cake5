@@ -509,9 +509,20 @@ class StudiesController extends AppController
 
         try {
             $studiesTable = $this->fetchTable('Studies');
+            $operationsTable = $this->fetchTable('Operations');
 
             if ($this->request->is('post')) {
                 $study = $studiesTable->get($id);
+
+                $operationsDB = $operationsTable->find()
+                    ->where(['Operations.study_id' => $id])
+                    ->toArray();
+
+                if (!empty($operationsDB)) {
+                    foreach ($operationsDB as $operation) {
+                        $operationsTable->delete($operation);
+                    }
+                }
 
                 if ($studiesTable->delete($study)) {
                     $this->Flash->success(__('Estudo excluído com sucesso!', 'success'));
@@ -526,8 +537,75 @@ class StudiesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    private function validateAndMapCsvHeaders($headers, $platform = 'profit')
+    {
+        // Normalizar headers (remover espaços, converter para minúsculas, corrigir encoding)
+         $normalizedHeaders = array_map(function($header) {
+             // Tentar corrigir encoding se necessário
+             $header = utf8_encode($header);
+             return strtolower(trim($header));
+         }, $headers);
+
+        // Mapeamento de possíveis nomes de colunas para campos padrão
+         $columnPatterns = [
+             'asset' => ['ativo'],
+             'open_time' => ['abertura'],
+             'close_time' => ['fechamento'],
+             'trade_duration' => ['tempo operação'],
+             'buy_quantity' => ['qtd compra'],
+             'sell_quantity' => ['qtd venda'],
+             'side' => ['lado'],
+             'buy_price' => ['preço compra'],
+             'sell_price' => ['preço venda'],
+             'market_price' => ['preço de mercado'],
+             'mep' => ['mep'],
+             'men' => ['men'],
+             'buy_agent' => ['ag. compra'],
+             'sell_agent' => ['ag. venda'],
+             'average_price' => ['médio'],
+             'gross_interval_result' => ['res. intervalo bruto'],
+             'interval_result_percent' => ['res. intervalo (%)'],
+             'operation_number' => ['número operação'],
+             'operation_result' => ['res. operação'],
+             'operation_result_percent' => ['res. operação (%)'],
+             'drawdown' => ['drawdown'],
+             'max_gain' => ['ganho max.'],
+             'max_loss' => ['perda max.'],
+             'tet' => ['tet'],
+             'total' => ['total']
+         ];
+
+        $columnMapping = [];
+        $requiredFields = ['asset', 'open_time', 'operation_result'];
+        $foundRequired = [];
+
+        // Mapear cada campo baseado nos padrões
+        foreach ($columnPatterns as $field => $patterns) {
+            foreach ($patterns as $pattern) {
+                $index = array_search($pattern, $normalizedHeaders);
+                if ($index !== false) {
+                    $columnMapping[$field] = $index;
+                    if (in_array($field, $requiredFields)) {
+                        $foundRequired[] = $field;
+                    }
+                    break;
+                }
+            }
+        }
+
+         // Verificar se todos os campos obrigatórios foram encontrados
+        $missingFields = array_diff($requiredFields, $foundRequired);
+        if (!empty($missingFields)) {
+            throw new Exception('Colunas obrigatórias não encontradas no CSV: ' . implode(', ', $missingFields) .
+                '. Verifique se o arquivo possui as colunas: Ativo, Abertura e Res. Operação');
+        }
+
+        return $columnMapping;
+    }
+
     public function import_csv()
     {
+
         $this->request->allowMethod(['post']);
 
         $this->autoRender = false;
@@ -599,6 +677,7 @@ class StudiesController extends AppController
             // Processar as linhas do CSV baseado na plataforma
             $headerProcessed = false;
             $csvData = [];
+            $columnMapping = []; // Mapeamento das colunas baseado nos títulos
 
             foreach ($lines as $lineIndex => $line) {
 
@@ -610,6 +689,14 @@ class StudiesController extends AppController
                     // Pular linhas de cabeçalho até encontrar os dados das operações
                     if (!$headerProcessed) {
                         if (strpos($line, 'Ativo') !== false) {
+                            // Processar e validar os títulos das colunas
+                            $headers = str_getcsv($line, ';');
+                            $columnMapping = $this->validateAndMapCsvHeaders($headers, $platform);
+
+                            if (empty($columnMapping)) {
+                                throw new Exception('Formato de CSV inválido. Colunas obrigatórias não encontradas.');
+                            }
+
                             $headerProcessed = true;
                             continue; // Pular a linha do cabeçalho
                         }
@@ -634,8 +721,9 @@ class StudiesController extends AppController
                     }
 
                     try {
-                        // Extrair a data da operação (campo Abertura - índice 1)
-                        $openTime = !empty($data[1]) ? $data[1] : null;
+                        // Extrair a data da operação usando o mapeamento de colunas
+                        $openTimeIndex = $columnMapping['open_time'] ?? 1;
+                        $openTime = !empty($data[$openTimeIndex]) ? $data[$openTimeIndex] : null;
                         if (!$openTime) {
                             $errors[] = "Linha " . ($lineIndex + 1) . ": Data de abertura não encontrada";
                             continue;
@@ -661,8 +749,9 @@ class StudiesController extends AppController
                             ];
                         }
 
-                        // Calcular resultado da operação
-                        $operationResult = floatval(str_replace(',', '.', $data[15] ?? '0')); // Res. Operação
+                        // Calcular resultado da operação usando o mapeamento
+                        $operationResultIndex = $columnMapping['operation_result'] ?? 15;
+                        $operationResult = floatval(str_replace(',', '.', $data[$operationResultIndex] ?? '0'));
 
                         // Determinar se é win ou loss
                         if ($operationResult > 0) {
@@ -677,7 +766,9 @@ class StudiesController extends AppController
                         // Somar ao profit/loss total
                         $studiesByDate[$operationDate]['profit_loss'] += $operationResult;
 
-                        $assetCompare = GlobalComponent::getTresPrimeirasLetras($data[0]);
+                        // Determinar mercado usando o mapeamento
+                        $assetIndex = $columnMapping['asset'] ?? 0;
+                        $assetCompare = GlobalComponent::getTresPrimeirasLetras($data[$assetIndex] ?? '');
 
                         $marketId = 1;
 
@@ -689,33 +780,33 @@ class StudiesController extends AppController
                             $marketId = 2;
                         }
 
-                        // Preparar dados da operação
+                        // Preparar dados da operação usando o mapeamento de colunas
                         $operationData = [
-                            'asset' => $data[0] ?? null,
-                            'open_time' => GlobalComponent::DataHoraDB($data[1]) ?? null,
-                            'close_time' => GlobalComponent::DataHoraDB($data[2]) ?? null,
-                            'trade_duration' => GlobalComponent::parseTimeToHMS($data[3] ?? ''),
-                            'buy_quantity' => $data[4] ?? '',
-                            'sell_quantity' => $data[5] ?? '',
-                            'side' => $data[6] ?? '',
-                            'buy_price' => GlobalComponent::MoedaDB($data[7] ?? ''),
-                            'sell_price' => GlobalComponent::MoedaDB($data[8] ?? ''),
-                            'market_price' => GlobalComponent::MoedaDB($data[9] ?? ''),
-                            'mep' => GlobalComponent::MoedaDB($data[10] ?? 0),
-                            'men' => GlobalComponent::MoedaDB($data[11] ?? 0),
-                            'buy_agent' => $data[12] ?? '',
-                            'sell_agent' => $data[13] ?? '',
-                            'average_price' => mb_convert_encoding($data[14] ?? '', 'UTF-8', 'ISO-8859-1'),
-                            'gross_interval_result' => GlobalComponent::MoedaDB($data[15] ?? ''),
-                            'interval_result_percent' => GlobalComponent::MoedaDB($data[16] ?? ''),
-                            'operation_number' => $data[17] ?? '',
-                            'operation_result' => GlobalComponent::MoedaDB($data[18] ?? 0), // Res. Operação
-                            'operation_result_percent' => GlobalComponent::MoedaDB($data[19] ?? 0), // Res. Operação (%)
-                            'drawdown' => GlobalComponent::MoedaDB($data[20] ?? ''),
-                            'max_gain' => GlobalComponent::MoedaDB($data[21] ?? ''),
-                            'max_loss' => GlobalComponent::MoedaDB($data[22] ?? ''),
-                            'tet' => GlobalComponent::parseTimeToHMS($data[23] ?? ''),
-                            'total' => GlobalComponent::MoedaDB($data[24] ?? ''),
+                            'asset' => $data[$columnMapping['asset'] ?? 0] ?? null,
+                            'open_time' => GlobalComponent::DataHoraDB($data[$columnMapping['open_time'] ?? 1]) ?? null,
+                            'close_time' => GlobalComponent::DataHoraDB($data[$columnMapping['close_time'] ?? 2]) ?? null,
+                            'trade_duration' => GlobalComponent::parseTimeToHMS($data[$columnMapping['trade_duration'] ?? 3] ?? ''),
+                            'buy_quantity' => $data[$columnMapping['buy_quantity'] ?? 4] ?? '',
+                            'sell_quantity' => $data[$columnMapping['sell_quantity'] ?? 5] ?? '',
+                            'side' => $data[$columnMapping['side'] ?? 6] ?? '',
+                            'buy_price' => GlobalComponent::MoedaDB($data[$columnMapping['buy_price'] ?? 7] ?? ''),
+                            'sell_price' => GlobalComponent::MoedaDB($data[$columnMapping['sell_price'] ?? 8] ?? ''),
+                            'market_price' => GlobalComponent::MoedaDB($data[$columnMapping['market_price'] ?? 9] ?? ''),
+                            'mep' => isset($columnMapping['mep']) && isset($data[$columnMapping['mep']]) && !empty($data[$columnMapping['mep']]) ? GlobalComponent::MoedaDB($data[$columnMapping['mep']]) : null,
+                            'men' => isset($columnMapping['men']) && isset($data[$columnMapping['men']]) && !empty($data[$columnMapping['men']]) ? GlobalComponent::MoedaDB($data[$columnMapping['men']]) : null,
+                            'buy_agent' => isset($columnMapping['buy_agent']) && isset($data[$columnMapping['buy_agent']]) ? $data[$columnMapping['buy_agent']] : '',
+                            'sell_agent' => isset($columnMapping['sell_agent']) && isset($data[$columnMapping['sell_agent']]) ? $data[$columnMapping['sell_agent']] : '',
+                            'average_price' => isset($columnMapping['average']) && isset($data[$columnMapping['average']]) ? mb_convert_encoding($data[$columnMapping['average']], 'UTF-8', 'ISO-8859-1') : '',
+                            'gross_interval_result' => isset($columnMapping['gross_interval_result']) && isset($data[$columnMapping['gross_interval_result']]) ? GlobalComponent::MoedaDB($data[$columnMapping['gross_interval_result']]) : null,
+                            'interval_result_percent' => isset($columnMapping['interval_result_percent']) && isset($data[$columnMapping['interval_result_percent']]) ? GlobalComponent::MoedaDB($data[$columnMapping['interval_result_percent']]) : null,
+                            'operation_number' => isset($columnMapping['operation_number']) && isset($data[$columnMapping['operation_number']]) ? $data[$columnMapping['operation_number']] : '',
+                            'operation_result' => GlobalComponent::MoedaDB($data[$columnMapping['operation_result'] ?? 18] ?? 0),
+                            'operation_result_percent' => isset($columnMapping['operation_result_percent']) && isset($data[$columnMapping['operation_result_percent']]) ? GlobalComponent::MoedaDB($data[$columnMapping['operation_result_percent']]) : null,
+                            'drawdown' => isset($columnMapping['drawdown']) && isset($data[$columnMapping['drawdown']]) ? GlobalComponent::MoedaDB($data[$columnMapping['drawdown']]) : null,
+                            'max_gain' => isset($columnMapping['max_gain']) && isset($data[$columnMapping['max_gain']]) ? GlobalComponent::MoedaDB($data[$columnMapping['max_gain']]) : null,
+                            'max_loss' => isset($columnMapping['max_loss']) && isset($data[$columnMapping['max_loss']]) ? GlobalComponent::MoedaDB($data[$columnMapping['max_loss']]) : null,
+                            'tet' => isset($columnMapping['tet']) && isset($data[$columnMapping['tet']]) ? GlobalComponent::parseTimeToHMS($data[$columnMapping['tet']]) : null,
+                            'total' => isset($columnMapping['total']) && isset($data[$columnMapping['total']]) ? GlobalComponent::MoedaDB($data[$columnMapping['total']]) : null,
                             'account' => $csvData['account'] ?? '',
                             'holder' => $csvData['holder'] ?? '',
                             'date_start' => GlobalComponent::DataDB($csvData['date_start'] ?? null),
@@ -800,8 +891,6 @@ class StudiesController extends AppController
                         } else {
                             // Debug: capturar erros de validação
                             $validationErrors = $operation->getErrors();
-
-                            pr($operation->getErrors());
 
                             $errorMsg = "Erro ao salvar operação da data $date";
                             if (!empty($validationErrors)) {
