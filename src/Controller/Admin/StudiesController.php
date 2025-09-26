@@ -509,6 +509,27 @@ class StudiesController extends AppController
             }
 
             $csvFile = $this->request->getData('csv_file');
+            $studyId = $this->request->getData('study_id');
+            $marketId = $this->request->getData('market_id');
+            $accountId = $this->request->getData('account_id');
+            $platform = $this->request->getData('platform');
+            
+            // Validar campos obrigatórios
+            if (!$studyId) {
+                throw new Exception('ID do estudo é obrigatório.');
+            }
+            
+            if (!$marketId) {
+                throw new Exception('Mercado é obrigatório.');
+            }
+            
+            if (!$accountId) {
+                throw new Exception('Tipo de conta é obrigatório.');
+            }
+            
+            if (!$platform) {
+                throw new Exception('Plataforma é obrigatória.');
+            }
             
             // Verificar se é um arquivo CSV
             if ($csvFile->getClientMediaType() !== 'text/csv' && 
@@ -527,10 +548,18 @@ class StudiesController extends AppController
             $operationsTable = $this->fetchTable('Operations');
             $studiesTable = $this->fetchTable('Studies');
             
+            // Atualizar o estudo com os novos dados de mercado e conta
+            $study = $studiesTable->get($studyId);
+            $study = $studiesTable->patchEntity($study, [
+                'market_id' => $marketId,
+                'account_id' => $accountId
+            ]);
+            $studiesTable->save($study);
+            
             $importedCount = 0;
             $errors = [];
             
-            // Processar as linhas do CSV
+            // Processar as linhas do CSV baseado na plataforma
             $headerProcessed = false;
             $csvData = [];
             
@@ -538,60 +567,63 @@ class StudiesController extends AppController
                 $line = trim($line);
                 if (empty($line)) continue;
                 
-                // Pular linhas de cabeçalho até encontrar os dados das operações
-                if (!$headerProcessed) {
-                    if (strpos($line, 'Ativo') !== false) {
-                        $headerProcessed = true;
-                        continue; // Pular a linha do cabeçalho
-                    }
-                    // Capturar informações do cabeçalho
-                    if (strpos($line, 'Conta:') !== false) {
-                        $csvData['conta'] = trim(str_replace('Conta:', '', $line));
-                    } elseif (strpos($line, 'Titular:') !== false) {
-                        $csvData['titular'] = trim(str_replace('Titular:', '', $line));
-                    } elseif (strpos($line, 'Data Inicial:') !== false) {
-                        $csvData['data_inicial'] = trim(str_replace('Data Inicial:', '', $line));
-                    } elseif (strpos($line, 'Data Final:') !== false) {
-                        $csvData['data_final'] = trim(str_replace('Data Final:', '', $line));
-                    }
-                    continue;
-                }
-                
-                // Processar linha de dados
-                $data = str_getcsv($line, ';');
-                
-                if (count($data) < 5) {
-                    continue; // Pular linhas incompletas
-                }
-                
-                try {
-                    // Criar nova operação
-                    $operation = $operationsTable->newEmptyEntity();
-                    $operation = $operationsTable->patchEntity($operation, [
-                        'study_id' => $this->request->getData('study_id'),
-                        'asset' => $data[0] ?? null,
-                        'open_time' => !empty($data[1]) ? date('Y-m-d H:i:s', strtotime($data[1])) : null,
-                        'close_time' => !empty($data[2]) ? date('Y-m-d H:i:s', strtotime($data[2])) : null,
-                        'operation_result' => $data[3] ?? null,
-                        'operation_result_percent' => $data[4] ?? null,
-                        'conta' => $csvData['conta'] ?? null,
-                        'titular' => $csvData['titular'] ?? null,
-                        'data_inicial' => !empty($csvData['data_inicial']) ? date('Y-m-d', strtotime($csvData['data_inicial'])) : null,
-                        'data_final' => !empty($csvData['data_final']) ? date('Y-m-d', strtotime($csvData['data_final'])) : null,
-                    ]);
-                    
-                    if ($operationsTable->save($operation)) {
-                        $importedCount++;
-                    } else {
-                        $errors[] = "Linha " . ($lineIndex + 1) . ": Erro ao salvar operação";
+                // Processamento específico para plataforma Profit
+                if ($platform === 'profit') {
+                    // Pular linhas de cabeçalho até encontrar os dados das operações
+                    if (!$headerProcessed) {
+                        if (strpos($line, 'Ativo') !== false) {
+                            $headerProcessed = true;
+                            continue; // Pular a linha do cabeçalho
+                        }
+                        // Capturar informações do cabeçalho
+                        if (strpos($line, 'Conta:') !== false) {
+                            $csvData['conta'] = trim(str_replace('Conta:', '', $line));
+                        } elseif (strpos($line, 'Titular:') !== false) {
+                            $csvData['titular'] = trim(str_replace('Titular:', '', $line));
+                        } elseif (strpos($line, 'Data Inicial:') !== false) {
+                            $csvData['data_inicial'] = trim(str_replace('Data Inicial:', '', $line));
+                        } elseif (strpos($line, 'Data Final:') !== false) {
+                            $csvData['data_final'] = trim(str_replace('Data Final:', '', $line));
+                        }
+                        continue;
                     }
                     
-                } catch (Exception $e) {
-                    $errors[] = "Linha " . ($lineIndex + 1) . ": " . $e->getMessage();
+                    // Processar linha de dados
+                    $data = str_getcsv($line, ';');
+                    
+                    if (count($data) < 5) {
+                        continue; // Pular linhas incompletas
+                    }
+                    
+                    try {
+                        // Criar nova operação
+                        $operation = $operationsTable->newEmptyEntity();
+                        $operation = $operationsTable->patchEntity($operation, [
+                            'study_id' => $studyId,
+                            'asset' => $data[0] ?? null,
+                            'open_time' => !empty($data[1]) ? date('Y-m-d H:i:s', strtotime($data[1])) : null,
+                            'close_time' => !empty($data[2]) ? date('Y-m-d H:i:s', strtotime($data[2])) : null,
+                            'operation_result' => $data[3] ?? null,
+                            'operation_result_percent' => $data[4] ?? null,
+                            'conta' => $csvData['conta'] ?? null,
+                            'titular' => $csvData['titular'] ?? null,
+                            'data_inicial' => !empty($csvData['data_inicial']) ? date('Y-m-d', strtotime($csvData['data_inicial'])) : null,
+                            'data_final' => !empty($csvData['data_final']) ? date('Y-m-d', strtotime($csvData['data_final'])) : null,
+                        ]);
+                        
+                        if ($operationsTable->save($operation)) {
+                            $importedCount++;
+                        } else {
+                            $errors[] = "Linha " . ($lineIndex + 1) . ": Erro ao salvar operação";
+                        }
+                        
+                    } catch (Exception $e) {
+                        $errors[] = "Linha " . ($lineIndex + 1) . ": " . $e->getMessage();
+                    }
                 }
             }
             
-            $message = "$importedCount operações importadas com sucesso.";
+            $message = "$importedCount operações importadas com sucesso para a plataforma $platform.";
             if (!empty($errors)) {
                 $message .= " Erros: " . implode(', ', array_slice($errors, 0, 3));
                 if (count($errors) > 3) {

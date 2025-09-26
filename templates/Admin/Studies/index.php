@@ -525,21 +525,56 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             // Criar modal para seleção de estudo
             const modalHtml = `
                 <div class="modal fade" id="csvImportModal" tabindex="-1" aria-labelledby="csvImportModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
+                    <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="csvImportModalLabel">Importar CSV de Operações</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="studySelect" class="form-label">Selecione o Estudo:</label>
-                                    <select class="form-select" id="studySelect" required>
-                                        <option value="">Escolha um estudo...</option>
-                                        <?php foreach ($studies as $study): ?>
-                                            <option value="<?= $study['id'] ?>"><?= h($study['title'] ?? 'Estudo sem título') ?> - <?= is_string($study['study_date']) ? date('d/m/Y', strtotime($study['study_date'])) : $study['study_date']->format('d/m/Y') ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="studySelect" class="form-label">Selecione o Estudo:</label>
+                                            <select class="form-select" id="studySelect" required>
+                                                <option value="">Escolha um estudo...</option>
+                                                <?php foreach ($studies as $study): ?>
+                                                    <option value="<?= $study['id'] ?>"><?= h($study['title'] ?? 'Estudo sem título') ?> - <?= is_string($study['study_date']) ? date('d/m/Y', strtotime($study['study_date'])) : $study['study_date']->format('d/m/Y') ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="marketSelect" class="form-label">Mercado:</label>
+                                            <select class="form-select" id="marketSelect" required>
+                                                <option value="">Selecione o mercado...</option>
+                                                <option value="1">Índice Futuro (WINFUT)</option>
+                                                <option value="2">Dólar Futuro (WDOFUT)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="accountSelect" class="form-label">Tipo de Conta:</label>
+                                            <select class="form-select" id="accountSelect" required>
+                                                <option value="">Selecione o tipo de conta...</option>
+                                                <option value="1">Simulador</option>
+                                                <option value="2">Real</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="platformSelect" class="form-label">Plataforma:</label>
+                                            <select class="form-select" id="platformSelect" required>
+                                                <option value="">Selecione a plataforma...</option>
+                                                <option value="profit">Profit</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="csvFileInput" class="form-label">Arquivo CSV:</label>
@@ -571,11 +606,29 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             // Evento do botão confirmar
             document.getElementById('confirmImportBtn').addEventListener('click', function() {
                 const studyId = document.getElementById('studySelect').value;
+                const marketId = document.getElementById('marketSelect').value;
+                const accountId = document.getElementById('accountSelect').value;
+                const platform = document.getElementById('platformSelect').value;
                 const fileInput = document.getElementById('csvFileInput');
                 const file = fileInput.files[0];
 
                 if (!studyId) {
                     alert('Por favor, selecione um estudo.');
+                    return;
+                }
+
+                if (!marketId) {
+                    alert('Por favor, selecione um mercado.');
+                    return;
+                }
+
+                if (!accountId) {
+                    alert('Por favor, selecione um tipo de conta.');
+                    return;
+                }
+
+                if (!platform) {
+                    alert('Por favor, selecione uma plataforma.');
                     return;
                 }
 
@@ -585,14 +638,17 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 }
 
                 modal.hide();
-                importCsvFile(file, studyId);
+                importCsvFile(file, studyId, marketId, accountId, platform);
             });
         }
 
-        function importCsvFile(file, studyId) {
+        function importCsvFile(file, studyId, marketId, accountId, platform) {
             const formData = new FormData();
             formData.append('csv_file', file);
             formData.append('study_id', studyId);
+            formData.append('market_id', marketId);
+            formData.append('account_id', accountId);
+            formData.append('platform', platform);
             formData.append('_csrfToken', '<?= $csrfToken ?>');
 
             // Mostrar loading
