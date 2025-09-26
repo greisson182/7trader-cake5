@@ -83,7 +83,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     <div class="stat-icon mb-3">
                         <i class="bi bi-journal-text"></i>
                     </div>
-                    <h3 class="stat-number mb-2"><?= number_format($overallStats['total_studies']) ?></h3>
+                    <h3 class="stat-number mb-2" id="total-studies-stat"><?= number_format($overallStats['total_studies']) ?></h3>
                     <p class="stat-label mb-0">Total de Estudos</p>
                     <div class="stat-trend">
                         <i class="bi bi-graph-up text-success"></i>
@@ -99,7 +99,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     <div class="stat-icon mb-3 text-success">
                         <i class="bi bi-percent"></i>
                     </div>
-                    <h3 class="stat-number mb-2 text-success" data-stat="winrate"><?= $overallStats['overall_win_rate'] ?>%</h3>
+                    <h3 class="stat-number mb-2 text-success" data-stat="winrate" id="winrate-stat"><?= $overallStats['overall_win_rate'] ?>%</h3>
                     <p class="stat-label mb-0">Taxa de Acerto</p>
                     <div class="stat-trend">
                         <i class="bi bi-<?= $overallStats['overall_win_rate'] >= 50 ? 'graph-up text-success' : 'graph-down text-warning' ?>"></i>
@@ -117,7 +117,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     <div class="stat-icon mb-3 text-info">
                         <i class="bi bi-bar-chart"></i>
                     </div>
-                    <h3 class="stat-number mb-2" data-stat="trades"><?= number_format($overallStats['total_trades']) ?></h3>
+                    <h3 class="stat-number mb-2" data-stat="trades" id="total-trades-stat"><?= number_format($overallStats['total_trades']) ?></h3>
                     <p class="stat-label mb-0">Total de Operações</p>
                     <div class="stat-trend">
                         <i class="bi bi-graph-up text-info"></i>
@@ -133,7 +133,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     <div class="stat-icon mb-3 <?= ($overallStats['total_profit_loss'] ?? 0) >= 0 ? 'text-success' : 'text-danger' ?>">
                         <i class="bi bi-currency-dollar"></i>
                     </div>
-                    <h3 class="stat-number mb-2 <?= ($overallStats['total_profit_loss'] ?? 0) >= 0 ? 'text-success' : 'text-danger' ?>" data-stat="profit">
+                    <h3 class="stat-number mb-2 <?= ($overallStats['total_profit_loss'] ?? 0) >= 0 ? 'text-success' : 'text-danger' ?>" data-stat="profit" id="profit-loss-stat">
                         <?= $this->Currency::formatForUser((float)($overallStats['total_profit_loss'] ?? 0), $student['currency'] ?? 'BRL') ?>
                     </h3>
                     <p class="stat-label mb-0">P&L Total</p>
@@ -906,6 +906,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         pointRadius: 6,
                         pointHoverRadius: 10,
                         pointHoverBackgroundColor: function(context) {
+                            if (!context || !context.parsed) return '#00cc6a';
                             const value = context.parsed.y;
                             return value >= 0 ? '#00cc6a' : '#cc2e24';
                         },
@@ -923,11 +924,13 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         tooltip: {
                             backgroundColor: 'rgba(0, 0, 0, 0.9)',
                             titleColor: function(context) {
+                                if (!context || !context[0] || !context[0].parsed) return '#ffffff';
                                 const value = context[0].parsed.y;
                                 return value >= 0 ? '#00ff88' : '#ff3b30';
                             },
                             bodyColor: '#fff',
                             borderColor: function(context) {
+                                if (!context || !context[0] || !context[0].parsed) return '#ffffff';
                                 const value = context[0].parsed.y;
                                 return value >= 0 ? '#00ff88' : '#ff3b30';
                             },
@@ -944,6 +947,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             padding: 12,
                             callbacks: {
                                 label: function(context) {
+                                    if (!context || !context.parsed) return 'N/A';
                                     const value = context.parsed.y;
                                     const prefix = value >= 0 ? '+' : '';
                                     return 'P&L: ' + prefix + '$' + value.toFixed(2);
@@ -1090,6 +1094,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             padding: 12,
                             callbacks: {
                                 label: function(context) {
+                                    if (!context || !context.parsed || !context.dataset) return 'N/A';
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                     const percentage = ((context.parsed / total) * 100).toFixed(1);
                                     return context.label + ': ' + percentage + '%';
@@ -1282,6 +1287,9 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
             // Filter charts
             filterCharts(selectedMarket, selectedAccount);
+            
+            // Update statistics
+            updateFilteredStats(selectedMarket, selectedAccount);
         }
 
         function filterCharts(selectedMarket, selectedAccount, retryCount = 0) {
@@ -1412,6 +1420,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
             // Update tooltip callback for currency formatting
             window.profitLossChart.options.plugins.tooltip.callbacks.label = function(context) {
+                if (!context || !context.parsed) return 'N/A';
                 const value = context.parsed.y;
                 const prefix = value >= 0 ? '+' : '';
                 if (chartCurrency === 'USD') {
@@ -1486,7 +1495,10 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         }
 
         // Event listeners
-        marketFilter.addEventListener('change', filterDashboard);
+        marketFilter.addEventListener('change', function() {
+            filterDashboard();
+            loadCalendarData(); // Atualizar calendário quando mercado mudar
+        });
         accountFilter.addEventListener('change', function() {
             filterDashboard();
             loadCalendarData(); // Atualizar calendário quando conta mudar
@@ -1612,11 +1624,19 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         // Load calendar data via AJAX
         function loadCalendarData() {
             const selectedAccount = accountFilter.value;
-            let url = `/admin/students/calendar-data/${studentId}/${currentCalendarYear}/${currentCalendarMonth}`;
+            const selectedMarket = marketFilter.value;
+            let url = `/admin/students/get_calendar_data_ajax/${studentId}/${currentCalendarYear}/${currentCalendarMonth}`;
 
-            // Adicionar parâmetro de conta se selecionada
+            // Adicionar parâmetros de filtro se selecionados
+            const params = [];
             if (selectedAccount) {
-                url += `?account_id=${selectedAccount}`;
+                params.push(`account_id=${selectedAccount}`);
+            }
+            if (selectedMarket) {
+                params.push(`market_id=${selectedMarket}`);
+            }
+            if (params.length > 0) {
+                url += `?${params.join('&')}`;
             }
 
             fetch(url, {
@@ -1875,6 +1895,73 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
             ];
             return monthNames[month];
+        }
+
+        // Function to update filtered statistics
+        function updateFilteredStats(selectedMarket, selectedAccount) {
+            const studentId = <?= $student['id'] ?>;
+            let url = `/admin/students/get_filtered_stats_ajax/${studentId}`;
+            
+            const params = [];
+            if (selectedMarket) {
+                params.push(`market_id=${selectedMarket}`);
+            }
+            if (selectedAccount) {
+                params.push(`account_id=${selectedAccount}`);
+            }
+            
+            if (params.length > 0) {
+                url += `?${params.join('&')}`;
+            }
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '<?= $csrfToken ?>',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const stats = data.data;
+                    
+                    // Update total studies
+                    document.getElementById('total-studies-stat').textContent = 
+                        new Intl.NumberFormat('pt-BR').format(stats.total_studies);
+                    
+                    // Update win rate
+                    const winRateElement = document.getElementById('winrate-stat');
+                    winRateElement.textContent = stats.overall_win_rate + '%';
+                    
+                    // Update total trades
+                    document.getElementById('total-trades-stat').textContent = 
+                        new Intl.NumberFormat('pt-BR').format(stats.total_trades);
+                    
+                    // Update profit/loss
+                    const profitElement = document.getElementById('profit-loss-stat');
+                    const profitValue = parseFloat(stats.total_profit_loss) || 0;
+                    const formattedProfit = new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    }).format(profitValue);
+                    profitElement.textContent = formattedProfit;
+                    
+                    // Update profit/loss color classes
+                    profitElement.className = profitElement.className.replace(/text-(success|danger)/g, '');
+                    profitElement.classList.add(profitValue >= 0 ? 'text-success' : 'text-danger');
+                    
+                    // Update win rate color classes
+                    winRateElement.className = winRateElement.className.replace(/text-(success|warning)/g, '');
+                    winRateElement.classList.add(stats.overall_win_rate >= 50 ? 'text-success' : 'text-warning');
+                    
+                } else {
+                    console.error('Error loading filtered stats:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
     });
 </script>

@@ -23,6 +23,12 @@ class StudentsController extends AppController
     {
         parent::beforeFilter($event);
 
+        // Skip authentication for AJAX endpoints that handle their own authentication
+        $action = $this->request->getParam('action');
+        if (in_array($action, ['get_filtered_stats_ajax', 'get_filtered_stats_ajax'])) {
+            return null;
+        }
+
         $this->checkSession();
 
         // Verificar se é admin ou estudante
@@ -680,7 +686,7 @@ class StudentsController extends AppController
             $currentMonth = (int)$this->request->getQuery('month', date('n'));
             $currentYear = (int)$this->request->getQuery('year', date('Y'));
             
-            $calendarData = $this->getCalendarData($id, $currentYear, $currentMonth);
+            $calendarData = $this->get_calendar_data($id, $currentYear, $currentMonth);
 
             // Buscar contas ativas para o filtro
             $accountsTable = $this->fetchTable('Accounts');
@@ -716,7 +722,7 @@ class StudentsController extends AppController
     /**
      * Método para buscar dados do calendário
      */
-    private function getCalendarData(int $studentId, int $year, int $month, int $accountId = null): array
+    private function get_calendar_data(int $studentId, int $year, int $month, int $accountId = 0, int $marketId = 0): array
     {
         $studiesTable = $this->fetchTable('Studies');
         
@@ -730,6 +736,11 @@ class StudentsController extends AppController
         // Adicionar filtro por conta se especificado
         if ($accountId !== null) {
             $conditions['account_id'] = $accountId;
+        }
+        
+        // Adicionar filtro por mercado se especificado
+        if ($marketId !== null) {
+            $conditions['market_id'] = $marketId;
         }
         
         $studies = $studiesTable->find()
@@ -832,17 +843,69 @@ class StudentsController extends AppController
     /**
      * AJAX endpoint para buscar dados do calendário
      */
-    public function getCalendarDataAjax($studentId = null, $year = null, $month = null)
+    public function get_calendar_data_ajax($studentId = null, $year = null, $month = null)
     {
         $this->request->allowMethod(['get']);
         $this->viewBuilder()->setClassName('Json');
         
-        // Obter parâmetros da URL
-        $studentId = $studentId ?: $this->request->getParam('pass.0');
-        $year = (int)($year ?: $this->request->getParam('pass.1', date('Y')));
-        $month = (int)($month ?: $this->request->getParam('pass.2', date('n')));
-        $accountId = $this->request->getQuery('account_id');
+        // Obter ID do estudante
+        if (!$studentId) {
+            $currentUser = $this->getCurrentUser();
+            if ($currentUser && $currentUser->role === 'student') {
+                $studentId = $currentUser->student_id;
+            }
+        }
         
+        if (!$studentId) {
+            $this->set([
+                'success' => false,
+                'message' => 'ID do estudante não fornecido'
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'message']);
+            return;
+        }
+        
+        // Usar ano e mês atuais se não fornecidos
+        $year = $year ?: date('Y');
+        $month = $month ?: date('n');
+        
+        try {
+            // Obter parâmetros de filtro
+            $accountId = $this->request->getQuery('account_id', 0);
+            $marketId = $this->request->getQuery('market_id', 0);
+            
+            // Chamar o método privado para buscar os dados
+            $calendarData = $this->get_calendar_data(
+                (int)$studentId,
+                (int)$year,
+                (int)$month,
+                (int)$accountId,
+                (int)$marketId
+            );
+            
+            $this->set([
+                'success' => true,
+                'data' => $calendarData
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'data']);
+        } catch (\Exception $e) {
+            $this->set([
+                'success' => false,
+                'message' => 'Erro ao buscar dados do calendário: ' . $e->getMessage()
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'message']);
+        }
+    }
+
+    /**
+     * AJAX endpoint para buscar estatísticas filtradas
+     */
+    public function get_filtered_stats_ajax($studentId = null)
+    {
+        $this->request->allowMethod(['get']);
+        $this->viewBuilder()->setClassName('Json');
+        
+        // Obter ID do estudante
         if (!$studentId) {
             $currentUser = $this->getCurrentUser();
             if ($currentUser && $currentUser->role === 'student') {
@@ -860,17 +923,66 @@ class StudentsController extends AppController
         }
         
         try {
-            $calendarData = $this->getCalendarData((int)$studentId, $year, $month, $accountId ? (int)$accountId : null);
+            // Obter parâmetros de filtro
+            $accountId = $this->request->getQuery('account_id');
+            $marketId = $this->request->getQuery('market_id');
+            $selectedYear = $this->request->getQuery('year', date('Y'));
+            
+            $studiesTable = $this->fetchTable('Studies');
+            
+            // Construir query com filtros
+            $conditions = [
+                'Studies.student_id' => $studentId,
+                'YEAR(Studies.study_date)' => $selectedYear
+            ];
+            
+            if ($accountId) {
+                $conditions['Studies.account_id'] = $accountId;
+            }
+            
+            if ($marketId) {
+                $conditions['Studies.market_id'] = $marketId;
+            }
+            
+            // Buscar estatísticas filtradas
+            $overallStatsQuery = $studiesTable->find()
+                ->select([
+                    'total_studies' => 'COUNT(*)',
+                    'total_wins' => 'SUM(wins)',
+                    'total_losses' => 'SUM(losses)',
+                    'total_profit_loss' => 'SUM(profit_loss)',
+                    'avg_profit_loss' => 'AVG(profit_loss)',
+                    'first_study_date' => 'MIN(study_date)',
+                    'last_study_date' => 'MAX(study_date)'
+                ])
+                ->where($conditions)
+                ->first();
+            
+            $overallStats = $overallStatsQuery ? $overallStatsQuery->toArray() : [
+                'total_studies' => 0,
+                'total_wins' => 0,
+                'total_losses' => 0,
+                'total_profit_loss' => 0,
+                'avg_profit_loss' => 0,
+                'first_study_date' => null,
+                'last_study_date' => null
+            ];
+            
+            // Calcular métricas adicionais
+            $overallStats['total_trades'] = $overallStats['total_wins'] + $overallStats['total_losses'];
+            $overallStats['overall_win_rate'] = $overallStats['total_trades'] > 0
+                ? round(($overallStats['total_wins'] / $overallStats['total_trades']) * 100, 2)
+                : 0;
             
             $this->set([
                 'success' => true,
-                'data' => $calendarData
+                'data' => $overallStats
             ]);
             $this->viewBuilder()->setOption('serialize', ['success', 'data']);
         } catch (\Exception $e) {
             $this->set([
                 'success' => false,
-                'message' => 'Erro ao buscar dados: ' . $e->getMessage()
+                'message' => 'Erro ao buscar estatísticas: ' . $e->getMessage()
             ]);
             $this->viewBuilder()->setOption('serialize', ['success', 'message']);
         }

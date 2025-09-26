@@ -22,4 +22,19 @@ class HtmlHelper extends Helper
         $class = isset($options['class']) ? ' class="' . $options['class'] . '"' : '';
         return '<a href="' . $url . '"' . $class . '>' . $text . '</a>';
     }
+    
+    /**
+     * Returns a charset META-tag.
+     *
+     * @param string|null $charset Desired character set. If null, UTF-8 will be used.
+     * @return string Formatted META element
+     */
+    public function charset(?string $charset = null): string
+    {
+        if ($charset === null) {
+            $charset = 'UTF-8';
+        }
+        
+        return '<meta charset="' . $charset . '">';
+    }
 }
