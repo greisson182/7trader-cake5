@@ -14,6 +14,7 @@ class StudiesController extends AppController
     public function initialize(): void
     {
         parent::initialize();
+        $this->checkSession();
     }
 
     public function index()

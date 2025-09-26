@@ -17,6 +17,7 @@ class StudentsController extends AppController
     {
         parent::initialize();
         $this->loadComponent('Flash');
+        $this->checkSession();
     }
 
     public function beforeFilter(EventInterface $event): ?Response
@@ -685,7 +686,7 @@ class StudentsController extends AppController
             // Buscar dados do calendário para o mês atual
             $currentMonth = (int)$this->request->getQuery('month', date('n'));
             $currentYear = (int)$this->request->getQuery('year', date('Y'));
-            
+
             $calendarData = $this->get_calendar_data($id, $currentYear, $currentMonth);
 
             // Buscar contas ativas para o filtro
@@ -725,24 +726,24 @@ class StudentsController extends AppController
     private function get_calendar_data(int $studentId, int $year, int $month, int $accountId = 0, int $marketId = 0): array
     {
         $studiesTable = $this->fetchTable('Studies');
-        
+
         // Buscar todos os estudos do mês
         $conditions = [
             'student_id' => $studentId,
             'YEAR(study_date)' => $year,
             'MONTH(study_date)' => $month
         ];
-        
+
         // Adicionar filtro por conta se especificado
         if ($accountId > 0) {
             $conditions['account_id'] = $accountId;
         }
-        
+
         // Adicionar filtro por mercado se especificado
         if ($marketId > 0) {
             $conditions['market_id'] = $marketId;
         }
-        
+
         $studies = $studiesTable->find()
             ->where($conditions)
             ->orderBy(['study_date' => 'ASC'])
@@ -755,6 +756,12 @@ class StudentsController extends AppController
         // Organizar dados por dia
         $dailyData = [];
         foreach ($studies as $study) {
+
+            // Calcular custo de operação para cada estudo
+            $amount_cost = $studiesTable->getCostTrades($study);
+            $study['profit_loss'] = $amount_cost + (float)$study['profit_loss'];
+
+
             $day = (int)$study->study_date->format('j');
             if (!isset($dailyData[$day])) {
                 $dailyData[$day] = [
@@ -765,7 +772,7 @@ class StudentsController extends AppController
                     'studies_count' => 0
                 ];
             }
-            
+
             $dailyData[$day]['profit_loss'] += $study->profit_loss;
             $dailyData[$day]['wins'] += $study->wins;
             $dailyData[$day]['losses'] += $study->losses;
@@ -802,11 +809,11 @@ class StudentsController extends AppController
     {
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
         $firstDayOfWeek = date('w', mktime(0, 0, 0, $month, 1, $year));
-        
+
         $weeks = [];
         $currentWeek = 1;
         $weekStart = 1 - $firstDayOfWeek;
-        
+
         for ($week = 1; $week <= 6; $week++) {
             $weekEnd = $weekStart + 6;
             $weekData = [
@@ -818,7 +825,7 @@ class StudentsController extends AppController
                 'days_count' => 0,
                 'active_days' => 0
             ];
-            
+
             for ($day = max(1, $weekStart); $day <= min($daysInMonth, $weekEnd); $day++) {
                 $weekData['days_count']++;
                 if (isset($dailyData[$day])) {
@@ -829,18 +836,18 @@ class StudentsController extends AppController
                     $weekData['active_days']++;
                 }
             }
-            
+
             $weekData['win_rate'] = $weekData['trades'] > 0 ? round(($weekData['wins'] / $weekData['trades']) * 100, 2) : 0;
             $weekData['days'] = $weekData['active_days']; // Alias for JavaScript compatibility
-            
+
             if ($weekData['days_count'] > 0) {
                 $weeks[] = $weekData;
             }
-            
+
             $weekStart = $weekEnd + 1;
             if ($weekStart > $daysInMonth) break;
         }
-        
+
         return $weeks;
     }
 
@@ -851,7 +858,7 @@ class StudentsController extends AppController
     {
         $this->request->allowMethod(['get']);
         $this->viewBuilder()->setClassName('Json');
-        
+
         // Obter ID do estudante
         if (!$studentId) {
             $currentUser = $this->getCurrentUser();
@@ -859,7 +866,7 @@ class StudentsController extends AppController
                 $studentId = $currentUser->student_id;
             }
         }
-        
+
         if (!$studentId) {
             $this->set([
                 'success' => false,
@@ -868,16 +875,16 @@ class StudentsController extends AppController
             $this->viewBuilder()->setOption('serialize', ['success', 'message']);
             return;
         }
-        
+
         // Usar ano e mês atuais se não fornecidos
         $year = $year ?: date('Y');
         $month = $month ?: date('n');
-        
+
         try {
             // Obter parâmetros de filtro
             $accountId = $this->request->getQuery('account_id', 0);
             $marketId = $this->request->getQuery('market_id', 0);
-            
+
             // Chamar o método privado para buscar os dados
             $calendarData = $this->get_calendar_data(
                 (int)$studentId,
@@ -886,7 +893,7 @@ class StudentsController extends AppController
                 (int)$accountId,
                 (int)$marketId
             );
-            
+
             $this->set([
                 'success' => true,
                 'data' => $calendarData
@@ -908,7 +915,7 @@ class StudentsController extends AppController
     {
         $this->request->allowMethod(['get']);
         $this->viewBuilder()->setClassName('Json');
-        
+
         // Obter ID do estudante
         if (!$studentId) {
             $currentUser = $this->getCurrentUser();
@@ -916,7 +923,7 @@ class StudentsController extends AppController
                 $studentId = $currentUser->student_id;
             }
         }
-        
+
         if (!$studentId) {
             $this->set([
                 'success' => false,
@@ -925,29 +932,29 @@ class StudentsController extends AppController
             $this->viewBuilder()->setOption('serialize', ['success', 'message']);
             return;
         }
-        
+
         try {
             // Obter parâmetros de filtro
             $accountId = $this->request->getQuery('account_id');
             $marketId = $this->request->getQuery('market_id');
             $selectedYear = $this->request->getQuery('year', date('Y'));
-            
+
             $studiesTable = $this->fetchTable('Studies');
-            
+
             // Construir query com filtros
             $conditions = [
                 'Studies.student_id' => $studentId,
                 'YEAR(Studies.study_date)' => $selectedYear
             ];
-            
+
             if ($accountId) {
                 $conditions['Studies.account_id'] = $accountId;
             }
-            
+
             if ($marketId) {
                 $conditions['Studies.market_id'] = $marketId;
             }
-            
+
             // Buscar estatísticas filtradas
             $overallStatsQuery = $studiesTable->find()
                 ->select([
@@ -961,7 +968,7 @@ class StudentsController extends AppController
                 ])
                 ->where($conditions)
                 ->first();
-            
+
             $overallStats = $overallStatsQuery ? $overallStatsQuery->toArray() : [
                 'total_studies' => 0,
                 'total_wins' => 0,
@@ -971,13 +978,13 @@ class StudentsController extends AppController
                 'first_study_date' => null,
                 'last_study_date' => null
             ];
-            
+
             // Calcular métricas adicionais
             $overallStats['total_trades'] = $overallStats['total_wins'] + $overallStats['total_losses'];
             $overallStats['overall_win_rate'] = $overallStats['total_trades'] > 0
                 ? round(($overallStats['total_wins'] / $overallStats['total_trades']) * 100, 2)
                 : 0;
-            
+
             $this->set([
                 'success' => true,
                 'data' => $overallStats

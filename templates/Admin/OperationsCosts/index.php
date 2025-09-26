@@ -26,7 +26,6 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Mercado</th>
-                                        <th>Estudante</th>
                                         <th>Custo por Contrato</th>
                                         <th>Data Início</th>
                                         <th>Data Fim</th>
@@ -39,9 +38,6 @@
                                             <td><?= $this->Number->format($operationsCost->id) ?></td>
                                             <td>
                                                 <?= $operationsCost->hasValue('market') ? h($operationsCost->market->name) : '-' ?>
-                                            </td>
-                                            <td>
-                                                <?= $operationsCost->hasValue('student') ? h($operationsCost->student->name) : '-' ?>
                                             </td>
                                             <td>
                                                 <?php if ($operationsCost->cost_per_contract !== null): ?>
