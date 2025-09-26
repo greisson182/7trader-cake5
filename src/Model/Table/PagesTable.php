@@ -1,21 +1,16 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query\SelectQuery;
+use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
 class PagesTable extends Table
 {
-    /**
-     * Initialize method
-     *
-     * @param array<string, mixed> $config The configuration for the Table.
-     * @return void
-     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -25,42 +20,103 @@ class PagesTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+
+        $this->belongsTo('Models', [
+            'foreignKey' => 'model_id',
+        ]);
     }
 
-    /**
-     * Default validation rules.
-     *
-     * @param \Cake\Validation\Validator $validator Validator instance.
-     * @return \Cake\Validation\Validator
-     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
             ->scalar('title')
             ->maxLength('title', 255)
-            ->requirePresence('title', 'create')
-            ->notEmptyString('title');
+            ->allowEmptyString('title');
+
+        $validator
+            ->scalar('subtitle')
+            ->maxLength('subtitle', 255)
+            ->allowEmptyString('subtitle');
+
+        $validator
+            ->scalar('slug')
+            ->maxLength('slug', 255)
+            ->allowEmptyString('slug');
 
         $validator
             ->scalar('content')
             ->allowEmptyString('content');
 
         $validator
-            ->boolean('active')
-            ->notEmptyString('active');
+            ->scalar('summary')
+            ->allowEmptyString('summary');
+
+        $validator
+            ->scalar('images')
+            ->maxLength('images', 300)
+            ->allowEmptyFile('images');
+
+        $validator
+            ->integer('creator')
+            ->allowEmptyString('creator');
+
+        $validator
+            ->integer('link')
+            ->allowEmptyString('link');
+
+        $validator
+            ->integer('order')
+            ->allowEmptyString('order');
+
+        $validator
+            ->scalar('status')
+            ->allowEmptyString('status');
+
+        $validator
+            ->integer('model_id')
+            ->allowEmptyString('model_id');
 
         return $validator;
     }
 
-    /**
-     * Get menu pages
-     *
-     * @return \Cake\ORM\Query\SelectQuery
-     */
-    public function getMenu(): SelectQuery
+    public function buildRules(RulesChecker $rules): RulesChecker
+    {
+        $rules->add($rules->existsIn('model_id', 'Models'), ['errorField' => 'model_id']);
+
+        return $rules;
+    }
+
+    public function getPaginaBySlug($url)
+    {
+        $query = $this->find()
+            ->where([
+                'Pages.slug' => $url
+            ]);
+        return $query->first();
+    }
+
+    public function getPaginaById($id)
+    {
+        $query = $this->find()
+            ->where([
+                'Pages.id' => $id
+            ]);
+        return $query->first();
+    }
+
+    public function getMenu()
     {
         return $this->find()
-            ->where(['active' => true])
-            ->orderBy(['title' => 'ASC']);
+            ->select(['title', 'slug', 'link'])
+            ->order(['Pages.order' => 'asc'])
+            ->all();
+    }
+
+    function beforeFind($event, $query, $options, $primary)
+    {
+
+        $query->where(function ($exp, $q) {
+            return $exp->in('Pages.status', ['a', 'i']);
+        });
     }
 }

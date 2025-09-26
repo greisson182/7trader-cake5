@@ -12,7 +12,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         7 Trader
         <?= isset($title) ? ' - ' . $title : '' ?>
     </title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
