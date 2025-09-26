@@ -60,4 +60,28 @@ class HtmlHelper extends Helper
         // Default meta tag
         return '<meta name="' . $type . '" content="' . htmlspecialchars($url ?? '') . '">';
     }
+
+    /**
+     * Returns an IMG tag for the given image path.
+     *
+     * @param string $path Path to the image
+     * @param array $options Additional options for the img tag
+     * @return string Formatted IMG element
+     */
+    public function image(string $path, array $options = []): string
+    {
+        $alt = isset($options['alt']) ? ' alt="' . htmlspecialchars($options['alt']) . '"' : '';
+        $title = isset($options['title']) ? ' title="' . htmlspecialchars($options['title']) . '"' : '';
+        $class = isset($options['class']) ? ' class="' . htmlspecialchars($options['class']) . '"' : '';
+        $id = isset($options['id']) ? ' id="' . htmlspecialchars($options['id']) . '"' : '';
+        
+        // Handle plugin paths (e.g., 'DebugKit./img/cake.icon.png')
+        if (strpos($path, '.') === 0 || strpos($path, '/') === 0) {
+            $src = $path;
+        } else {
+            $src = '/' . ltrim($path, '/');
+        }
+        
+        return '<img src="' . htmlspecialchars($src) . '"' . $alt . $title . $class . $id . '>';
+    }
 }
