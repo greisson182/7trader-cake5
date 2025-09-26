@@ -154,6 +154,11 @@ return [
     ],
     'Session' => [
         'defaults' => 'php',
+        'timeout' => 1440, // 24 horas (em minutos)
+        'ini' => [
+            'session.cookie_lifetime' => 86400, // 24 horas (em segundos)
+            'session.gc_maxlifetime' => 86400,  // 24 horas (em segundos)
+        ],
     ],
     'DebugKit' => [
         'forceEnable' => filter_var(env('DEBUG_KIT_FORCE_ENABLE', false), FILTER_VALIDATE_BOOLEAN),
