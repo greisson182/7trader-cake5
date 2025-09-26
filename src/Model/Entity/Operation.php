@@ -34,13 +34,13 @@ class Operation extends Entity
         'max_loss' => true,
         'tet' => true,
         'total' => true,
-        'conta' => true,
-        'titular' => true,
-        'data_inicial' => true,
-        'data_final' => true,
         'created' => true,
         'modified' => true,
         'study' => true,
+        'account' => true,
+        'holder' => true,
+        'date_start' => true,
+        'date_last' => true,
     ];
 
     protected array $_hidden = [

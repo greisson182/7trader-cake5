@@ -88,7 +88,7 @@ class OperationsTable extends Table
             ->allowEmptyString('sell_agent');
 
         $validator
-            ->decimal('average_price')
+            ->scalar('average_price')
             ->allowEmptyString('average_price');
 
         $validator
@@ -124,7 +124,7 @@ class OperationsTable extends Table
             ->allowEmptyString('max_loss');
 
         $validator
-            ->decimal('tet')
+            ->scalar('tet')
             ->allowEmptyString('tet');
 
         $validator

@@ -225,9 +225,9 @@ class StudiesController extends AppController
             }
 
             if (!$study) {
-            $this->Flash->error(__('Study not found.', 'error'));
-            return $this->redirect(['action' => 'index']);
-        }
+                $this->Flash->error(__('Study not found.', 'error'));
+                return $this->redirect(['action' => 'index']);
+            }
 
             // Verificar se estudante pode acessar este estudo
             if ($this->isStudent()) {
@@ -335,9 +335,9 @@ class StudiesController extends AppController
                 $currentUser = $this->getCurrentUser();
 
                 if (!$this->getCurrentUser()) {
-            $this->Flash->error(__('Acesso negado. Faça login para continuar.', 'error'));
-            return $this->redirect(['controller' => 'Users', 'action' => 'login']);
-        }
+                    $this->Flash->error(__('Acesso negado. Faça login para continuar.', 'error'));
+                    return $this->redirect(['controller' => 'Users', 'action' => 'login']);
+                }
 
                 if ($this->isStudent()) {
 
@@ -350,7 +350,7 @@ class StudiesController extends AppController
                     // Force the student_id to be the current student's ID to prevent tampering
                     $data['student_id'] = $currentStudentId;
                 }
-                
+
                 $study = $studiesTable->patchEntity($study, [
                     'student_id' => $data['student_id'],
                     'market_id' => $data['market_id'],
@@ -361,7 +361,7 @@ class StudiesController extends AppController
                     'profit_loss' => $data['profit_loss'],
                     'notes' => $data['notes'] ?? ''
                 ]);
-                
+
                 if ($studiesTable->save($study)) {
                     $this->Flash->success(__('Estudo atualizado com sucesso!', 'success'));
                     return $this->redirect(['action' => 'index']);
@@ -394,19 +394,19 @@ class StudiesController extends AppController
                 ->where(['Studies.id' => $id])
                 ->first();
 
-                $study['study_date'] = $study['study_date']->format('Y-m-d');
+            $study['study_date'] = $study['study_date']->format('Y-m-d');
 
             if (!$study) {
-            $this->Flash->error(__('Study not found.', 'error'));
-            return $this->redirect(['action' => 'index']);
-        }
+                $this->Flash->error(__('Study not found.', 'error'));
+                return $this->redirect(['action' => 'index']);
+            }
 
             // Security check: Only allow editing if user is logged in and owns the study
             $currentUser = $this->getCurrentUser();
             if (!$this->getCurrentUser()) {
-            $this->Flash->error(__('Acesso negado. Faça login para continuar.', 'error'));
-            return $this->redirect(['controller' => 'Users', 'action' => 'login']);
-        }
+                $this->Flash->error(__('Acesso negado. Faça login para continuar.', 'error'));
+                return $this->redirect(['controller' => 'Users', 'action' => 'login']);
+            }
 
             // If user is a student, they can only edit their own studies
             if ($this->isStudent()) {
@@ -499,41 +499,45 @@ class StudiesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
-    public function importCsv()
+    public function import_csv()
     {
-        $this->request->allowMethod(['post']);
-        
+       $this->request->allowMethod(['post']);
+
+       $this->autoRender = false;
+
         try {
+            // Carregar as tabelas necessárias
+            $studiesTable = $this->fetchTable('Studies');
+            $operationsTable = $this->fetchTable('Operations');
+            $studentsTable = $this->fetchTable('Students');
+
             if (!$this->request->getData('csv_file')) {
                 throw new Exception('Nenhum arquivo CSV foi enviado.');
             }
 
             $csvFile = $this->request->getData('csv_file');
-            $studyId = $this->request->getData('study_id');
             $marketId = $this->request->getData('market_id');
             $accountId = $this->request->getData('account_id');
             $platform = $this->request->getData('platform');
-            
+
             // Validar campos obrigatórios
-            if (!$studyId) {
-                throw new Exception('ID do estudo é obrigatório.');
-            }
-            
             if (!$marketId) {
                 throw new Exception('Mercado é obrigatório.');
             }
-            
+
             if (!$accountId) {
                 throw new Exception('Tipo de conta é obrigatório.');
             }
-            
+
             if (!$platform) {
                 throw new Exception('Plataforma é obrigatória.');
             }
-            
+
             // Verificar se é um arquivo CSV
-            if ($csvFile->getClientMediaType() !== 'text/csv' && 
-                pathinfo($csvFile->getClientFilename(), PATHINFO_EXTENSION) !== 'csv') {
+            if (
+                $csvFile->getClientMediaType() !== 'text/csv' &&
+                pathinfo($csvFile->getClientFilename(), PATHINFO_EXTENSION) !== 'csv'
+            ) {
                 throw new Exception('O arquivo deve ser um CSV válido.');
             }
 
@@ -545,28 +549,41 @@ class StudiesController extends AppController
                 throw new Exception('O arquivo CSV está vazio.');
             }
 
-            $operationsTable = $this->fetchTable('Operations');
-            $studiesTable = $this->fetchTable('Studies');
+            // Determinar o student_id
+            $user = $this->getCurrentUser();
+            if (!$user) {
+                throw new Exception('Usuário não autenticado.');
+            }
             
-            // Atualizar o estudo com os novos dados de mercado e conta
-            $study = $studiesTable->get($studyId);
-            $study = $studiesTable->patchEntity($study, [
-                'market_id' => $marketId,
-                'account_id' => $accountId
-            ]);
-            $studiesTable->save($study);
-            
+            if ($user->profile_id == 1) { // Admin
+                $studentId = $this->request->getData('student_id');
+                if (!$studentId) {
+                    throw new Exception('Estudante é obrigatório para administradores.');
+                }
+            } else {
+                $studentId = $this->getCurrentStudentId();
+                if (!$studentId) {
+                    throw new Exception('ID do estudante não encontrado.');
+                }
+            }
+
+            // Ler o conteúdo do arquivo CSV
+            $csvContent = file_get_contents($csvFile->getStream()->getMetadata('uri'));
+            $lines = explode("\n", $csvContent);
+
             $importedCount = 0;
             $errors = [];
-            
+            $studiesByDate = []; // Array para agrupar operações por data
+
             // Processar as linhas do CSV baseado na plataforma
             $headerProcessed = false;
             $csvData = [];
-            
+
             foreach ($lines as $lineIndex => $line) {
+
                 $line = trim($line);
                 if (empty($line)) continue;
-                
+
                 // Processamento específico para plataforma Profit
                 if ($platform === 'profit') {
                     // Pular linhas de cabeçalho até encontrar os dados das operações
@@ -577,69 +594,207 @@ class StudiesController extends AppController
                         }
                         // Capturar informações do cabeçalho
                         if (strpos($line, 'Conta:') !== false) {
-                            $csvData['conta'] = trim(str_replace('Conta:', '', $line));
+                            $csvData['account'] = trim(str_replace('Conta:', '', $line));
                         } elseif (strpos($line, 'Titular:') !== false) {
-                            $csvData['titular'] = trim(str_replace('Titular:', '', $line));
+                            $csvData['holder'] = trim(str_replace('Titular:', '', $line));
                         } elseif (strpos($line, 'Data Inicial:') !== false) {
-                            $csvData['data_inicial'] = trim(str_replace('Data Inicial:', '', $line));
+                            $csvData['date_start'] = trim(str_replace('Data Inicial:', '', $line));
                         } elseif (strpos($line, 'Data Final:') !== false) {
-                            $csvData['data_final'] = trim(str_replace('Data Final:', '', $line));
+                            $csvData['date_last'] = trim(str_replace('Data Final:', '', $line));
                         }
                         continue;
                     }
-                    
+
                     // Processar linha de dados
                     $data = str_getcsv($line, ';');
-                    
+
                     if (count($data) < 5) {
                         continue; // Pular linhas incompletas
                     }
-                    
+
                     try {
-                        // Criar nova operação
-                        $operation = $operationsTable->newEmptyEntity();
-                        $operation = $operationsTable->patchEntity($operation, [
-                            'study_id' => $studyId,
-                            'asset' => $data[0] ?? null,
-                            'open_time' => !empty($data[1]) ? date('Y-m-d H:i:s', strtotime($data[1])) : null,
-                            'close_time' => !empty($data[2]) ? date('Y-m-d H:i:s', strtotime($data[2])) : null,
-                            'operation_result' => $data[3] ?? null,
-                            'operation_result_percent' => $data[4] ?? null,
-                            'conta' => $csvData['conta'] ?? null,
-                            'titular' => $csvData['titular'] ?? null,
-                            'data_inicial' => !empty($csvData['data_inicial']) ? date('Y-m-d', strtotime($csvData['data_inicial'])) : null,
-                            'data_final' => !empty($csvData['data_final']) ? date('Y-m-d', strtotime($csvData['data_final'])) : null,
-                        ]);
-                        
-                        if ($operationsTable->save($operation)) {
-                            $importedCount++;
-                        } else {
-                            $errors[] = "Linha " . ($lineIndex + 1) . ": Erro ao salvar operação";
+                        // Extrair a data da operação (campo Abertura - índice 1)
+                        $openTime = !empty($data[1]) ? $data[1] : null;
+                        if (!$openTime) {
+                            $errors[] = "Linha " . ($lineIndex + 1) . ": Data de abertura não encontrada";
+                            continue;
+                        }
+
+                        // Converter para formato de data
+                        $timestamp = strtotime(GlobalComponent::DataHoraDB($openTime));
+
+                        if ($timestamp === false) {
+                            $errors[] = "Linha " . ($lineIndex + 1) . ": Data de abertura inválida: $openTime";
+                            continue;
                         }
                         
+                        $operationDate = date('Y-m-d', $timestamp);
+
+                        // Agrupar operação por data
+                        if (!isset($studiesByDate[$operationDate])) {
+                            $studiesByDate[$operationDate] = [
+                                'operations' => [],
+                                'wins' => 0,
+                                'losses' => 0,
+                                'profit_loss' => 0.00
+                            ];
+                        }
+
+                        // Calcular resultado da operação
+                        $operationResult = floatval(str_replace(',', '.', $data[15] ?? '0')); // Res. Operação
+
+                        // Determinar se é win ou loss
+                        if ($operationResult > 0) {
+                            $studiesByDate[$operationDate]['wins']++;
+                        } elseif ($operationResult < 0) {
+                            $studiesByDate[$operationDate]['losses']++;
+                        } else {
+                            // Se for zero, considerar como win conforme solicitado
+                            $studiesByDate[$operationDate]['wins']++;
+                        }
+
+                        // Somar ao profit/loss total
+                        $studiesByDate[$operationDate]['profit_loss'] += $operationResult;
+
+                        // Preparar dados da operação
+                        $operationData = [
+                            'asset' => $data[0] ?? null,
+                            'open_time' => GlobalComponent::DataHoraDB($data[1]) ?? null,
+                            'close_time' => GlobalComponent::DataHoraDB($data[2]) ?? null,
+                            'trade_duration' => GlobalComponent::parseTimeToHMS($data[3] ?? ''),
+                            'buy_quantity' => $data[4] ?? '',
+                            'sell_quantity' => $data[5] ?? '',
+                            'side' => $data[6] ?? '',
+                            'buy_price' => GlobalComponent::MoedaDB($data[7] ?? ''),
+                            'sell_price' => GlobalComponent::MoedaDB($data[8] ?? ''),
+                            'market_price' => GlobalComponent::MoedaDB($data[9] ?? ''),
+                            'mep' => GlobalComponent::MoedaDB($data[10] ?? ''),
+                            'men' => GlobalComponent::MoedaDB($data[11] ?? ''),
+                            'buy_agent' => $data[12] ?? '',
+                            'sell_agent' => $data[13] ?? '',
+                            'average_price' => mb_convert_encoding($data[14] ?? '', 'UTF-8', 'ISO-8859-1'),
+                            'gross_interval_result' => GlobalComponent::MoedaDB($data[15] ?? ''),
+                            'interval_result_percent' => GlobalComponent::MoedaDB($data[16] ?? ''),
+                            'operation_number' => $data[17] ?? '',
+                            'operation_result' => GlobalComponent::MoedaDB($data[18] ?? 0), // Res. Operação
+                            'operation_result_percent' => GlobalComponent::MoedaDB($data[19] ?? 0), // Res. Operação (%)
+                            'drawdown' => GlobalComponent::MoedaDB($data[20] ?? ''),
+                            'max_gain' => GlobalComponent::MoedaDB($data[21] ?? ''),
+                            'max_loss' => GlobalComponent::MoedaDB($data[22] ?? ''),
+                            'tet' => GlobalComponent::parseTimeToHMS($data[23] ?? ''),
+                            'total' => GlobalComponent::MoedaDB($data[24] ?? ''),
+                            'account' => $csvData['account'] ?? '',
+                            'holder' => $csvData['holder'] ?? '',
+                            'date_start' => GlobalComponent::DataDB($csvData['date_start'] ?? null),
+                            'date_last' => GlobalComponent::DataDB($csvData['date_last'] ?? null),
+                        ];
+
+                        $studiesByDate[$operationDate]['operations'][] = $operationData;
                     } catch (Exception $e) {
                         $errors[] = "Linha " . ($lineIndex + 1) . ": " . $e->getMessage();
                     }
                 }
             }
+
+            //pr($studiesByDate);die;
+
+            // Processar cada data agrupada
+            foreach ($studiesByDate as $date => $dateData) {
+                try {
+                    // Verificar se já existe um estudo para esta data
+                    $existingStudy = $studiesTable->find()
+                        ->where([
+                            'student_id' => $studentId,
+                            'market_id' => $marketId,
+                            'account_id' => $accountId,
+                            'study_date' => $date
+                        ])
+                        ->first();
+
+                    if ($existingStudy) {
+                        // Usar estudo existente
+                        $studyId = $existingStudy->id;
+
+                        // Atualizar contadores do estudo existente
+                        $existingStudy = $studiesTable->patchEntity($existingStudy, [
+                            'wins' => $existingStudy->wins + $dateData['wins'],
+                            'losses' => $existingStudy->losses + $dateData['losses'],
+                            'profit_loss' => $existingStudy->profit_loss + $dateData['profit_loss'],
+                            'notes' => $existingStudy->notes . " | Atualizado via importação CSV - Plataforma: $platform"
+                        ]);
+                        $studiesTable->save($existingStudy);
+                    } else {
+                        // Criar novo estudo para esta data
+                        $studyData = [
+                            'student_id' => $studentId,
+                            'market_id' => $marketId,
+                            'account_id' => $accountId,
+                            'study_date' => $date,
+                            'wins' => $dateData['wins'],
+                            'losses' => $dateData['losses'],
+                            'profit_loss' => $dateData['profit_loss'],
+                            'notes' => "Estudo criado automaticamente via importação CSV - Plataforma: $platform - Data: $date"
+                        ];
+
+                        $study = $studiesTable->newEmptyEntity();
+                        $study = $studiesTable->patchEntity($study, $studyData);
+
+                        if (!$studiesTable->save($study)) {
+                            throw new Exception("Erro ao criar estudo para a data $date.");
+                        }
+
+                        $studyId = $study->id;
+                    }
+
+                    // Inserir todas as operações desta data no estudo
+                    foreach ($dateData['operations'] as $operationData) {
+                        $operationData['study_id'] = $studyId;
+
+                        // Debug: verificar se o study_id é válido
+                        if (empty($studyId)) {
+                            $errors[] = "Study ID vazio para a data $date";
+                            continue;
+                        }
+
+                        $operation = $operationsTable->newEmptyEntity();
+                        $operation = $operationsTable->patchEntity($operation, $operationData);
+
+                        if ($operationsTable->save($operation)) {
+                            $importedCount++;
+                        } else {
+                            // Debug: capturar erros de validação
+                            $validationErrors = $operation->getErrors();
             
-            $message = "$importedCount operações importadas com sucesso para a plataforma $platform.";
+                            $errorMsg = "Erro ao salvar operação da data $date";
+                            if (!empty($validationErrors)) {
+                                $errorMsg .= ": " . json_encode($validationErrors);
+                            }
+                            $errors[] = $errorMsg;
+                        }
+                    }
+                } catch (Exception $e) {
+                    $errors[] = "Erro ao processar data $date: " . $e->getMessage();
+                }
+            }
+
+            $studiesCount = count($studiesByDate);
+            $message = "$importedCount operações importadas com sucesso em $studiesCount estudo(s) para a plataforma $platform.";
             if (!empty($errors)) {
                 $message .= " Erros: " . implode(', ', array_slice($errors, 0, 3));
                 if (count($errors) > 3) {
                     $message .= " e mais " . (count($errors) - 3) . " erros.";
                 }
             }
-            
+
             $this->response = $this->response->withType('application/json');
             $this->set([
                 'success' => true,
                 'message' => $message,
                 'imported_count' => $importedCount,
+                'studies_count' => $studiesCount,
                 'errors_count' => count($errors)
             ]);
-            $this->viewBuilder()->setOption('serialize', ['success', 'message', 'imported_count', 'errors_count']);
-            
+            $this->viewBuilder()->setOption('serialize', ['success', 'message', 'imported_count', 'studies_count', 'errors_count']);
         } catch (Exception $e) {
             $this->response = $this->response->withType('application/json');
             $this->set([

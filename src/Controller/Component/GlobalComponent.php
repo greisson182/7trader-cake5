@@ -42,7 +42,7 @@ class GlobalComponent extends Component
 		return explode(' ', $valorTratado);
 	}
 
-	public function MoedaDB($valor)
+	public static function MoedaDB($valor)
 	{
 
 		if ($valor) {
@@ -137,7 +137,7 @@ class GlobalComponent extends Component
 		return $valorTratado;
 	}
 
-	public function DataHoraDB($data)
+	public static function DataHoraDB($data)
 	{
 		$DataHora = explode(" ", $data);
 
@@ -160,7 +160,7 @@ class GlobalComponent extends Component
 		return $valorTratado;
 	}
 
-	public function DataDB($data)
+	public static function DataDB($data)
 	{
 		if ($data) {
 			$valorTratado = implode("-", array_reverse(explode("/", $data)));
@@ -459,4 +459,22 @@ class GlobalComponent extends Component
 			return null;
 		}
 	}
+
+	public static function parseTimeToHMS(string $timeString = ''): string
+	{
+		// Padrão: pode ter h, min, s em qualquer combinação
+		$pattern = '/(?:(\d+)h)?(?:(\d+)min)?(?:(\d+)s)?/';
+
+		if (preg_match($pattern, $timeString, $matches)) {
+			$hours = isset($matches[1]) && $matches[1] !== '' ? (int)$matches[1] : 0;
+			$minutes = isset($matches[2]) && $matches[2] !== '' ? (int)$matches[2] : 0;
+			$seconds = isset($matches[3]) && $matches[3] !== '' ? (int)$matches[3] : 0;
+
+			return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+		}
+
+		// Se não casar, retorna 00:00:00
+		return '00:00:00';
+	}
+
 }

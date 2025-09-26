@@ -269,7 +269,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         // Função para recalcular valores do month-header baseado nos estudos visíveis
         function updateMonthHeaderValues(card) {
             const visibleRows = card.querySelectorAll('.study-row[style=""], .study-row:not([style*="display: none"])');
-            
+
             let totalStudies = 0;
             let totalWins = 0;
             let totalLosses = 0;
@@ -281,11 +281,11 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 if (cells.length >= 9) {
                     const wins = parseInt(cells[5].textContent.trim()) || 0;
                     const losses = parseInt(cells[6].textContent.trim()) || 0;
-                    
+
                     // Extrair P&L da célula (remover formatação de moeda)
                     const profitLossText = cells[8].textContent.trim();
                     const profitLossValue = parseFloat(profitLossText.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
-                    
+
                     totalStudies++;
                     totalWins += wins;
                     totalLosses += losses;
@@ -299,7 +299,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
             // Atualizar valores no header
             const header = card.querySelector('.month-header');
-            
+
             // Atualizar estudos
             const studiesValue = header.querySelector('.stat-item:nth-child(1) .stat-value');
             if (studiesValue) studiesValue.textContent = totalStudies;
@@ -327,7 +327,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     style: 'currency',
                     currency: 'BRL'
                 }).format(totalProfitLoss);
-                
+
                 profitLossElement.textContent = formattedValue;
                 profitLossElement.className = 'stat-value ' + (totalProfitLoss >= 0 ? 'text-success' : 'text-danger');
             }
@@ -468,7 +468,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 studyRows.forEach(row => {
                     row.style.display = '';
                 });
-                
+
                 // Recalcular com todos os estudos visíveis
                 updateMonthHeaderValues(card);
             });
@@ -479,7 +479,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 if (marketFilter) marketFilter.value = '';
                 if (accountFilter) accountFilter.value = '';
                 if (yearFilter) yearFilter.value = '';
-                
+
                 // Restaurar valores originais antes de aplicar filtros
                 restoreOriginalValues();
                 filterStudies();
@@ -533,18 +533,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             </div>
                             <div class="modal-body">
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="studySelect" class="form-label">Selecione o Estudo:</label>
-                                            <select class="form-select" id="studySelect" required>
-                                                <option value="">Escolha um estudo...</option>
-                                                <?php foreach ($studies as $study): ?>
-                                                    <option value="<?= $study['id'] ?>"><?= h($study['title'] ?? 'Estudo sem título') ?> - <?= is_string($study['study_date']) ? date('d/m/Y', strtotime($study['study_date'])) : $study['study_date']->format('d/m/Y') ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="mb-3">
                                             <label for="marketSelect" class="form-label">Mercado:</label>
                                             <select class="form-select" id="marketSelect" required>
@@ -554,9 +543,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                             </select>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="mb-3">
                                             <label for="accountSelect" class="form-label">Tipo de Conta:</label>
                                             <select class="form-select" id="accountSelect" required>
@@ -566,7 +553,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="mb-3">
                                             <label for="platformSelect" class="form-label">Plataforma:</label>
                                             <select class="form-select" id="platformSelect" required>
@@ -605,17 +592,11 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
             // Evento do botão confirmar
             document.getElementById('confirmImportBtn').addEventListener('click', function() {
-                const studyId = document.getElementById('studySelect').value;
                 const marketId = document.getElementById('marketSelect').value;
                 const accountId = document.getElementById('accountSelect').value;
                 const platform = document.getElementById('platformSelect').value;
                 const fileInput = document.getElementById('csvFileInput');
                 const file = fileInput.files[0];
-
-                if (!studyId) {
-                    alert('Por favor, selecione um estudo.');
-                    return;
-                }
 
                 if (!marketId) {
                     alert('Por favor, selecione um mercado.');
@@ -638,45 +619,46 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 }
 
                 modal.hide();
-                importCsvFile(file, studyId, marketId, accountId, platform);
+                importCsvFile(file, marketId, accountId, platform);
             });
         }
 
-        function importCsvFile(file, studyId, marketId, accountId, platform) {
+        function importCsvFile(file, marketId, accountId, platform) {
             const formData = new FormData();
             formData.append('csv_file', file);
-            formData.append('study_id', studyId);
             formData.append('market_id', marketId);
             formData.append('account_id', accountId);
             formData.append('platform', platform);
-            formData.append('_csrfToken', '<?= $csrfToken ?>');
 
             // Mostrar loading
             importCsvBtn.disabled = true;
             importCsvBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Importando...';
 
-            fetch('/admin/studies/import-csv', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('CSV importado com sucesso! ' + data.message);
-                    location.reload(); // Recarregar a página para mostrar os novos dados
-                } else {
-                    alert('Erro ao importar CSV: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro ao importar CSV. Verifique o console para mais detalhes.');
-            })
-            .finally(() => {
-                // Restaurar botão
-                importCsvBtn.disabled = false;
-                importCsvBtn.innerHTML = '<i class="fas fa-file-csv me-2"></i>Importar CSV';
-            });
+            fetch('/admin/studies/import_csv', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-Token': '<?= $csrfToken ?>',
+                    },
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('CSV importado com sucesso! ' + data.message);
+                        location.reload(); // Recarregar a página para mostrar os novos dados
+                    } else {
+                        alert('Erro ao importar CSV: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao importar CSV. Verifique o console para mais detalhes.');
+                })
+                .finally(() => {
+                    // Restaurar botão
+                    importCsvBtn.disabled = false;
+                    importCsvBtn.innerHTML = '<i class="fas fa-file-csv me-2"></i>Importar CSV';
+                });
         }
 
         // Aplicar filtros iniciais
