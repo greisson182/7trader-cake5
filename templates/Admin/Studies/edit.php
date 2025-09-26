@@ -169,7 +169,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                             </td>
                                             <td>
                                                 <?php if ($operation['gross_interval_result'] !== null): ?>
-                                                    <span class="badge badge-<?= $operation['gross_interval_result'] > 0 ? 'success' : 'danger' ?>">
+                                                    <span class="badge badge-<?= $operation['gross_interval_result'] > 0 ? 'success price-positive' : 'danger price-negative' ?>">
                                                         <?= $this->Currency::formatForUser($operation['gross_interval_result'], $study['user']['currency'] ?? 'BRL') ?>
                                                     </span>
                                                 <?php else: ?>
