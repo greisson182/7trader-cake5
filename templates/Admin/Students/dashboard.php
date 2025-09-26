@@ -43,7 +43,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         <option value="">Todas as contas</option>
                         <?php if (!empty($accounts)): ?>
                             <?php foreach ($accounts as $account): ?>
-                                <option value="<?= h($account['id']) ?>"><?= h($account['name']) ?></option>
+                                <option value="<?= h($account['id']) ?>" <?= $account['id'] == 2 ? 'selected' : '' ?>><?= h($account['name']) ?></option>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>
@@ -813,7 +813,6 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             return;
         }
 
-        console.log('Starting chart initialization...');
 
         // Chart data
         const chartLabels = <?= json_encode($chartLabels) ?>;
@@ -834,7 +833,6 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         // P&L Chart
         const profitLossCtx = document.getElementById('profitLossChart');
         if (profitLossCtx) {
-            console.log('Creating P&L chart...');
 
             // Function to create gradient based on data values
             function createGradient(ctx, chartArea, data) {
@@ -1034,7 +1032,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         // Win Rate Chart
         const winRateCtx = document.getElementById('winRateChart');
         if (winRateCtx) {
-            console.log('Creating Win Rate chart...');
+ 
             window.winRateChart = new Chart(winRateCtx, {
                 type: 'doughnut',
                 data: {
@@ -1111,7 +1109,6 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             });
         }
 
-        console.log('Charts initialization completed. P&L Chart:', !!window.profitLossChart, 'Win Rate Chart:', !!window.winRateChart);
 
         // Add smooth animations
         // Get user currency from PHP
@@ -1314,8 +1311,6 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 setTimeout(() => filterCharts(selectedMarket, selectedAccount, retryCount + 1), 200);
                 return;
             }
-
-            console.log('Charts initialized successfully, applying filter...');
 
             let filteredLabels = [];
             let filteredProfitLoss = [];
