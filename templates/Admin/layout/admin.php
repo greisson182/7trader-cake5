@@ -120,6 +120,10 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                         <i class="bi bi-person-gear me-2"></i>
                                         Editar Perfil
                                     </a></li>
+                                <li><a class="dropdown-item" href="/admin/operations_costs">
+                                        <i class="bi bi-gear-fill me-2"></i>
+                                        Configurações
+                                    </a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>

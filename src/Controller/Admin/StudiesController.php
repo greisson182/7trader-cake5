@@ -21,6 +21,7 @@ class StudiesController extends AppController
         try {
             $studiesTable = $this->fetchTable('Studies');
             $marketsTable = $this->fetchTable('Markets');
+            $operationsTable = $this->fetchTable('Operations');
 
             // Se for estudante, mostrar apenas seus próprios estudos
             if ($this->isStudent()) {
@@ -78,6 +79,14 @@ class StudiesController extends AppController
                     ->leftJoinWith('Markets')
                     ->orderByDesc('Studies.study_date')
                     ->toArray();
+            }
+
+            // Calcular custo de operação para cada estudo
+            foreach ($studies as $key => &$study) {
+
+                $amount_cost = $studiesTable->getCostTrades($study);
+
+                $studies[$key]['profit_loss'] = $amount_cost + (float)$study['profit_loss'];
             }
 
             // Adicionar dados do usuário a cada estudo para compatibilidade com templates

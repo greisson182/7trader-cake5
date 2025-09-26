@@ -112,6 +112,10 @@ class OperationsTable extends Table
             ->allowEmptyString('operation_result_percent');
 
         $validator
+            ->decimal('operation_cost')
+            ->allowEmptyString('operation_cost');
+
+        $validator
             ->decimal('drawdown')
             ->allowEmptyString('drawdown');
 

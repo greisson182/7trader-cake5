@@ -29,6 +29,7 @@ class Operation extends Entity
         'operation_number' => true,
         'operation_result' => true,
         'operation_result_percent' => true,
+        'operation_cost' => true,
         'drawdown' => true,
         'max_gain' => true,
         'max_loss' => true,

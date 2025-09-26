@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Model\Table;
@@ -7,6 +8,7 @@ use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
+use Cake\ORM\TableRegistry;
 
 class StudiesTable extends Table
 {
@@ -73,13 +75,6 @@ class StudiesTable extends Table
         return $validator;
     }
 
-    /**
-     * Returns a rules checker object that will be used for validating
-     * application integrity.
-     *
-     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
-     * @return \Cake\ORM\RulesChecker
-     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->existsIn(['student_id'], 'Students'), ['errorField' => 'student_id']);
@@ -87,5 +82,35 @@ class StudiesTable extends Table
         $rules->add($rules->existsIn(['account_id'], 'Accounts'), ['errorField' => 'account_id']);
 
         return $rules;
+    }
+
+    public function getCostTrades($study)
+    {
+        $this->Operations = TableRegistry::getTableLocator()->get('Operations');
+        $this->OperationsCosts = TableRegistry::getTableLocator()->get('OperationsCosts');
+
+        $operations = $this->Operations->find('all')->where([
+            'study_id' => $study['id'],
+            'market_id' => $study['market_id'],
+        ])->toArray();
+
+        $amount_cost = 0;
+        if (count($operations) > 0) {
+            foreach ($operations as &$operation) {
+                $amount_cost += $this->OperationsCosts->calculateOperationCost(
+                    $study['student_id'],
+                    $study['market_id'],
+                    $study['account_id'],
+                    $study['study_date'],
+                    $operation['buy_quantity'],
+                );
+            }
+        }
+
+        if ($amount_cost > 0) {
+            $amount_cost = $amount_cost + (float)$study['profit_loss'];
+        }
+
+        return $amount_cost;
     }
 }
