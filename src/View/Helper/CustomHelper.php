@@ -1,35 +1,39 @@
 <?php
 
 namespace App\View\Helper;
- 
+
 use Cake\View\Helper;
- 
-class CustomHelper extends Helper {
-	
-    public function Words($String, $Limite, $Pointer = null) {
-        $Data = strip_tags(trim($String));
-        $Format = (int) $Limite;
 
-        $ArrWords = explode(' ', $Data);
-        $NumWords = count($ArrWords);
-        $NewWords = implode(' ', array_slice($ArrWords, 0, $Format));
+class CustomHelper extends Helper
+{
 
-        $Pointer = (empty($Pointer) ? '...' : ' ' . $Pointer );
-        $Result = ( $Format < $NumWords ? $NewWords . $Pointer : $Data );
-        return $Result;
-    }
-	
-	public function MoedaDB($valor){
-		
+	public function Words($String, $Limite, $Pointer = null)
+	{
+		$Data = strip_tags(trim($String));
+		$Format = (int) $Limite;
+
+		$ArrWords = explode(' ', $Data);
+		$NumWords = count($ArrWords);
+		$NewWords = implode(' ', array_slice($ArrWords, 0, $Format));
+
+		$Pointer = (empty($Pointer) ? '...' : ' ' . $Pointer);
+		$Result = ($Format < $NumWords ? $NewWords . $Pointer : $Data);
+		return $Result;
+	}
+
+	public function MoedaDB($valor)
+	{
+
 		if ($valor) {
-			$valorTratado = trim(str_replace(',','.',(str_replace('.','',str_replace('R$ ','',$valor)))));
+			$valorTratado = trim(str_replace(',', '.', (str_replace('.', '', str_replace('R$ ', '', $valor)))));
 		} else {
 			$valorTratado = 0;
 		}
 		return $valorTratado;
 	}
-	
-	public function Image($image_url=''){
+
+	public function Image($image_url = '')
+	{
 
 		$external_link = $image_url;
 		if (@getimagesize($external_link)) {
@@ -37,36 +41,40 @@ class CustomHelper extends Helper {
 		} else {
 			$image = false;
 		}
-				
+
 		return $image;
 	}
 
-	public function MoedaView($valor){
+	public function MoedaView($valor)
+	{
 
-		$valorTratado = "R$ " .  number_format($valor,2,',','.');
+		$valorTratado = "R$ " .  number_format($valor, 2, ',', '.');
+
+		return $valorTratado;
+	}
+
+	public function taxa($valor, $size = 2)
+	{
+
+		$valorTratado = number_format($valor, $size, ',', '.');
 
 		return $valorTratado;
 	}
 
-	public function taxa($valor,$size=2){
+	public function taxaView($valor, $decimal = 5)
+	{
 
-		$valorTratado = number_format($valor,$size,',','.');
-
-		return $valorTratado;
-	}
-	
-	public function taxaView($valor,$decimal=5){
-
-		$valorTratado = number_format($valor,$decimal,',','.');
+		$valorTratado = number_format($valor, $decimal, ',', '.');
 
 		return $valorTratado;
 	}
-	
-	public function taxaDB($valor){
-		
+
+	public function taxaDB($valor)
+	{
+
 		if ($valor) {
-			
-			$valorTratado = trim(str_replace(',','.',$valor));
+
+			$valorTratado = trim(str_replace(',', '.', $valor));
 		} else {
 			$valorTratado = 0;
 		}
@@ -74,14 +82,15 @@ class CustomHelper extends Helper {
 		return $valorTratado;
 	}
 
-	public function DataHoraView($data , $segundos = false){
+	public function DataHoraView($data, $segundos = false)
+	{
 
 		if ($data) {
-			
-			if($segundos){
-				$valorTratado = date("d/m/Y H:i:s",strtotime($data));
+
+			if ($segundos) {
+				$valorTratado = date("d/m/Y H:i:s", strtotime($data));
 			} else {
-				$valorTratado = date("d/m/Y H:i",strtotime($data));
+				$valorTratado = date("d/m/Y H:i", strtotime($data));
 			}
 		} else {
 			$valorTratado = "";
@@ -90,37 +99,40 @@ class CustomHelper extends Helper {
 		return $valorTratado;
 	}
 
-	public function DataHoraDB($data){
+	public function DataHoraDB($data)
+	{
 
-		$DataHora = explode(" ",$data);
+		$DataHora = explode(" ", $data);
 
 		$Hora = explode(":", $DataHora[1]);
 
-		if(sizeof($Hora) == 2)
-			$DataHora[1] .":00";
+		if (sizeof($Hora) == 2)
+			$DataHora[1] . ":00";
 
-		$NewData = implode("-",array_reverse((explode("/",$DataHora[0]))));
+		$NewData = implode("-", array_reverse((explode("/", $DataHora[0]))));
 
-		$valorTratado = $NewData ." ". $DataHora[1];
+		$valorTratado = $NewData . " " . $DataHora[1];
 
 		return $valorTratado;
 	}
 
-	public function DataView($data){
+	public function DataView($data)
+	{
 
 		if ($data) {
 
-			$valorTratado = date("d/m/Y",strtotime($data));
+			$valorTratado = date("d/m/Y", strtotime($data));
 		} else {
 			$valorTratado = "";
 		}
 
 		return $valorTratado;
 	}
-	
-	public function DataDB($data){
 
-		$valorTratado = implode("-",array_reverse((explode("/",$data))));
+	public function DataDB($data)
+	{
+
+		$valorTratado = implode("-", array_reverse((explode("/", $data))));
 
 		return $valorTratado;
 	}
@@ -138,4 +150,22 @@ class CustomHelper extends Helper {
 		return trim($str, "-");
 	}
 
+	public function formatarTempo($tempo)
+	{
+		// Separa as partes por ":"
+		list($horas, $minutos, $segundos) = explode(":", $tempo);
+
+		// Remove zeros à esquerda
+		$horas = ltrim($horas, "0");
+		$minutos = ltrim($minutos, "0");
+		$segundos = ltrim($segundos, "0");
+
+		// Monta a string final
+		$resultado = "";
+		if ($horas !== "") $resultado .= $horas . "h";
+		if ($minutos !== "") $resultado .= $minutos . "m";
+		if ($segundos !== "") $resultado .= $segundos . "s";
+
+		return $resultado;
+	}
 }

@@ -41,6 +41,7 @@ class Operation extends Entity
         'holder' => true,
         'date_start' => true,
         'date_last' => true,
+        'market_id' => true,
     ];
 
     protected array $_hidden = [

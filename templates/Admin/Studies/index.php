@@ -533,17 +533,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             </div>
                             <div class="modal-body">
                                 <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="mb-3">
-                                            <label for="marketSelect" class="form-label">Mercado:</label>
-                                            <select class="form-select" id="marketSelect" required>
-                                                <option value="">Selecione o mercado...</option>
-                                                <option value="1">Índice Futuro (WINFUT)</option>
-                                                <option value="2">Dólar Futuro (WDOFUT)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="mb-3">
                                             <label for="accountSelect" class="form-label">Tipo de Conta:</label>
                                             <select class="form-select" id="accountSelect" required>
@@ -553,7 +543,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="mb-3">
                                             <label for="platformSelect" class="form-label">Plataforma:</label>
                                             <select class="form-select" id="platformSelect" required>
@@ -592,16 +582,11 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
             // Evento do botão confirmar
             document.getElementById('confirmImportBtn').addEventListener('click', function() {
-                const marketId = document.getElementById('marketSelect').value;
+
                 const accountId = document.getElementById('accountSelect').value;
                 const platform = document.getElementById('platformSelect').value;
                 const fileInput = document.getElementById('csvFileInput');
                 const file = fileInput.files[0];
-
-                if (!marketId) {
-                    alert('Por favor, selecione um mercado.');
-                    return;
-                }
 
                 if (!accountId) {
                     alert('Por favor, selecione um tipo de conta.');
@@ -619,14 +604,13 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 }
 
                 modal.hide();
-                importCsvFile(file, marketId, accountId, platform);
+                importCsvFile(file, accountId, platform);
             });
         }
 
-        function importCsvFile(file, marketId, accountId, platform) {
+        function importCsvFile(file, accountId, platform) {
             const formData = new FormData();
             formData.append('csv_file', file);
-            formData.append('market_id', marketId);
             formData.append('account_id', accountId);
             formData.append('platform', platform);
 

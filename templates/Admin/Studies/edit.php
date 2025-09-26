@@ -118,6 +118,107 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     </form>
                 </div>
             </div>
+
+            <!-- Seção de Operações -->
+            <?php if (!empty($operations)): ?>
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Operações (<?= count($operations) ?>)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Ativo</th>
+                                        <th>Abertura</th>
+                                        <th>Fechamento</th>
+                                        <th>Duração</th>
+                                        <th>Resultado</th>
+                                        <th>Qtd Compra</th>
+                                        <th>Qtd Venda</th>
+                                        <th>Lado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                   // pr($operations);
+                                    foreach ($operations as $operation): ?>
+                                        <tr>
+                                            <td><?= h($operation['asset']) ?></td>
+                                            <td>
+                                                <?php if ($operation['open_time']): ?>
+                                                    <?= $operation['open_time']->format('d/m/Y H:i:s') ?>
+                                                <?php else: ?>
+                                                    -
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($operation['close_time']): ?>
+                                                    <?= $operation['close_time']->format('d/m/Y H:i:s') ?>
+                                                <?php else: ?>
+                                                    -
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($operation['trade_duration']): ?>
+                                                    <?= $this->Custom->formatarTempo($operation['trade_duration']->format('H:i:s')) ?>
+                                                <?php else: ?>
+                                                    -
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($operation['gross_interval_result'] !== null): ?>
+                                                    <span class="badge badge-<?= $operation['gross_interval_result'] > 0 ? 'success' : 'danger' ?>">
+                                                        <?= $this->Currency::formatForUser($operation['gross_interval_result'], $study['user']['currency'] ?? 'BRL') ?>
+                                                    </span>
+                                                <?php else: ?>
+                                                    -
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($operation['buy_quantity'] !== null): ?>
+                                                    <span class="text-<?= $operation['buy_quantity'] >= 0 ? 'success' : 'danger' ?>">
+                                                        <?= $operation['buy_quantity'] ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($operation['sell_quantity'] !== null): ?>
+                                                    <span class="text-<?= $operation['sell_quantity'] >= 0 ? 'success' : 'danger' ?>">
+                                                        <?= $operation['sell_quantity'] ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </td>
+
+                                            <td>
+                                                <?php if ($operation['side'] !== null): ?>
+                                                    <span class="text-<?= $operation['side'] === 'C' ? 'success' : 'danger' ?>">
+                                                        <?= $operation['side'] ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </td>
+
+                                            
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Operações</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Nenhuma operação encontrada para este estudo.
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>

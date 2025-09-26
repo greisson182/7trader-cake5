@@ -477,4 +477,8 @@ class GlobalComponent extends Component
 		return '00:00:00';
 	}
 
+	public static function getTresPrimeirasLetras($str)
+	{
+		return substr($str, 0, 3);
+	}
 }

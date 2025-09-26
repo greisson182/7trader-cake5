@@ -43,7 +43,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         <option value="">Todas as contas</option>
                         <?php if (!empty($accounts)): ?>
                             <?php foreach ($accounts as $account): ?>
-                                <option value="<?= h($account['id']) ?>" <?= $account['id'] == 2 ? 'selected' : '' ?>><?= h($account['name']) ?></option>
+                                <option value="<?= h($account['id']) ?>"><?= h($account['name']) ?></option>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>

@@ -192,6 +192,13 @@ class StudiesController extends AppController
                 ->where(['Studies.id' => $id])
                 ->first();
 
+            // Carregar as operações relacionadas ao estudo
+            $operationsTable = $this->fetchTable('Operations');
+            $operations = $operationsTable->find()
+                ->where(['Operations.study_id' => $id])
+                ->orderBy(['Operations.open_time' => 'ASC'])
+                ->toArray();
+
             if ($study) {
                 // Adicionar dados do usuário ao array do study para compatibilidade com o template
                 $study['user'] = [
@@ -243,6 +250,8 @@ class StudiesController extends AppController
             $this->Flash->error(__('Error loading study: ' . $e->getMessage(), 'error'));
             return $this->redirect(['action' => 'index']);
         }
+
+        $this->set(compact('operations'));
     }
 
     public function add()
@@ -425,8 +434,16 @@ class StudiesController extends AppController
             $study['total_trades'] = $totalTrades;
             $study['win_rate'] = $winRate;
 
+            // Carregar as operações relacionadas ao estudo
+            $operationsTable = $this->fetchTable('Operations');
+            $operations = $operationsTable->find()
+                ->where(['Operations.study_id' => $id])
+                ->orderBy(['Operations.open_time' => 'ASC'])
+                ->toArray();
+
             $this->set('study', $study);
             $this->set('studentName', $study['student_name']);
+            $this->set(compact('operations'));
         } catch (Exception $e) {
             $this->Flash->error(__('Error loading study: ' . $e->getMessage(), 'error'));
             return $this->redirect(['action' => 'index']);
@@ -501,9 +518,9 @@ class StudiesController extends AppController
 
     public function import_csv()
     {
-       $this->request->allowMethod(['post']);
+        $this->request->allowMethod(['post']);
 
-       $this->autoRender = false;
+        $this->autoRender = false;
 
         try {
             // Carregar as tabelas necessárias
@@ -516,14 +533,8 @@ class StudiesController extends AppController
             }
 
             $csvFile = $this->request->getData('csv_file');
-            $marketId = $this->request->getData('market_id');
             $accountId = $this->request->getData('account_id');
             $platform = $this->request->getData('platform');
-
-            // Validar campos obrigatórios
-            if (!$marketId) {
-                throw new Exception('Mercado é obrigatório.');
-            }
 
             if (!$accountId) {
                 throw new Exception('Tipo de conta é obrigatório.');
@@ -544,7 +555,7 @@ class StudiesController extends AppController
             // Ler o arquivo CSV
             $csvContent = file_get_contents($csvFile->getStream()->getMetadata('uri'));
             $lines = explode("\n", $csvContent);
-            
+
             if (empty($lines)) {
                 throw new Exception('O arquivo CSV está vazio.');
             }
@@ -554,7 +565,7 @@ class StudiesController extends AppController
             if (!$user) {
                 throw new Exception('Usuário não autenticado.');
             }
-            
+
             if ($user->profile_id == 1) { // Admin
                 $studentId = $this->request->getData('student_id');
                 if (!$studentId) {
@@ -627,7 +638,7 @@ class StudiesController extends AppController
                             $errors[] = "Linha " . ($lineIndex + 1) . ": Data de abertura inválida: $openTime";
                             continue;
                         }
-                        
+
                         $operationDate = date('Y-m-d', $timestamp);
 
                         // Agrupar operação por data
@@ -656,6 +667,18 @@ class StudiesController extends AppController
                         // Somar ao profit/loss total
                         $studiesByDate[$operationDate]['profit_loss'] += $operationResult;
 
+                        $assetCompare = GlobalComponent::getTresPrimeirasLetras($data[0]);
+
+                        $marketId = 1;
+
+                        if ($assetCompare == 'WIN') {
+                            $marketId = 1;
+                        }
+
+                        if ($assetCompare == 'WDO') {
+                            $marketId = 2;
+                        }
+
                         // Preparar dados da operação
                         $operationData = [
                             'asset' => $data[0] ?? null,
@@ -668,8 +691,8 @@ class StudiesController extends AppController
                             'buy_price' => GlobalComponent::MoedaDB($data[7] ?? ''),
                             'sell_price' => GlobalComponent::MoedaDB($data[8] ?? ''),
                             'market_price' => GlobalComponent::MoedaDB($data[9] ?? ''),
-                            'mep' => GlobalComponent::MoedaDB($data[10] ?? ''),
-                            'men' => GlobalComponent::MoedaDB($data[11] ?? ''),
+                            'mep' => GlobalComponent::MoedaDB($data[10] ?? 0),
+                            'men' => GlobalComponent::MoedaDB($data[11] ?? 0),
                             'buy_agent' => $data[12] ?? '',
                             'sell_agent' => $data[13] ?? '',
                             'average_price' => mb_convert_encoding($data[14] ?? '', 'UTF-8', 'ISO-8859-1'),
@@ -687,6 +710,7 @@ class StudiesController extends AppController
                             'holder' => $csvData['holder'] ?? '',
                             'date_start' => GlobalComponent::DataDB($csvData['date_start'] ?? null),
                             'date_last' => GlobalComponent::DataDB($csvData['date_last'] ?? null),
+                            'market_id' => $marketId,
                         ];
 
                         $studiesByDate[$operationDate]['operations'][] = $operationData;
@@ -701,53 +725,55 @@ class StudiesController extends AppController
             // Processar cada data agrupada
             foreach ($studiesByDate as $date => $dateData) {
                 try {
-                    // Verificar se já existe um estudo para esta data
-                    $existingStudy = $studiesTable->find()
-                        ->where([
-                            'student_id' => $studentId,
-                            'market_id' => $marketId,
-                            'account_id' => $accountId,
-                            'study_date' => $date
-                        ])
-                        ->first();
-
-                    if ($existingStudy) {
-                        // Usar estudo existente
-                        $studyId = $existingStudy->id;
-
-                        // Atualizar contadores do estudo existente
-                        $existingStudy = $studiesTable->patchEntity($existingStudy, [
-                            'wins' => $dateData['wins'],
-                            'losses' => $dateData['losses'],
-                            'profit_loss' => $dateData['profit_loss'],
-                            'notes' => $existingStudy->notes . " | Atualizado via importação CSV - Plataforma: $platform"
-                        ]);
-                        $studiesTable->save($existingStudy);
-                    } else {
-                        // Criar novo estudo para esta data
-                        $studyData = [
-                            'student_id' => $studentId,
-                            'market_id' => $marketId,
-                            'account_id' => $accountId,
-                            'study_date' => $date,
-                            'wins' => $dateData['wins'],
-                            'losses' => $dateData['losses'],
-                            'profit_loss' => $dateData['profit_loss'],
-                            'notes' => "Estudo criado automaticamente via importação CSV - Plataforma: $platform - Data: $date"
-                        ];
-
-                        $study = $studiesTable->newEmptyEntity();
-                        $study = $studiesTable->patchEntity($study, $studyData);
-
-                        if (!$studiesTable->save($study)) {
-                            throw new Exception("Erro ao criar estudo para a data $date.");
-                        }
-
-                        $studyId = $study->id;
-                    }
 
                     // Inserir todas as operações desta data no estudo
                     foreach ($dateData['operations'] as $operationData) {
+
+                        // Verificar se já existe um estudo para esta data
+                        $existingStudy = $studiesTable->find()
+                            ->where([
+                                'student_id' => $studentId,
+                                'market_id' => $operationData['market_id'],
+                                'account_id' => $accountId,
+                                'study_date' => $date
+                            ])
+                            ->first();
+
+                        if ($existingStudy) {
+                            // Usar estudo existente
+                            $studyId = $existingStudy->id;
+
+                            // Atualizar contadores do estudo existente
+                            $existingStudy = $studiesTable->patchEntity($existingStudy, [
+                                'wins' => $dateData['wins'],
+                                'losses' => $dateData['losses'],
+                                'profit_loss' => $dateData['profit_loss'],
+                                'notes' => $existingStudy->notes . " | Atualizado via importação CSV - Plataforma: $platform"
+                            ]);
+                            $studiesTable->save($existingStudy);
+                        } else {
+                            // Criar novo estudo para esta data
+                            $studyData = [
+                                'student_id' => $studentId,
+                                'market_id' => $operationData['market_id'],
+                                'account_id' => $accountId,
+                                'study_date' => $date,
+                                'wins' => $dateData['wins'],
+                                'losses' => $dateData['losses'],
+                                'profit_loss' => $dateData['profit_loss'],
+                                'notes' => "Estudo criado automaticamente via importação CSV - Plataforma: $platform - Data: $date"
+                            ];
+
+                            $study = $studiesTable->newEmptyEntity();
+                            $study = $studiesTable->patchEntity($study, $studyData);
+
+                            if (!$studiesTable->save($study)) {
+                                throw new Exception("Erro ao criar estudo para a data $date.");
+                            }
+
+                            $studyId = $study->id;
+                        }
+
                         $operationData['study_id'] = $studyId;
 
                         // Debug: verificar se o study_id é válido
@@ -764,7 +790,9 @@ class StudiesController extends AppController
                         } else {
                             // Debug: capturar erros de validação
                             $validationErrors = $operation->getErrors();
-            
+
+                            pr($operation->getErrors());
+
                             $errorMsg = "Erro ao salvar operação da data $date";
                             if (!empty($validationErrors)) {
                                 $errorMsg .= ": " . json_encode($validationErrors);
@@ -793,17 +821,16 @@ class StudiesController extends AppController
                 'studies_count' => $studiesCount,
                 'errors_count' => count($errors)
             ];
-            
+
             $this->response = $this->response->withType('application/json');
             echo json_encode($response);
             return;
-            
         } catch (Exception $e) {
             $response = [
                 'success' => false,
                 'message' => $e->getMessage()
             ];
-            
+
             $this->response = $this->response->withType('application/json');
             echo json_encode($response);
             return;
