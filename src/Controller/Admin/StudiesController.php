@@ -786,22 +786,27 @@ class StudiesController extends AppController
                 }
             }
 
-            $this->response = $this->response->withType('application/json');
-            $this->set([
+            $response = [
                 'success' => true,
                 'message' => $message,
                 'imported_count' => $importedCount,
                 'studies_count' => $studiesCount,
                 'errors_count' => count($errors)
-            ]);
-            $this->viewBuilder()->setOption('serialize', ['success', 'message', 'imported_count', 'studies_count', 'errors_count']);
-        } catch (Exception $e) {
+            ];
+            
             $this->response = $this->response->withType('application/json');
-            $this->set([
+            echo json_encode($response);
+            return;
+            
+        } catch (Exception $e) {
+            $response = [
                 'success' => false,
                 'message' => $e->getMessage()
-            ]);
-            $this->viewBuilder()->setOption('serialize', ['success', 'message']);
+            ];
+            
+            $this->response = $this->response->withType('application/json');
+            echo json_encode($response);
+            return;
         }
     }
 
