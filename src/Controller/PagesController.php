@@ -1,73 +1,214 @@
 <?php
-declare(strict_types=1);
 
-/**
- * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
- *
- * Licensed under The MIT License
- * For full copyright and license information, please see the LICENSE.txt
- * Redistributions of files must retain the above copyright notice.
- *
- * @copyright Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
- * @link      https://cakephp.org CakePHP(tm) Project
- * @since     0.2.9
- * @license   https://opensource.org/licenses/mit-license.php MIT License
- */
 namespace App\Controller;
 
-use Cake\Core\Configure;
-use Cake\Http\Exception\ForbiddenException;
-use Cake\Http\Exception\NotFoundException;
-use Cake\Http\Response;
-use Cake\View\Exception\MissingTemplateException;
+use Cake\Event\Event;
+use Cake\Network\Exception\NotFoundException;
+use Cake\ORM\TableRegistry;
+use Cake\Mailer\Email;
+use Cake\Event\EventInterface;
 
-/**
- * Static content controller
- *
- * This controller will render views from templates/Pages/
- *
- * @link https://book.cakephp.org/5/en/controllers/pages-controller.html
- */
 class PagesController extends AppController
 {
-    /**
-     * Displays a view
-     *
-     * @param string ...$path Path segments.
-     * @return \Cake\Http\Response|null
-     * @throws \Cake\Http\Exception\ForbiddenException When a directory traversal attempt.
-     * @throws \Cake\View\Exception\MissingTemplateException When the view file could not
-     *   be found and in debug mode.
-     * @throws \Cake\Http\Exception\NotFoundException When the view file could not
-     *   be found and not in debug mode.
-     * @throws \Cake\View\Exception\MissingTemplateException In debug mode.
-     */
-    public function display(string ...$path): ?Response
-    {
-        if (!$path) {
-            return $this->redirect('/');
-        }
-        if (in_array('..', $path, true) || in_array('.', $path, true)) {
-            throw new ForbiddenException();
-        }
-        $page = $subpage = null;
 
-        if (!empty($path[0])) {
-            $page = $path[0];
-        }
-        if (!empty($path[1])) {
-            $subpage = $path[1];
-        }
-        $this->set(compact('page', 'subpage'));
+	public function beforeFilter(EventInterface $event)
+	{
+		parent::beforeFilter($event);
+	}
 
-        try {
-            return $this->render(implode('/', $path));
-        } catch (MissingTemplateException $exception) {
-            if (Configure::read('debug')) {
-                throw $exception;
-            }
-            throw new NotFoundException();
-        }
-    }
+	public function view($url)
+	{
+		$Settings = TableRegistry::getTableLocator()->get('Settings');
+		$Config = $Settings->find('all')->first();
+
+		if ($url == "index.php") {
+			$url = "inicial";
+		}
+
+		if ($url == "inicial") {
+
+			if ($Config->redirect_website) {
+
+				if ($Config->url_site) {
+
+					header("location: " . $Config->url_site);
+					die;
+				}
+			}
+		}
+
+		$title_layout = $Config->title;
+
+		$page = $this->Pages->getPaginaBySlug($url);
+
+		$Posts = TableRegistry::getTableLocator()->get('Posts');
+		$PostsPage = $Posts->getPostBySlug($url);
+
+		$q = "";
+
+		$faqs = array();
+		$servicos = array();
+		$comofunciona = array(); 
+		$sobrenos = array();
+		$faq = array();
+		$contato = array();
+		$documentos = array();
+		$blogs = array();
+		$blogsPopulares = array();
+		$home = array();
+
+		$documentos = $Posts->find('all', ['conditions' => ['categorie_id' => 4]])->toArray();
+
+		if ($url == 'index' || $url == 'servicos' || $url == 'faq') {
+
+			$servicos = $Posts->find('all', ['conditions' => ['categorie_id' => 2]]);
+
+			$servicos = $servicos->toArray();
+
+			$faqs = $Posts->find('all', ['conditions' => ['categorie_id' => 3]])->toArray();
+
+			$home = $this->Pages->getPaginaById(1);
+			$comofunciona = $this->Pages->getPaginaById(2);
+			$sobrenos = $this->Pages->getPaginaById(3);
+			$faq = $this->Pages->getPaginaById(4);
+			$contato = $this->Pages->getPaginaById(5);
+			$blogs = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 3])->order(["created" => "DESC"])->toArray();
+		}
+		if ($url == 'blog') {
+
+			$blogs = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 6])->order(["created" => "DESC"])->toArray();
+			$blogsPopulares = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 5])->order(["view" => "DESC"])->toArray();
+		}
+
+		$noticias = [];
+		if ($url == 'noticias') {
+
+			$noticias = $Posts->find('all', ['conditions' => ['categorie_id' => 2]]);
+
+			$noticia = $Posts->find('all', ['conditions' => ['categorie_id' => 2]])->first();
+
+			$Config->image = $noticia->imagem;
+		}
+
+		if (!empty($page) && $page->slug != 'index') {
+			$title_layout =  $title_layout . ' - ' . $page->title;
+		}
+
+		if (!empty($PostsPage)) {
+			$title_layout = $PostsPage->title . ' - ' . $title_layout;;
+
+			$postdb = $Posts->get($PostsPage->id);
+
+			$savePost = array();
+			$savePost['view'] = $PostsPage->view + 1;
+
+			$postdb = $Posts->patchEntity($postdb, $savePost);
+
+			$Posts->save($postdb);
+
+			$Config->image = $PostsPage->image;
+			$Config->title = $title_layout;
+			$Config->description = strip_tags($PostsPage->summary);
+
+			$blogsPopulares = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 3])->order(["view" => "DESC"])->toArray();
+		}
+
+		$this->set(compact('q', 'page', 'PostsPage', 'noticias', 'title_layout', 'Config', 'comofunciona', 'sobrenos', 'faq', 'home', 'contato', 'faqs', 'servicos', 'documentos', 'blogs', 'blogsPopulares'));
+	}
+
+	public function blog($slug)
+	{
+		$Settings = TableRegistry::getTableLocator()->get('Settings');
+
+		$Config = $Settings->find('all')->first();
+
+		$Posts = TableRegistry::getTableLocator()->get('Posts');
+
+		$page = $this->Pages->getPaginaBySlug('blog');
+
+		$blogs = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 6])->order(["created" => "DESC"])->toArray();
+		$blogsPopulares = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 5])->order(["view" => "DESC"])->toArray();
+
+		$PostsPage = $Posts->getPostBySlug($slug);
+
+		$title_layout = $Config->title;
+		$this->set(compact('title_layout', 'Config', 'blogsPopulares', 'blogs', 'page'));
+	}
+
+	public function sendContact()
+	{
+		$this->autoRender = false;
+
+		$res = new \stdClass();
+		$res->status = 0;
+
+		$Settings = TableRegistry::getTableLocator()->get('Settings');
+
+		$Config = $Settings->find('all')->first();
+
+		$title_layouit = $Config->title;
+
+		if ($this->request->getData()) {
+			$dados = $this->request->getData();
+
+			if (count($dados) > 0) {
+
+				if (isset($dados['full_name']) && $dados['full_name'] == '') {
+
+					$html = @file_get_contents(HOME . 'email/contato.php');
+
+					$html = str_ireplace(array(
+						"%nome%",
+						"%email%",
+						"%telefone%",
+						"%mensagem%",
+					), array(
+						$dados['contactsName'],
+						$dados['contactsEmail'],
+						$dados['contactsPhone'],
+						$dados['contactsMassage'],
+					), $html);
+
+					$emails = array($Config->email);
+
+					foreach ($emails as $theEmail) {
+
+						$data = [];
+						$data['destination'] = ($theEmail);
+						$data['body'] = $html;
+						$data['subject'] = 'Contato Site Corge Gestão de Seguros';
+						$data['from'] = ("$Config->title <$Config->email>");
+
+						$url = $Config->aws_api . "/send";
+
+						$this->sendCurl($url, $data);
+					}
+
+					$html = @file_get_contents(HOME . 'email/agradece_contato.php');
+
+					$html = str_ireplace(array(
+						"%nome%",
+					), array(
+						$dados['contactsName'],
+					), $html);
+
+					$data = [];
+					$data['destination'] = trim($dados['contactsEmail']);
+					$data['body'] = $html;
+					$data['subject'] = 'Obrigado pelo contato.';
+					$data['from'] = ("$Config->title <$Config->email>");
+
+					$url = $Config->aws_api . "/send";
+
+					$this->sendCurl($url, $data);
+
+					$res->status = 1;
+				}
+			}
+
+			echo json_encode($res);
+
+			exit;
+		}
+	}
 }

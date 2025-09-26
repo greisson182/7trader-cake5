@@ -240,9 +240,16 @@ span.text-danger {
 }
 
 [data-theme="dark"] #monthlyTotal  {
-  background-color: #ffa74c !important;
+  background-color: #0e3f28 !important;
   color: #fff !important;
 }
+
+[data-theme="dark"] #activeDays  {
+  background-color: #0e3f28  !important;
+  color: #fff !important;
+}
+
+
 
 [data-theme="light"] .calendar-summary .badge {
   background-color: #0f422a !important;

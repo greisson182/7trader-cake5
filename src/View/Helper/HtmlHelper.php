@@ -37,4 +37,27 @@ class HtmlHelper extends Helper
         
         return '<meta charset="' . $charset . '">';
     }
+    
+    /**
+     * Returns a META tag for various purposes.
+     *
+     * @param string $type Type of meta tag (icon, description, etc.)
+     * @param string|array|null $url URL or options array
+     * @param array $options Additional options
+     * @return string Formatted META element
+     */
+    public function meta(string $type, $url = null, array $options = []): string
+    {
+        if ($type === 'icon') {
+            $href = $url ?? '/favicon.ico';
+            return '<link rel="icon" href="' . $href . '">';
+        }
+        
+        if ($type === 'description' && is_string($url)) {
+            return '<meta name="description" content="' . htmlspecialchars($url) . '">';
+        }
+        
+        // Default meta tag
+        return '<meta name="' . $type . '" content="' . htmlspecialchars($url ?? '') . '">';
+    }
 }

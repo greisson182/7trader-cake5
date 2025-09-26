@@ -25,7 +25,7 @@ class StudentsController extends AppController
 
         // Skip authentication for AJAX endpoints that handle their own authentication
         $action = $this->request->getParam('action');
-        if (in_array($action, ['get_filtered_stats_ajax', 'get_filtered_stats_ajax'])) {
+        if (in_array($action, ['get_filtered_stats_ajax', 'get_calendar_data_ajax'])) {
             return null;
         }
 
@@ -734,12 +734,12 @@ class StudentsController extends AppController
         ];
         
         // Adicionar filtro por conta se especificado
-        if ($accountId !== null) {
+        if ($accountId > 0) {
             $conditions['account_id'] = $accountId;
         }
         
         // Adicionar filtro por mercado se especificado
-        if ($marketId !== null) {
+        if ($marketId > 0) {
             $conditions['market_id'] = $marketId;
         }
         
@@ -747,6 +747,10 @@ class StudentsController extends AppController
             ->where($conditions)
             ->orderBy(['study_date' => 'ASC'])
             ->toArray();
+
+        // Debug: log the query and results
+        error_log("Calendar data query conditions: " . json_encode($conditions));
+        error_log("Studies found: " . count($studies));
 
         // Organizar dados por dia
         $dailyData = [];

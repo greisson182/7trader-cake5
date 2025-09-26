@@ -361,7 +361,7 @@ class AppController extends Controller
 				$data->message = 'Request error.';
 				$this->response = $this->response->withStatus(401);
 			}
-		} catch (Throwable $e) {
+		} catch (\Throwable $e) {
 			$data->message = $e->getMessage();
 		}
 
@@ -404,5 +404,54 @@ class AppController extends Controller
 			return $user->student_id;
 		}
 		return null;
+	}
+
+	public function sendCurl($url = "", $data = [])
+	{
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data, '', '&'));
+		$output = curl_exec($ch);
+		$info = curl_getinfo($ch);
+		curl_close($ch);
+
+		return json_decode($output);
+	}
+
+	public function postFile($file = null)
+	{
+
+		set_time_limit(0);
+
+		$Settings = TableRegistry::getTableLocator()->get('Settings');
+
+		$Config = $Settings->find('all')->first();
+
+		$cfile = curl_file_create($file['tmp_name'], $file['type'], $file['name']); // try adding
+
+		$imgdata = array('file' => $cfile);
+
+		$headers = array("Content-Type" => "multipart/form-data");
+
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_URL, $Config->aws_api . '/' . 'upload');
+		curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+		curl_setopt($curl, CURLOPT_POST, true); // enable posting
+		curl_setopt($curl, CURLOPT_POSTFIELDS, $imgdata); // post images
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1); // if any redirection after upload
+		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 0);
+		curl_setopt($curl, CURLOPT_TIMEOUT, 30);
+		curl_setopt($curl, CURLOPT_ENCODING, '');
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); // stop verifying certificate
+
+		$results = curl_exec($curl);
+
+		curl_close($curl);
+
+		return json_decode($results);
 	}
 }

@@ -703,6 +703,11 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         border-color: rgba(108, 117, 125, 0.2);
     }
 
+    .week-summary-item.loss-week {
+        background: linear-gradient(135deg, rgba(255, 59, 48, 0.15), rgba(255, 59, 48, 0.05));
+        border-color: rgba(255, 59, 48, 0.3);
+    }
+
     .week-label {
         font-size: 0.875rem;
         font-weight: 600;
@@ -1648,7 +1653,9 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('AJAX Response:', data);
                     if (data.success) {
+                        console.log('Calendar data received:', data.data);
                         renderCalendar(data.data);
                         updateMonthYearDisplay();
                     } else {
@@ -1672,6 +1679,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
         // Render calendar with data
         function renderCalendar(calendarData) {
+            console.log('renderCalendar called with:', calendarData);
             const calendarBody = document.getElementById('calendarBody');
             const weeklySummaryContent = document.getElementById('weeklySummaryContent');
             const summaryFooter = document.getElementById('summaryFooter');
@@ -1819,7 +1827,12 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
                 if (profitLoss === bestValue && profitLoss > 0) {
                     weekItem.classList.add('best-week');
-                    weekLabel.innerHTML += ' <i class="bi bi-star-fill text-warning ms-1" title="Melhor semana"></i>';
+                    weekLabel.innerHTML += ' <i class="bi bi-trophy-fill text-warning ms-1" title="Melhor semana"></i>';
+                }
+
+                // Adicionar classe para semanas com prejuízo
+                if (profitLoss < 0) {
+                    weekItem.classList.add('loss-week');
                 }
 
                 const weekValue = document.createElement('div');
