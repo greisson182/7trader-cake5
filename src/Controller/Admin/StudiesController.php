@@ -717,9 +717,9 @@ class StudiesController extends AppController
 
                         // Atualizar contadores do estudo existente
                         $existingStudy = $studiesTable->patchEntity($existingStudy, [
-                            'wins' => $existingStudy->wins + $dateData['wins'],
-                            'losses' => $existingStudy->losses + $dateData['losses'],
-                            'profit_loss' => $existingStudy->profit_loss + $dateData['profit_loss'],
+                            'wins' => $dateData['wins'],
+                            'losses' => $dateData['losses'],
+                            'profit_loss' => $dateData['profit_loss'],
                             'notes' => $existingStudy->notes . " | Atualizado via importação CSV - Plataforma: $platform"
                         ]);
                         $studiesTable->save($existingStudy);
