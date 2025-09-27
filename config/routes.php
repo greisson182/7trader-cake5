@@ -23,6 +23,7 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/painel', ['prefix' => 'Admin', 'controller' => 'users', 'action' => 'login']);
         $builder->connect('/recupera', ['prefix' => 'Admin', 'controller' => 'users', 'action' => 'recover']);
         $builder->connect('/envia_contato', ['controller' => 'pages', 'action' => 'sendContact']);
+        $builder->connect('/register', ['controller' => 'StudentsRegistration', 'action' => 'register']);
 
 
         $builder->fallbacks();

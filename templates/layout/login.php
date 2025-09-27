@@ -3,59 +3,30 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entrar - Sistema Backtest</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-        }
-
-        .login-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .login-header {
-            background: #000;
-            color: white;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .login-body {
-            padding: 2rem;
-        }
-
-        .form-control:focus {
-            border-color: #00ff88;
-            box-shadow: 0 0 0 0.2rem rgba(0, 255, 136, 0.25);
-        }
-
-        .btn-login {
-            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-            border: none;
-            padding: 12px;
-            font-weight: 600;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-    </style>
+    <link href="/adm/css/login.css" rel="stylesheet">
 </head>
 
 <body>
+    <!-- Market Grid Pattern -->
+    <div class="market-grid"></div>
+    
+    <!-- Background Particles -->
+    <div class="background-particles">
+        <div class="particle" style="left: 10%; top: 20%; width: 4px; height: 4px; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 80%; top: 30%; width: 6px; height: 6px; animation-delay: 1s;"></div>
+        <div class="particle" style="left: 60%; top: 70%; width: 3px; height: 3px; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 20%; top: 80%; width: 5px; height: 5px; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 90%; top: 60%; width: 4px; height: 4px; animation-delay: 4s;"></div>
+    </div>
+
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-4">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-8 col-lg-6">
                 <div class="login-card">
                     <div class="login-header">
                         <img src="/adm/images/logo-dark.png" alt="7 Trader" class="img-fluid">

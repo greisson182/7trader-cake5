@@ -35,3 +35,8 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     <i class="fas fa-sign-in-alt me-2"></i>Entrar
 </button>
 <?= $this->Form->end() ?>
+
+<div class="text-center mt-3">
+    <p class="text-white-50 mb-2">Não possui uma conta?</p>
+    <a href="/register" style="color: #00ff88; text-decoration: none; font-weight: 500;">Criar Conta</a>
+</div>

@@ -111,11 +111,6 @@ class AppController extends Controller
 					}
 				}
 
-				$Usuario->online = 2;
-				$Usuario->typing = 0;
-				$Usuario->user_to = 0;
-
-				$Usuarios->save($Usuario);
 				$checkUserApp = $this->checkUser();
 
 				$this->set(compact('logado', 'products_groupps', 'checkUserApp', 'permissions_all', 'users_accesses', 'size_amount'));
@@ -145,15 +140,25 @@ class AppController extends Controller
 		} elseif ($prefix == 'Api') {
 			$this->viewBuilder()->setLayout('documentation');
 		} else {
-			$this->viewBuilder()->setLayout('site');
 
-			$Pages = TableRegistry::getTableLocator()->get('Pages');
+			if (stristr($this->request->getParam('action'), "register")) {
+				$this->viewBuilder()->setLayout('login');
 
-			$pages = $Pages->getMenu();
+				if (stristr($this->request->getParam('action'), "maintenance")) {
+					$this->redirectApp('login', 'not');
+				}
+			} else {
 
-			$this->set(compact('pages'));
+				$this->viewBuilder()->setLayout('site');
 
-			$this->set('title', $Config->title);
+				$Pages = TableRegistry::getTableLocator()->get('Pages');
+				
+				$pages = $Pages->getMenu();
+				
+				$this->set(compact('pages'));
+				
+				$this->set('title', $Config->title);
+			}
 		}
 	}
 
