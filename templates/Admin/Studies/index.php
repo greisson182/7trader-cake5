@@ -448,15 +448,51 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             }
         }
 
+        // Função para atualizar a URL com os filtros selecionados
+        function updateURL() {
+            const url = new URL(window.location);
+            
+            // Atualizar parâmetros baseados nos filtros
+            if (marketFilter && marketFilter.value) {
+                url.searchParams.set('market', marketFilter.value);
+            } else {
+                url.searchParams.delete('market');
+            }
+            
+            if (accountFilter && accountFilter.value) {
+                url.searchParams.set('account', accountFilter.value);
+            } else {
+                url.searchParams.delete('account');
+            }
+            
+            if (yearFilter && yearFilter.value) {
+                url.searchParams.set('year', yearFilter.value);
+            } else {
+                url.searchParams.delete('year');
+            }
+            
+            // Atualizar a URL sem recarregar a página
+            window.history.pushState({}, '', url.toString());
+        }
+
         // Event listeners
         if (marketFilter) {
-            marketFilter.addEventListener('change', filterStudies);
+            marketFilter.addEventListener('change', function() {
+                filterStudies();
+                updateURL();
+            });
         }
         if (accountFilter) {
-            accountFilter.addEventListener('change', filterStudies);
+            accountFilter.addEventListener('change', function() {
+                filterStudies();
+                updateURL();
+            });
         }
         if (yearFilter) {
-            yearFilter.addEventListener('change', filterStudies);
+            yearFilter.addEventListener('change', function() {
+                filterStudies();
+                updateURL();
+            });
         }
 
         // Função para restaurar valores originais do month-header
@@ -483,6 +519,13 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 // Restaurar valores originais antes de aplicar filtros
                 restoreOriginalValues();
                 filterStudies();
+                
+                // Limpar parâmetros da URL
+                const url = new URL(window.location);
+                url.searchParams.delete('market');
+                url.searchParams.delete('account');
+                url.searchParams.delete('year');
+                window.history.pushState({}, '', url.toString());
             });
         }
 
@@ -504,10 +547,14 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         // Aplicar filtros baseados nos parâmetros da URL ao carregar
         const urlParams = new URLSearchParams(window.location.search);
         const marketParam = urlParams.get('market');
+        const accountParam = urlParams.get('account');
         const yearParam = urlParams.get('year');
 
         if (marketParam && marketFilter) {
             marketFilter.value = marketParam;
+        }
+        if (accountParam && accountFilter) {
+            accountFilter.value = accountParam;
         }
         if (yearParam && yearFilter) {
             yearFilter.value = yearParam;
