@@ -26,6 +26,7 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Mercado</th>
+                                        <th>Conta</th>
                                         <th>Custo por Contrato</th>
                                         <th>Data Início</th>
                                         <th>Data Fim</th>
@@ -33,11 +34,17 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($operationsCosts as $operationsCost): ?>
+                                    <?php 
+                            
+                                    foreach ($operationsCosts as $operationsCost): ?>
                                         <tr>
                                             <td><?= $this->Number->format($operationsCost->id) ?></td>
                                             <td>
                                                 <?= $operationsCost->hasValue('market') ? h($operationsCost->market->name) : '-' ?>
+                                            </td>
+
+                                            <td>
+                                                <?= $operationsCost->hasValue('account') ? h($operationsCost->account->name) : '-' ?>
                                             </td>
                                             <td>
                                                 <?php if ($operationsCost->cost_per_contract !== null): ?>
