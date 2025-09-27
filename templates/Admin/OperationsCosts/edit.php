@@ -24,7 +24,9 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <?php $csrfToken = $this->request->getAttribute('csrfToken'); ?>
                     <?= $this->Form->create($operationsCost, ['class' => 'needs-validation', 'novalidate' => true]) ?>
+                    <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
                     
                     <div class="row">
                         <div class="col-md-6">

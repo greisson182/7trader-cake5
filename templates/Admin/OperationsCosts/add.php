@@ -1,12 +1,3 @@
-<?php
-
-/**
- * @var \App\View\AppView $this
- * @var \App\Model\Entity\OperationsCost $operationsCost
- * @var \Cake\Collection\CollectionInterface|string[] $markets
- * @var \Cake\Collection\CollectionInterface|string[] $students
- */
-?>
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-8 offset-md-2">
@@ -22,7 +13,9 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <?php $csrfToken = $this->request->getAttribute('csrfToken'); ?>
                     <?= $this->Form->create($operationsCost, ['class' => 'needs-validation', 'novalidate' => true]) ?>
+                    <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
 
                     <div class="row">
                         <div class="col-md-6">

@@ -1,9 +1,4 @@
-<?php
-/**
- * @var \App\View\AppView $this
- * @var iterable<\App\Model\Entity\OperationsCost> $operationsCosts
- */
-?>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
