@@ -1753,6 +1753,15 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     dayElement.setAttribute('data-bs-toggle', 'tooltip');
                     dayElement.setAttribute('data-bs-placement', 'top');
                     dayElement.setAttribute('title', tooltipText);
+
+                    // Adicionar evento de clique para navegar para a página de visualização do estudo
+                    dayElement.style.cursor = 'pointer';
+                    dayElement.addEventListener('click', function() {
+                        if (dayData.study_id) {
+                            window.open('/admin/studies/view/' + dayData.study_id, '_blank');
+                           // window.location.href = '/admin/studies/view/' + dayData.study_id;
+                        }
+                    });
                 }
 
                 currentWeek.appendChild(dayElement);

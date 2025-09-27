@@ -769,7 +769,8 @@ class StudentsController extends AppController
                     'wins' => 0,
                     'losses' => 0,
                     'trades' => 0,
-                    'studies_count' => 0
+                    'studies_count' => 0,
+                    'study_id' => $study->id // Adicionar ID do estudo
                 ];
             }
 
@@ -778,6 +779,11 @@ class StudentsController extends AppController
             $dailyData[$day]['losses'] += $study->losses;
             $dailyData[$day]['trades'] += ($study->wins + $study->losses);
             $dailyData[$day]['studies_count']++;
+            
+            // Se há múltiplos estudos no mesmo dia, manter o ID do primeiro
+            if (!isset($dailyData[$day]['study_id'])) {
+                $dailyData[$day]['study_id'] = $study->id;
+            }
         }
 
         // Calcular métricas adicionais e converter para array
