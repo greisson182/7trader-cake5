@@ -1246,6 +1246,14 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             setTimeout(() => {
                 filterDashboard();
                 loadCalendarData();
+                // Also update dashboard stats when filters are applied from URL
+                updateDashboardStats(currentCalendarYear, currentCalendarMonth);
+            }, 100);
+        } else {
+            // Load initial dashboard data even without filters
+            setTimeout(() => {
+                loadCalendarData();
+                updateDashboardStats(currentCalendarYear, currentCalendarMonth);
             }, 100);
         }
 
@@ -2058,9 +2066,21 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
         // Function to update dashboard statistics based on selected month
         function updateDashboardStats(year, month) {
+            console.log('updateDashboardStats called with:', year, month);
             const studentId = <?= $student['id'] ?>;
-            const selectedMarket = marketFilter.value;
-            const selectedAccount = accountFilter.value;
+            
+            // Check if filter elements exist before accessing them
+            const marketFilterElement = document.getElementById('marketFilter');
+            const accountFilterElement = document.getElementById('accountFilter');
+            
+            console.log('Market filter element:', marketFilterElement);
+            console.log('Account filter element:', accountFilterElement);
+            
+            const selectedMarket = marketFilterElement ? marketFilterElement.value : '';
+            const selectedAccount = accountFilterElement ? accountFilterElement.value : '';
+            
+            console.log('Selected market:', selectedMarket);
+            console.log('Selected account:', selectedAccount);
             
             let url = `/admin/students/get_monthly_stats_ajax/${studentId}/${year}/${month}`;
             
@@ -2076,6 +2096,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 url += `?${params.join('&')}`;
             }
 
+            console.log('Making AJAX request to:', url);
             fetch(url, {
                 method: 'GET',
                 headers: {
@@ -2083,39 +2104,70 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     'X-CSRF-Token': '<?= $csrfToken ?>',
                 },
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data received:', data);
                 if (data.success) {
                     const stats = data.data;
+                    console.log('Stats data:', stats);
                     
                     // Update total studies
-                    document.getElementById('total-studies-stat').textContent = 
-                        new Intl.NumberFormat('pt-BR').format(stats.total_studies);
+                    const totalStudiesElement = document.getElementById('total-studies-stat');
+                    console.log('Total studies element found:', totalStudiesElement);
+                    if (totalStudiesElement) {
+                        totalStudiesElement.textContent = new Intl.NumberFormat('pt-BR').format(stats.total_studies);
+                        console.log('Updated total studies to:', stats.total_studies);
+                    } else {
+                        console.error('Element total-studies-stat not found!');
+                    }
                     
                     // Update win rate
                     const winRateElement = document.getElementById('winrate-stat');
-                    winRateElement.textContent = stats.win_rate + '%';
+                    console.log('Win rate element found:', winRateElement);
+                    if (winRateElement) {
+                        winRateElement.textContent = stats.win_rate + '%';
+                        console.log('Updated win rate to:', stats.win_rate + '%');
+                    } else {
+                        console.error('Element winrate-stat not found!');
+                    }
                     
                     // Update total trades
-                    document.getElementById('total-trades-stat').textContent = 
-                        new Intl.NumberFormat('pt-BR').format(stats.total_trades);
+                    const totalTradesElement = document.getElementById('total-trades-stat');
+                    console.log('Total trades element found:', totalTradesElement);
+                    if (totalTradesElement) {
+                        totalTradesElement.textContent = new Intl.NumberFormat('pt-BR').format(stats.total_trades);
+                        console.log('Updated total trades to:', stats.total_trades);
+                    } else {
+                        console.error('Element total-trades-stat not found!');
+                    }
                     
                     // Update profit/loss
                     const profitElement = document.getElementById('profit-loss-stat');
-                    const profitValue = parseFloat(stats.total_profit_loss) || 0;
-                    const formattedProfit = new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL'
-                    }).format(profitValue);
-                    profitElement.textContent = formattedProfit;
-                    
-                    // Update profit/loss color classes
-                    profitElement.className = profitElement.className.replace(/text-(success|danger)/g, '');
-                    profitElement.classList.add(profitValue >= 0 ? 'text-success' : 'text-danger');
+                    console.log('Profit element found:', profitElement);
+                    if (profitElement) {
+                        const profitValue = parseFloat(stats.total_profit_loss) || 0;
+                        const formattedProfit = new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                        }).format(profitValue);
+                        profitElement.textContent = formattedProfit;
+                        console.log('Updated profit to:', formattedProfit);
+                        
+                        // Update profit/loss color classes
+                        profitElement.className = profitElement.className.replace(/text-(success|danger)/g, '');
+                        profitElement.classList.add(profitValue >= 0 ? 'text-success' : 'text-danger');
+                    } else {
+                        console.error('Element profit-loss-stat not found!');
+                    }
                     
                     // Update win rate color classes
-                    winRateElement.className = winRateElement.className.replace(/text-(success|warning)/g, '');
-                    winRateElement.classList.add(stats.win_rate >= 50 ? 'text-success' : 'text-warning');
+                    if (winRateElement) {
+                        winRateElement.className = winRateElement.className.replace(/text-(success|warning)/g, '');
+                        winRateElement.classList.add(stats.win_rate >= 50 ? 'text-success' : 'text-warning');
+                    }
                     
                 } else {
                     console.error('Error loading monthly stats:', data.message);
