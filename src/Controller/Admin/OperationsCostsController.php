@@ -11,7 +11,8 @@ class OperationsCostsController extends AppController
     public function index()
     {
         $query = $this->OperationsCosts->find()
-            ->contain(['Markets', 'Students', 'Accounts']);
+            ->contain(['Markets', 'Students', 'Accounts'])
+            ->where(['OperationsCosts.student_id' => $this->getCurrentStudentId()]);
         $operationsCosts = $this->paginate($query);
 
         $this->set(compact('operationsCosts'));
