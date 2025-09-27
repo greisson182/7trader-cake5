@@ -26,7 +26,7 @@ class StudentsController extends AppController
 
         // Skip authentication for AJAX endpoints that handle their own authentication
         $action = $this->request->getParam('action');
-        if (in_array($action, ['get_filtered_stats_ajax', 'get_calendar_data_ajax'])) {
+        if (in_array($action, ['get_filtered_stats_ajax', 'get_calendar_data_ajax', 'get_monthly_stats_ajax'])) {
             return null;
         }
 
@@ -779,7 +779,7 @@ class StudentsController extends AppController
             $dailyData[$day]['losses'] += $study->losses;
             $dailyData[$day]['trades'] += ($study->wins + $study->losses);
             $dailyData[$day]['studies_count']++;
-            
+
             // Se há múltiplos estudos no mesmo dia, manter o ID do primeiro
             if (!isset($dailyData[$day]['study_id'])) {
                 $dailyData[$day]['study_id'] = $study->id;
@@ -1085,6 +1085,103 @@ class StudentsController extends AppController
         } catch (Exception $e) {
             $this->Flash->error(__('Erro ao carregar estudos mensais: ' . $e->getMessage()));
             return $this->redirect(['action' => 'index']);
+        }
+    }
+
+    /**
+     * AJAX endpoint para buscar estatísticas mensais
+     */
+    public function get_monthly_stats_ajax($studentId = null, $year = null, $month = null)
+    {
+        $this->request->allowMethod(['get']);
+        $this->viewBuilder()->setClassName('Json');
+
+        // Obter ID do estudante
+        if (!$studentId) {
+            $currentUser = $this->getCurrentUser();
+            if ($currentUser && $currentUser->role === 'student') {
+                $studentId = $currentUser->student_id;
+            }
+        }
+
+        if (!$studentId) {
+            $this->set([
+                'success' => false,
+                'message' => 'ID do estudante não fornecido'
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'message']);
+            return;
+        }
+
+        // Usar ano e mês atuais se não fornecidos
+        $year = $year ?: date('Y');
+        $month = $month ?: date('n');
+
+        try {
+            // Obter parâmetros de filtro
+            $accountId = $this->request->getQuery('account_id', 0);
+            $marketId = $this->request->getQuery('market_id', 0);
+
+            $studiesTable = $this->fetchTable('Studies');
+
+            // Construir query com filtros para o mês específico
+            $conditions = [
+                'Studies.student_id' => $studentId,
+                'YEAR(Studies.study_date)' => $year,
+                'MONTH(Studies.study_date)' => $month
+            ];
+
+            if ($accountId) {
+                $conditions['Studies.account_id'] = $accountId;
+            }
+
+            if ($marketId) {
+                $conditions['Studies.market_id'] = $marketId;
+            }
+
+            // Buscar estatísticas mensais
+            $studies = $studiesTable->find()
+                ->where($conditions)
+                ->toArray();
+
+
+            $monthlyStats = [
+                'total_studies' => 0,
+                'total_wins' => 0,
+                'total_losses' => 0,
+                'total_trades' => 0,
+                'total_profit_loss' => 0
+            ];
+
+            foreach ($studies as $key => $study) {
+                // Calcular custo de operação para cada estudo
+                $amount_cost = $studiesTable->getCostTrades($study);
+                $studies[$key]['profit_loss'] = $amount_cost + (float)$study['profit_loss'];
+
+                // Acumular estatísticas
+                $monthlyStats['total_studies']++;
+                $monthlyStats['total_wins'] += $study['wins'];
+                $monthlyStats['total_losses'] += $study['losses'];
+                $monthlyStats['total_trades'] += $study['wins'] + $study['losses'];
+                $monthlyStats['total_profit_loss'] += $studies[$key]['profit_loss'];
+            }
+
+            // Calcular taxa de acerto
+            $totalTrades = $monthlyStats['total_trades'];
+            $winRate = $totalTrades > 0 ? round(($monthlyStats['total_wins'] / $totalTrades) * 100, 2) : 0;
+            $monthlyStats['win_rate'] = $winRate;
+
+            $this->set([
+                'success' => true,
+                'data' => $monthlyStats
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'data']);
+        } catch (\Exception $e) {
+            $this->set([
+                'success' => false,
+                'message' => 'Erro ao buscar estatísticas mensais: ' . $e->getMessage()
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['success', 'message']);
         }
     }
 }

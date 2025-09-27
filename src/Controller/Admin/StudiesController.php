@@ -849,7 +849,6 @@ class StudiesController extends AppController
                                 'wins' => $dateData['wins'],
                                 'losses' => $dateData['losses'],
                                 'profit_loss' => $dateData['profit_loss'],
-                                'notes' => $existingStudy->notes . " | Atualizado via importação CSV - Plataforma: $platform"
                             ]);
                             $studiesTable->save($existingStudy);
                         } else {
@@ -862,7 +861,6 @@ class StudiesController extends AppController
                                 'wins' => $dateData['wins'],
                                 'losses' => $dateData['losses'],
                                 'profit_loss' => $dateData['profit_loss'],
-                                'notes' => "Estudo criado automaticamente via importação CSV - Plataforma: $platform - Data: $date"
                             ];
 
                             $study = $studiesTable->newEmptyEntity();

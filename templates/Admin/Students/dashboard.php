@@ -1663,6 +1663,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             currentCalendarYear = year;
             loadCalendarData();
             populateMonthSelector(); // Atualizar o dropdown
+            updateDashboardStats(year, month); // Atualizar estatísticas mensais
         }
 
         // Initialize month selector
@@ -1677,6 +1678,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             }
             loadCalendarData();
             populateMonthSelector(); // Atualizar o dropdown
+            updateDashboardStats(currentCalendarYear, currentCalendarMonth); // Atualizar estatísticas mensais
         });
 
         document.getElementById('nextMonth').addEventListener('click', function() {
@@ -1687,6 +1689,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             }
             loadCalendarData();
             populateMonthSelector(); // Atualizar o dropdown
+            updateDashboardStats(currentCalendarYear, currentCalendarMonth); // Atualizar estatísticas mensais
         });
 
         // Load calendar data via AJAX
@@ -2046,6 +2049,76 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     
                 } else {
                     console.error('Error loading filtered stats:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // Function to update dashboard statistics based on selected month
+        function updateDashboardStats(year, month) {
+            const studentId = <?= $student['id'] ?>;
+            const selectedMarket = marketFilter.value;
+            const selectedAccount = accountFilter.value;
+            
+            let url = `/admin/students/get_monthly_stats_ajax/${studentId}/${year}/${month}`;
+            
+            const params = [];
+            if (selectedMarket) {
+                params.push(`market_id=${selectedMarket}`);
+            }
+            if (selectedAccount) {
+                params.push(`account_id=${selectedAccount}`);
+            }
+            
+            if (params.length > 0) {
+                url += `?${params.join('&')}`;
+            }
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '<?= $csrfToken ?>',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const stats = data.data;
+                    
+                    // Update total studies
+                    document.getElementById('total-studies-stat').textContent = 
+                        new Intl.NumberFormat('pt-BR').format(stats.total_studies);
+                    
+                    // Update win rate
+                    const winRateElement = document.getElementById('winrate-stat');
+                    winRateElement.textContent = stats.win_rate + '%';
+                    
+                    // Update total trades
+                    document.getElementById('total-trades-stat').textContent = 
+                        new Intl.NumberFormat('pt-BR').format(stats.total_trades);
+                    
+                    // Update profit/loss
+                    const profitElement = document.getElementById('profit-loss-stat');
+                    const profitValue = parseFloat(stats.total_profit_loss) || 0;
+                    const formattedProfit = new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    }).format(profitValue);
+                    profitElement.textContent = formattedProfit;
+                    
+                    // Update profit/loss color classes
+                    profitElement.className = profitElement.className.replace(/text-(success|danger)/g, '');
+                    profitElement.classList.add(profitValue >= 0 ? 'text-success' : 'text-danger');
+                    
+                    // Update win rate color classes
+                    winRateElement.className = winRateElement.className.replace(/text-(success|warning)/g, '');
+                    winRateElement.classList.add(stats.win_rate >= 50 ? 'text-success' : 'text-warning');
+                    
+                } else {
+                    console.error('Error loading monthly stats:', data.message);
                 }
             })
             .catch(error => {
