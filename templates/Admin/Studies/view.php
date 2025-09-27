@@ -1,3 +1,6 @@
+<?php
+$csrfToken = $this->request->getAttribute('csrfToken');
+?>
 <div class="row">
     <aside class="column">
         <div class="side-nav">
@@ -6,6 +9,7 @@
                 <i class="fas fa-edit me-2"></i>Editar Estudo
             </a>
             <form method="post" action="/admin/studies/delete/<?= h($study['id']) ?>" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este estudo?');">
+                <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
                 <button type="submit" class="btn btn-danger mb-2 btn-with-icon">
                     <i class="fas fa-trash me-2"></i>Excluir
                 </button>

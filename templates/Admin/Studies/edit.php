@@ -1,12 +1,13 @@
 <?php
 $csrfToken = $this->request->getAttribute('csrfToken');
-?>
+?> 
 <div class="row">
     <aside class="column">
         <div class="side-nav">
             <h4 class="heading">Ações</h4>
             <form method="post" action="/admin/studies/delete/<?= h($study['id']) ?>" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir # <?= h($study['id']) ?>?');">
-                <button type="submit" class="btn btn-danger btn-with-icon">
+            <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">    
+            <button type="submit" class="btn btn-danger btn-with-icon">
                     <i class="fas fa-trash me-2"></i>Excluir
                 </button>
             </form>
