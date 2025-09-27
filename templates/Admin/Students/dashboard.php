@@ -708,6 +708,11 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         border-color: rgba(255, 59, 48, 0.3);
     }
 
+    .week-summary-item.gain-week {
+        background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 255, 136, 0.05));
+        border-color: rgba(0, 255, 136, 0.3);
+    }
+
     .week-label {
         font-size: 0.875rem;
         font-weight: 600;
@@ -1828,6 +1833,10 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 // Adicionar classe para semanas com prejuízo
                 if (profitLoss < 0) {
                     weekItem.classList.add('loss-week');
+                } 
+
+                if (profitLoss > 0 && profitLoss !== bestValue) {
+                    weekItem.classList.add('gain-week');
                 }
 
                 const weekValue = document.createElement('div');
