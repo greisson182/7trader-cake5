@@ -1228,6 +1228,27 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         const dashboardRows = document.querySelectorAll('.dashboard-row');
         const noDataMessage = document.querySelector('.card-body .text-center');
 
+        // Load filters from URL parameters on page load
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('market')) {
+            marketFilter.value = urlParams.get('market');
+        }
+        if (urlParams.get('account')) {
+            accountFilter.value = urlParams.get('account');
+        }
+        if (urlParams.get('year')) {
+            yearFilter.value = urlParams.get('year');
+        }
+
+        // Apply filters and update calendar if filters are loaded from URL
+        if (urlParams.get('market') || urlParams.get('account')) {
+            // Use setTimeout to ensure DOM is fully loaded
+            setTimeout(() => {
+                filterDashboard();
+                loadCalendarData();
+            }, 100);
+        }
+
         // Chart instances (will be set after chart creation)
         let profitLossChart = null;
         let winRateChart = null;
@@ -1499,14 +1520,49 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             }
         }
 
+        // Function to update URL with filter parameters
+        function updateURL() {
+            const selectedMarket = marketFilter.value;
+            const selectedAccount = accountFilter.value;
+            const selectedYear = yearFilter.value;
+            
+            const url = new URL(window.location);
+            
+            // Update or remove market parameter
+            if (selectedMarket) {
+                url.searchParams.set('market', selectedMarket);
+            } else {
+                url.searchParams.delete('market');
+            }
+            
+            // Update or remove account parameter
+            if (selectedAccount) {
+                url.searchParams.set('account', selectedAccount);
+            } else {
+                url.searchParams.delete('account');
+            }
+            
+            // Update or remove year parameter
+            if (selectedYear && selectedYear !== '<?= date('Y') ?>') {
+                url.searchParams.set('year', selectedYear);
+            } else {
+                url.searchParams.delete('year');
+            }
+            
+            // Update URL without reloading the page
+            window.history.pushState({}, '', url);
+        }
+
         // Event listeners
         marketFilter.addEventListener('change', function() {
             filterDashboard();
             loadCalendarData(); // Atualizar calendário quando mercado mudar
+            updateURL();
         });
         accountFilter.addEventListener('change', function() {
             filterDashboard();
             loadCalendarData(); // Atualizar calendário quando conta mudar
+            updateURL();
         });
 
         yearFilter.addEventListener('change', function() {
@@ -1520,9 +1576,16 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             marketFilter.value = '';
             accountFilter.value = '';
             yearFilter.value = '<?= date('Y') ?>';
-            const currentUrl = new URL(window.location);
-            currentUrl.searchParams.delete('year');
-            window.location.href = currentUrl.toString();
+            
+            // Clear URL parameters
+            const url = new URL(window.location);
+            url.searchParams.delete('market');
+            url.searchParams.delete('account');
+            url.searchParams.delete('year');
+            window.history.pushState({}, '', url);
+            
+            filterDashboard();
+            loadCalendarData();
         });
 
         // Trading Calendar functionality
