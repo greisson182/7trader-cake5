@@ -1250,10 +1250,10 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 updateDashboardStats(currentCalendarYear, currentCalendarMonth);
             }, 100);
         } else {
-            // Load initial dashboard data even without filters
+            // Load initial dashboard data even without filters - get yearly data
             setTimeout(() => {
                 loadCalendarData();
-                updateDashboardStats(currentCalendarYear, currentCalendarMonth);
+                updateDashboardStats(currentCalendarYear); // No month parameter = yearly data
             }, 100);
         }
 
@@ -2064,7 +2064,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             });
         }
 
-        // Function to update dashboard statistics based on selected month
+        // Function to update dashboard statistics based on selected month or year
         function updateDashboardStats(year, month) {
             console.log('updateDashboardStats called with:', year, month);
             const studentId = <?= $student['id'] ?>;
@@ -2082,7 +2082,11 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             console.log('Selected market:', selectedMarket);
             console.log('Selected account:', selectedAccount);
             
-            let url = `/admin/students/get_monthly_stats_ajax/${studentId}/${year}/${month}`;
+            // Build URL - if month is not provided, get yearly data
+            let url = `/admin/students/get_monthly_stats_ajax/${studentId}/${year}`;
+            if (month) {
+                url += `/${month}`;
+            }
             
             const params = [];
             if (selectedMarket) {

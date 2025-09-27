@@ -1089,7 +1089,7 @@ class StudentsController extends AppController
     }
 
     /**
-     * AJAX endpoint para buscar estatísticas mensais
+     * AJAX endpoint para buscar estatísticas mensais ou anuais
      */
     public function get_monthly_stats_ajax($studentId = null, $year = null, $month = null)
     {
@@ -1113,9 +1113,13 @@ class StudentsController extends AppController
             return;
         }
 
-        // Usar ano e mês atuais se não fornecidos
+        // Usar ano atual se não fornecido
         $year = $year ?: date('Y');
-        $month = $month ?: date('n');
+        // Se mês não fornecido, buscar dados do ano inteiro
+        $isYearlyData = !$month;
+        if (!$isYearlyData) {
+            $month = $month ?: date('n');
+        }
 
         try {
             // Obter parâmetros de filtro
@@ -1124,12 +1128,16 @@ class StudentsController extends AppController
 
             $studiesTable = $this->fetchTable('Studies');
 
-            // Construir query com filtros para o mês específico
+            // Construir query com filtros
             $conditions = [
                 'Studies.student_id' => $studentId,
-                'YEAR(Studies.study_date)' => $year,
-                'MONTH(Studies.study_date)' => $month
+                'YEAR(Studies.study_date)' => $year
             ];
+
+            // Adicionar filtro de mês apenas se fornecido
+            if (!$isYearlyData) {
+                $conditions['MONTH(Studies.study_date)'] = $month;
+            }
 
             if ($accountId) {
                 $conditions['Studies.account_id'] = $accountId;
@@ -1139,7 +1147,7 @@ class StudentsController extends AppController
                 $conditions['Studies.market_id'] = $marketId;
             }
 
-            // Buscar estatísticas mensais
+            // Buscar estatísticas
             $studies = $studiesTable->find()
                 ->where($conditions)
                 ->toArray();
