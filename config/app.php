@@ -58,6 +58,14 @@ return [
             'duration' => '+1 years',
             'url' => env('CACHE_CAKEMODEL_URL', null),
         ],
+        'rate_limit' => [
+            'className' => FileEngine::class,
+            'prefix' => 'rate_limit_',
+            'path' => CACHE . 'rate_limit' . DS,
+            'serialize' => true,
+            'duration' => '+10 minutes',
+            'url' => env('CACHE_RATE_LIMIT_URL', null),
+        ],
     ],
     'Error' => [
         'errorLevel' => E_ALL,

@@ -1,11 +1,4 @@
-<?php
-/**
- * @var \App\View\AppView $this
- * @var array $params
- * @var string $message
- */
-if (!isset($params['escape']) || $params['escape'] !== false) {
-    $message = h($message);
-}
-?>
-<div class="message error" onclick="this.classList.add('hidden');"><?= $message ?></div>
+<div class="alert alert-danger fields-error">
+	<button class="close" data-dismiss="alert"><i class="pci-cross pci-circle"></i></button>
+	<strong>Ooops!</strong> <?= h($message) ?>
+</div>

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Controller\AppController;
+use App\Middleware\RateLimitMiddleware;
 use Cake\Event\EventInterface;
 use Cake\ORM\TableRegistry;
+use Cake\Http\Exception\TooManyRequestsException;
 
 class StudentsRegistrationController extends AppController
 {
@@ -15,8 +17,61 @@ class StudentsRegistrationController extends AppController
         parent::beforeFilter($event);
     }
 
+    public function checkUsername()
+    {
+        $this->autoRender = false;
+
+        $this->request->allowMethod(['post']);
+        
+        $username = $this->request->getData('username');
+        
+        // Sanitize and validate input
+        if (empty($username) || !is_string($username)) {
+            $this->set([
+                'exists' => false,
+                'message' => ''
+            ]);
+            $this->viewBuilder()->setOption('serialize', ['exists', 'message']);
+            return;
+        }
+
+        // Sanitize username
+        $username = trim(strip_tags($username));
+        
+        // Additional validation
+        if (strlen($username) < 3 || strlen($username) > 50) {
+            echo json_encode([
+                'exists' => false,
+                'message' => 'Nome de usuário deve ter entre 3 e 50 caracteres'
+            ]);
+            exit;
+        }
+
+        $usersTable = TableRegistry::getTableLocator()->get('Users');
+        $user = $usersTable->find()->where(['username' => $username])->first();
+        
+        $exists = !empty($user);
+        $message = $exists ? 'Este nome de usuário já está em uso' : 'Nome de usuário disponível';
+        
+        echo json_encode([
+            'exists' => $exists,
+            'message' => $message
+        ]);
+        exit;
+    }
+
     public function register()
     {
+        // Apply rate limiting
+        $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit'); // 5 attempts per 5 minutes
+        $clientIp = $this->getClientIp();
+        
+        // Check rate limit before processing
+        $remainingAttempts = $rateLimiter->getRemainingAttempts($clientIp);
+        if ($remainingAttempts <= 0) {
+            $timeUntilReset = $rateLimiter->getTimeUntilReset($clientIp);
+            $this->Flash->error('Muitas tentativas de registro. Tente novamente em ' . ceil($timeUntilReset / 60) . ' minutos.');
+        }
 
         $studentsTable = TableRegistry::getTableLocator()->get('Students');
         $usersTable = TableRegistry::getTableLocator()->get('Users');
@@ -30,28 +85,58 @@ class StudentsRegistrationController extends AppController
             // Validate required fields
             $errors = [];
 
-            if (empty($data['name'])) {
+            // Sanitize and validate name
+            if (empty($data['name']) || !is_string($data['name'])) {
                 $errors['name'] = 'Nome é obrigatório';
+            } else {
+                $data['name'] = trim(strip_tags($data['name']));
+                if (strlen($data['name']) < 2 || strlen($data['name']) > 100) {
+                    $errors['name'] = 'Nome deve ter entre 2 e 100 caracteres';
+                }
             }
 
-            if (empty($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-                $errors['email'] = 'E-mail válido é obrigatório';
+            // Sanitize and validate email
+            if (empty($data['email']) || !is_string($data['email'])) {
+                $errors['email'] = 'E-mail é obrigatório';
+            } else {
+                $data['email'] = trim(strtolower($data['email']));
+                if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                    $errors['email'] = 'E-mail válido é obrigatório';
+                }
             }
 
-            if (empty($data['username'])) {
+            // Sanitize and validate username
+            if (empty($data['username']) || !is_string($data['username'])) {
                 $errors['username'] = 'Nome de usuário é obrigatório';
-            } elseif (strlen($data['username']) < 3) {
-                $errors['username'] = 'Nome de usuário deve ter pelo menos 3 caracteres';
+            } else {
+                $data['username'] = trim(strip_tags($data['username']));
+                if (strlen($data['username']) < 3 || strlen($data['username']) > 50) {
+                    $errors['username'] = 'Nome de usuário deve ter entre 3 e 50 caracteres';
+                } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $data['username'])) {
+                    $errors['username'] = 'Nome de usuário deve conter apenas letras, números e underscore';
+                }
             }
 
-            if (empty($data['password'])) {
+            // Validate password
+            if (empty($data['password']) || !is_string($data['password'])) {
                 $errors['password'] = 'Senha é obrigatória';
-            } elseif (strlen($data['password']) < 6) {
-                $errors['password'] = 'Senha deve ter pelo menos 6 caracteres';
+            } elseif (strlen($data['password']) < 8) {
+                $errors['password'] = 'Senha deve ter pelo menos 8 caracteres';
+            } elseif (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/', $data['password'])) {
+                $errors['password'] = 'Senha deve conter pelo menos uma letra minúscula, uma maiúscula e um número';
             }
 
+            // Validate password confirmation
             if (empty($data['confirm_password']) || $data['password'] !== $data['confirm_password']) {
                 $errors['confirm_password'] = 'Confirmação de senha não confere';
+            }
+
+            // Sanitize phone if provided
+            if (!empty($data['phone'])) {
+                $data['phone'] = trim(strip_tags($data['phone']));
+                if (strlen($data['phone']) > 20) {
+                    $errors['phone'] = 'Telefone deve ter no máximo 20 caracteres';
+                }
             }
 
             // Check for existing email in students table
@@ -73,6 +158,9 @@ class StudentsRegistrationController extends AppController
             }
 
             if (!empty($errors)) {
+                // Record failed attempt for rate limiting
+                $this->recordFailedAttempt($clientIp);
+                
                 foreach ($errors as $field => $message) {
                     $this->Flash->error($message);
                 }
@@ -136,6 +224,9 @@ class StudentsRegistrationController extends AppController
                 } catch (\Exception $e) {
                     // Rollback transaction
                     $connection->rollback();
+                    
+                    // Record failed attempt for rate limiting
+                    $this->recordFailedAttempt($clientIp);
 
                     $this->Flash->error(__('Erro ao criar conta: ' . $e->getMessage()));
                 }
@@ -143,5 +234,68 @@ class StudentsRegistrationController extends AppController
         }
 
         $this->set(compact('student', 'user'));
+    }
+
+    private function getClientIp(): string
+    {
+        $serverParams = $this->request->getServerParams();
+        
+        // Check for IP from various headers (for proxy/load balancer scenarios)
+        $ipHeaders = [
+            'HTTP_CF_CONNECTING_IP',     // Cloudflare
+            'HTTP_CLIENT_IP',            // Proxy
+            'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
+            'HTTP_X_FORWARDED',          // Proxy
+            'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
+            'HTTP_FORWARDED_FOR',        // Proxy
+            'HTTP_FORWARDED',            // Proxy
+            'REMOTE_ADDR'                // Standard
+        ];
+        
+        foreach ($ipHeaders as $header) {
+            if (!empty($serverParams[$header])) {
+                $ip = $serverParams[$header];
+                // Handle comma-separated IPs (X-Forwarded-For can contain multiple IPs)
+                if (strpos($ip, ',') !== false) {
+                    $ip = trim(explode(',', $ip)[0]);
+                }
+                // Validate IP
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                    return $ip;
+                }
+            }
+        }
+        
+        // Fallback to REMOTE_ADDR
+        return $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
+    }
+
+    private function recordFailedAttempt(string $clientIp): void
+    {
+        $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit');
+        // Force record an attempt by simulating middleware processing
+        $key = 'rate_limit_' . md5($clientIp);
+        $attempts = \Cake\Cache\Cache::read($key, 'rate_limit') ?: [];
+        $attempts[] = time();
+        \Cake\Cache\Cache::write($key, $attempts, 'rate_limit');
+    }
+
+    public function getRateLimitStatus()
+    {
+        $this->autoRender = false;
+        $this->request->allowMethod(['post']);
+        
+        $clientIp = $this->getClientIp();
+        $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit');
+        
+        $remainingAttempts = $rateLimiter->getRemainingAttempts($clientIp);
+        $timeUntilReset = $rateLimiter->getTimeUntilReset($clientIp);
+        
+        echo json_encode([
+            'remaining_attempts' => $remainingAttempts,
+            'time_until_reset' => $timeUntilReset,
+            'max_attempts' => 5
+        ]);
+        exit;
     }
 }

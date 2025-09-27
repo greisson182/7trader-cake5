@@ -24,6 +24,7 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/recupera', ['prefix' => 'Admin', 'controller' => 'users', 'action' => 'recover']);
         $builder->connect('/envia_contato', ['controller' => 'pages', 'action' => 'sendContact']);
         $builder->connect('/register', ['controller' => 'StudentsRegistration', 'action' => 'register']);
+        $builder->connect('/check-username', ['controller' => 'StudentsRegistration', 'action' => 'checkUsername']);
 
 
         $builder->fallbacks();
@@ -45,7 +46,7 @@ return function (RouteBuilder $routes): void {
 
         $routes->connect('/students/monthly-studies/*', ['controller' => 'students', 'action' => 'monthlyStudies']);
 
-        //$routes->applyMiddleware('csrf');
+       // $routes->applyMiddleware('csrf');
         $routes->setExtensions(['json', 'xml']);
 
         $routes->fallbacks('InflectedRoute');

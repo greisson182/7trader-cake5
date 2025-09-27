@@ -9,6 +9,13 @@ class HtmlHelper extends Helper
 {
     public function css($path)
     {
+        if (is_array($path)) {
+            $output = '';
+            foreach ($path as $file) {
+                $output .= '<link rel="stylesheet" href="' . $file . '">' . "\n";
+            }
+            return $output;
+        }
         return '<link rel="stylesheet" href="' . $path . '">';
     }
     
