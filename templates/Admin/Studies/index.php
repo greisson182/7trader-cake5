@@ -665,7 +665,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             importCsvBtn.disabled = true;
             importCsvBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Importando...';
 
-            fetch('/admin/studies/import_csv', {
+            fetch('/admin/imports/import_csv', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-Token': '<?= $csrfToken ?>',

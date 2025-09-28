@@ -117,7 +117,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     <div class="stat-icon mb-3 text-info">
                         <i class="bi bi-bar-chart"></i>
                     </div>
-                    <h3 class="stat-number mb-2" data-stat="trades" id="total-trades-stat"><?= number_format($overallStats['total_trades']) ?></h3>
+                    <h3 class="stat-number mb-2" data-stat="<?= $overallStats['total_trades'] ?>" id="total-trades-stat"><?= $overallStats['total_trades'] ?></h3>
                     <p class="stat-label mb-0">Total de Operações</p>
                     <div class="stat-trend">
                         <i class="bi bi-graph-up text-info"></i>
@@ -428,383 +428,9 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-    /* Dashboard Specific Styles */
-    .stat-card {
-        transition: all 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: var(--primary-gradient);
-        transform: scaleX(0);
-        transition: transform 0.3s ease;
-    }
-
-    .stat-card:hover::before {
-        transform: scaleX(1);
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    }
-
-    .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: rgba(var(--bs-primary-rgb), 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-        font-size: 1.5rem;
-        color: var(--bs-primary);
-    }
-
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .stat-label {
-        color: var(--bs-gray-600);
-        font-weight: 500;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-    }
-
-    .stat-trend {
-        margin-top: 0.5rem;
-        padding-top: 0.5rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .chart-card {
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .chart-controls .btn {
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        padding: 0;
-        margin-left: 0.25rem;
-    }
-
-    .chart-controls .btn.active {
-        background: var(--bs-primary);
-        border-color: var(--bs-primary);
-        color: white;
-    }
-
-    /* Estilos removidos - usando novo sistema de tabelas do style.css */
-
-    .month-indicator {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--primary-gradient);
-    }
-
-    .empty-state .empty-icon {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: rgba(var(--bs-primary-rgb), 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-        font-size: 2rem;
-        color: var(--bs-primary);
-    }
-
-    .table-controls .btn {
-        border-radius: 20px;
-        padding: 0.375rem 1rem;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .stat-number {
-            font-size: 1.5rem;
-        }
-
-        .chart-controls {
-            display: none;
-        }
-
-        .modern-table {
-            font-size: 0.875rem;
-        }
-    }
-
-    /* Trading Calendar Styles */
-    .trading-calendar {
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 12px;
-        padding: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        position: relative;
-        z-index: 1;
-    }
-
-    .calendar-header {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 8px;
-        margin-bottom: 1rem;
-    }
-
-    .calendar-day-header {
-        text-align: center;
-        font-weight: 600;
-        color: var(--bs-gray-600);
-        font-size: 0.875rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 0.5rem;
-    }
-
-    .calendar-body {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .calendar-week {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 8px;
-    }
-
-    .calendar-day {
-        aspect-ratio: 1;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 8px;
-        position: relative;
-        background: rgba(255, 255, 255, 0.02);
-        transition: all 0.3s ease;
-        cursor: pointer;
-        min-height: 80px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .calendar-day.empty {
-        border: none;
-        background: transparent;
-        cursor: default;
-    }
-
-    .calendar-day.profit {
-        background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 255, 136, 0.05));
-        border-color: rgba(0, 255, 136, 0.3);
-    }
-
-    .calendar-day.loss {
-        background: linear-gradient(135deg, rgba(255, 59, 48, 0.15), rgba(255, 59, 48, 0.05));
-        border-color: rgba(255, 59, 48, 0.3);
-    }
-
-    .calendar-day:hover:not(.empty) {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        border-color: var(--bs-primary);
-    }
-
-    .day-number {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--bs-gray-600);
-        margin-bottom: 4px;
-    }
-
-    .trade-result {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        text-align: center;
-    }
-
-    .trade-value {
-        font-size: 0.875rem;
-        font-weight: 700;
-        margin-bottom: 2px;
-    }
-
-    .calendar-day.profit .trade-value {
-        color: #00ff88;
-    }
-
-    .calendar-day.loss .trade-value {
-        color: #ff3b30;
-    }
-
-    .trade-details {
-        font-size: 0.625rem;
-        color: var(--bs-gray-500);
-        margin-bottom: 2px;
-    }
-
-    .trade-metrics {
-        font-size: 0.625rem;
-        color: var(--bs-gray-400);
-        font-weight: 500;
-    }
-
-    /* Weekly Summary Styles */
-    .weekly-summary {
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 12px;
-        padding: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        height: fit-content;
-    }
-
-    .week-summary-item {
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 0.75rem;
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
-    }
-
-    .week-summary-item:hover {
-        background: rgba(255, 255, 255, 0.05);
-        transform: translateX(4px);
-    }
-
-    .week-summary-item.best-week {
-        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
-        border-color: rgba(255, 193, 7, 0.3);
-    }
-
-    .week-summary-item.worst-week {
-        background: rgba(108, 117, 125, 0.1);
-        border-color: rgba(108, 117, 125, 0.2);
-    }
-
-    .week-summary-item.loss-week {
-        background: linear-gradient(135deg, rgba(255, 59, 48, 0.15), rgba(255, 59, 48, 0.05));
-        border-color: rgba(255, 59, 48, 0.3);
-    }
-
-    .week-summary-item.gain-week {
-        background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 255, 136, 0.05));
-        border-color: rgba(0, 255, 136, 0.3);
-    }
-
-    .week-label {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: var(--bs-gray-300);
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-    }
-
-    .week-value {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 0.25rem;
-    }
-
-    .week-value.profit {
-        color: #00ff88;
-    }
-
-    .week-value.loss {
-        color: #ff3b30;
-    }
-
-    .week-value.neutral {
-        color: var(--bs-gray-500);
-    }
-
-    .week-days {
-        font-size: 0.75rem;
-        color: var(--bs-gray-500);
-    }
-
-    .summary-footer {
-        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-    }
-
-    .calendar-summary .badge {
-        font-size: 0.875rem;
-        padding: 0.5rem 1rem;
-    }
-
-    /* Responsive Calendar */
-    @media (max-width: 992px) {
-        .calendar-day {
-            min-height: 70px;
-            padding: 6px;
-        }
-
-        .trade-value {
-            font-size: 0.75rem;
-        }
-
-        .trade-details,
-        .trade-metrics {
-            font-size: 0.5rem;
-        }
-
-        .weekly-summary {
-            margin-top: 2rem;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .calendar-day {
-            min-height: 60px;
-            padding: 4px;
-        }
-
-        .day-number {
-            font-size: 0.625rem;
-        }
-
-        .trade-value {
-            font-size: 0.625rem;
-        }
-
-        .trade-details,
-        .trade-metrics {
-            display: none;
-        }
-
-        .calendar-summary {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .calendar-summary .badge {
-            font-size: 0.75rem;
-            padding: 0.375rem 0.75rem;
-        }
-    }
-</style>
+<?php 
+echo $this->Html->css('/adm/css/dashboard.css?v=' . time(), ['block' => 'style']);
+?>
 <script>
     // Chart instances (declared globally)
     window.profitLossChart = null;
@@ -1137,42 +763,48 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         // Animate stat numbers
         document.querySelectorAll('.stat-number').forEach(el => {
             const originalText = el.textContent;
-            // Improved parsing for Brazilian currency format (R$ 1.468,00)
+            
+            // Check if element has a data-target attribute (for custom animation targets)
             let finalValue;
-            if (originalText.includes('R$')) {
-                // Remove R$ and spaces, then handle Brazilian number format
-                let cleanValue = originalText.replace(/R\$\s*/g, '').trim();
-
-                // Handle Brazilian number format properly for all value ranges
-                if (cleanValue.includes(',')) {
-                    // Brazilian format uses comma as decimal separator
-                    const parts = cleanValue.split(',');
-                    if (parts.length === 2) {
-                        // Remove all dots from the integer part (thousands separators)
-                        const integerPart = parts[0].replace(/\./g, '');
-                        const decimalPart = parts[1];
-                        cleanValue = integerPart + '.' + decimalPart;
-                    } else {
-                        // No decimal part, just remove dots (thousands separators)
-                        cleanValue = cleanValue.replace(/\./g, '').replace(',', '');
-                    }
-                } else if (cleanValue.includes('.')) {
-                    // Check if it's thousands separator or decimal separator
-                    const dotCount = (cleanValue.match(/\./g) || []).length;
-                    if (dotCount === 1 && cleanValue.split('.')[1].length <= 2) {
-                        // Single dot with 1-2 digits after = decimal separator, keep as is
-                        // This handles cases like "1500.50"
-                    } else {
-                        // Multiple dots or more than 2 digits after = thousands separators
-                        // Remove all dots: "1.000.000" -> "1000000"
-                        cleanValue = cleanValue.replace(/\./g, '');
-                    }
-                }
-
-                finalValue = parseFloat(cleanValue) || 0;
+            if (el.hasAttribute('data-target')) {
+                finalValue = parseFloat(el.getAttribute('data-target')) || 0;
             } else {
-                // For other values (percentages, counts)
-                finalValue = parseFloat(originalText.replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0;
+                // Improved parsing for Brazilian currency format (R$ 1.468,00)
+                if (originalText.includes('R$')) {
+                    // Remove R$ and spaces, then handle Brazilian number format
+                    let cleanValue = originalText.replace(/R\$\s*/g, '').trim();
+
+                    // Handle Brazilian number format properly for all value ranges
+                    if (cleanValue.includes(',')) {
+                        // Brazilian format uses comma as decimal separator
+                        const parts = cleanValue.split(',');
+                        if (parts.length === 2) {
+                            // Remove all dots from the integer part (thousands separators)
+                            const integerPart = parts[0].replace(/\./g, '');
+                            const decimalPart = parts[1];
+                            cleanValue = integerPart + '.' + decimalPart;
+                        } else {
+                            // No decimal part, just remove dots (thousands separators)
+                            cleanValue = cleanValue.replace(/\./g, '').replace(',', '');
+                        }
+                    } else if (cleanValue.includes('.')) {
+                        // Check if it's thousands separator or decimal separator
+                        const dotCount = (cleanValue.match(/\./g) || []).length;
+                        if (dotCount === 1 && cleanValue.split('.')[1].length <= 2) {
+                            // Single dot with 1-2 digits after = decimal separator, keep as is
+                            // This handles cases like "1500.50"
+                        } else {
+                            // Multiple dots or more than 2 digits after = thousands separators
+                            // Remove all dots: "1.000.000" -> "1000000"
+                            cleanValue = cleanValue.replace(/\./g, '');
+                        }
+                    }
+
+                    finalValue = parseFloat(cleanValue) || 0;
+                } else {
+                    // For other values (percentages, counts)
+                    finalValue = parseFloat(originalText.replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0;
+                }
             }
 
             let currentValue = 0;
@@ -2035,8 +1667,13 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     winRateElement.textContent = stats.overall_win_rate + '%';
                     
                     // Update total trades
-                    document.getElementById('total-trades-stat').textContent = 
-                        new Intl.NumberFormat('pt-BR').format(stats.total_trades);
+                    const totalTradesFilterElement = document.getElementById('total-trades-stat');
+                    if (totalTradesFilterElement) {
+                        totalTradesFilterElement.textContent = new Intl.NumberFormat('pt-BR').format(stats.total_trades);
+                        console.log('Updated total trades (filtered) to:', stats.total_trades);
+                    } else {
+                        console.error('Element total-trades-stat not found in updateFilteredStats!');
+                    }
                     
                     // Update profit/loss
                     const profitElement = document.getElementById('profit-loss-stat');
@@ -2138,11 +1775,38 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         console.error('Element winrate-stat not found!');
                     }
                     
-                    // Update total trades
+                    // Update total trades with animation
                     const totalTradesElement = document.getElementById('total-trades-stat');
                     console.log('Total trades element found:', totalTradesElement);
                     if (totalTradesElement) {
-                        totalTradesElement.textContent = new Intl.NumberFormat('pt-BR').format(stats.total_trades);
+                        // Animate from current value to new value
+                        const currentValue = parseInt(totalTradesElement.textContent.replace(/\D/g, '')) || 0;
+                        const targetValue = parseInt(stats.total_trades) || 0;
+                        
+                        console.log('Animating total trades from:', currentValue, 'to:', targetValue);
+                        
+                        // Animate the value
+                        let animatedValue = currentValue;
+                        const increment = (targetValue - currentValue) / 50; // 50 steps for smooth animation
+                        
+                        const animationTimer = setInterval(() => {
+                            if (increment > 0) {
+                                animatedValue += increment;
+                                if (animatedValue >= targetValue) {
+                                    animatedValue = targetValue;
+                                    clearInterval(animationTimer);
+                                }
+                            } else {
+                                animatedValue += increment;
+                                if (animatedValue <= targetValue) {
+                                    animatedValue = targetValue;
+                                    clearInterval(animationTimer);
+                                }
+                            }
+                            
+                            totalTradesElement.textContent = Math.floor(animatedValue).toLocaleString('pt-BR');
+                        }, 20); // Update every 20ms for smooth animation
+                        
                         console.log('Updated total trades to:', stats.total_trades);
                     } else {
                         console.error('Element total-trades-stat not found!');

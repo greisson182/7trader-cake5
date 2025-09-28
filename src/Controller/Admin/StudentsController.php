@@ -961,7 +961,7 @@ class StudentsController extends AppController
                 $conditions['Studies.market_id'] = $marketId;
             }
 
-            // Buscar estatísticas filtradas
+            /*   // Buscar estatísticas filtradas
             $overallStatsQuery = $studiesTable->find()
                 ->select([
                     'total_studies' => 'COUNT(*)',
@@ -973,9 +973,13 @@ class StudentsController extends AppController
                     'last_study_date' => 'MAX(study_date)'
                 ])
                 ->where($conditions)
+                ->first();*/
+
+            $studies =   $studiesTable->find()
+                ->where($conditions)
                 ->first();
 
-            $overallStats = $overallStatsQuery ? $overallStatsQuery->toArray() : [
+            $overallStats =  [
                 'total_studies' => 0,
                 'total_wins' => 0,
                 'total_losses' => 0,
@@ -984,6 +988,23 @@ class StudentsController extends AppController
                 'first_study_date' => null,
                 'last_study_date' => null
             ];
+
+
+            foreach ($studies as $key => $study) {
+                // Calcular custo de operação para cada estudo
+                $amount_cost = $studiesTable->getCostTrades($study);
+                $studies[$key]['profit_loss'] = $amount_cost + (float)$study['profit_loss'];
+
+                // Acumular estatísticas
+                $overallStats['total_studies']++;
+                $overallStats['total_wins'] += $study['wins'];
+                $overallStats['total_losses'] += $study['losses'];
+                $overallStats['total_trades'] += $study['wins'] + $study['losses'];
+                $overallStats['total_profit_loss'] += $studies[$key]['profit_loss'];
+                $overallStats['avg_profit_loss'] = $overallStats['total_profit_loss'] / $overallStats['total_studies'];
+                $overallStats['first_study_date'] = $overallStats['first_study_date'] ?: $study['study_date'];
+                $overallStats['last_study_date'] = $overallStats['last_study_date'] ?: $study['study_date'];
+            }
 
             // Calcular métricas adicionais
             $overallStats['total_trades'] = $overallStats['total_wins'] + $overallStats['total_losses'];
@@ -1158,13 +1179,17 @@ class StudentsController extends AppController
                 'total_wins' => 0,
                 'total_losses' => 0,
                 'total_trades' => 0,
-                'total_profit_loss' => 0
+                'total_profit_loss' => 0,
+                'profit_loss_cost' => 0,
+                'amount_cost' => 0
             ];
 
             foreach ($studies as $key => $study) {
                 // Calcular custo de operação para cada estudo
                 $amount_cost = $studiesTable->getCostTrades($study);
-                $studies[$key]['profit_loss'] = $amount_cost + (float)$study['profit_loss'];
+                $studies[$key]['profit_loss_cost'] = $amount_cost + (float)$study['profit_loss'];
+
+                $studies[$key]['profit_loss'] = $studies[$key]['profit_loss_cost'];
 
                 // Acumular estatísticas
                 $monthlyStats['total_studies']++;
@@ -1172,6 +1197,7 @@ class StudentsController extends AppController
                 $monthlyStats['total_losses'] += $study['losses'];
                 $monthlyStats['total_trades'] += $study['wins'] + $study['losses'];
                 $monthlyStats['total_profit_loss'] += $studies[$key]['profit_loss'];
+                $monthlyStats['amount_cost'] += $amount_cost;
             }
 
             // Calcular taxa de acerto

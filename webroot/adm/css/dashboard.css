@@ -1,0 +1,374 @@
+    /* Dashboard Specific Styles */
+    .stat-card {
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary-gradient);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        font-size: 1.5rem;
+        color: var(--bs-primary);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label {
+        color: var(--bs-gray-600);
+        font-weight: 500;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-trend {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .chart-card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .chart-controls .btn {
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        margin-left: 0.25rem;
+    }
+
+    .chart-controls .btn.active {
+        background: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: white;
+    }
+
+    /* Estilos removidos - usando novo sistema de tabelas do style.css */
+
+    .month-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+    }
+
+    .empty-state .empty-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        font-size: 2rem;
+        color: var(--bs-primary);
+    }
+
+    .table-controls .btn {
+        border-radius: 20px;
+        padding: 0.375rem 1rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .stat-number {
+            font-size: 1.5rem;
+        }
+
+        .chart-controls {
+            display: none;
+        }
+
+        .modern-table {
+            font-size: 0.875rem;
+        }
+    }
+
+    /* Trading Calendar Styles */
+    .trading-calendar {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .calendar-header {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .calendar-day-header {
+        text-align: center;
+        font-weight: 600;
+        color: var(--bs-gray-600);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.5rem;
+    }
+
+    .calendar-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .calendar-week {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+    }
+
+    .calendar-day {
+        aspect-ratio: 1;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 8px;
+        position: relative;
+        background: rgba(255, 255, 255, 0.02);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .calendar-day.empty {
+        border: none;
+        background: transparent;
+        cursor: default;
+    }
+
+    .calendar-day.profit {
+        background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 255, 136, 0.05));
+        border-color: rgba(0, 255, 136, 0.3);
+    }
+
+    .calendar-day.loss {
+        background: linear-gradient(135deg, rgba(255, 59, 48, 0.15), rgba(255, 59, 48, 0.05));
+        border-color: rgba(255, 59, 48, 0.3);
+    }
+
+    .calendar-day:hover:not(.empty) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        border-color: var(--bs-primary);
+    }
+
+    .day-number {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--bs-gray-600);
+        margin-bottom: 4px;
+    }
+
+    .trade-result {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .trade-value {
+        font-size: 0.875rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .calendar-day.profit .trade-value {
+        color: #00ff88;
+    }
+
+    .calendar-day.loss .trade-value {
+        color: #ff3b30;
+    }
+
+    .trade-details {
+        font-size: 0.625rem;
+        color: var(--bs-gray-500);
+        margin-bottom: 2px;
+    }
+
+    .trade-metrics {
+        font-size: 0.625rem;
+        color: var(--bs-gray-400);
+        font-weight: 500;
+    }
+
+    /* Weekly Summary Styles */
+    .weekly-summary {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        height: fit-content;
+    }
+
+    .week-summary-item {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .week-summary-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateX(4px);
+    }
+
+    .week-summary-item.best-week {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
+        border-color: rgba(255, 193, 7, 0.3);
+    }
+
+    .week-summary-item.worst-week {
+        background: rgba(108, 117, 125, 0.1);
+        border-color: rgba(108, 117, 125, 0.2);
+    }
+
+    .week-summary-item.loss-week {
+        background: linear-gradient(135deg, rgba(255, 59, 48, 0.15), rgba(255, 59, 48, 0.05));
+        border-color: rgba(255, 59, 48, 0.3);
+    }
+
+    .week-summary-item.gain-week {
+        background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 255, 136, 0.05));
+        border-color: rgba(0, 255, 136, 0.3);
+    }
+
+    .week-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--bs-gray-300);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .week-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .week-value.profit {
+        color: #00ff88;
+    }
+
+    .week-value.loss {
+        color: #ff3b30;
+    }
+
+    .week-value.neutral {
+        color: var(--bs-gray-500);
+    }
+
+    .week-days {
+        font-size: 0.75rem;
+        color: var(--bs-gray-500);
+    }
+
+    .summary-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .calendar-summary .badge {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+
+    /* Responsive Calendar */
+    @media (max-width: 992px) {
+        .calendar-day {
+            min-height: 70px;
+            padding: 6px;
+        }
+
+        .trade-value {
+            font-size: 0.75rem;
+        }
+
+        .trade-details,
+        .trade-metrics {
+            font-size: 0.5rem;
+        }
+
+        .weekly-summary {
+            margin-top: 2rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .calendar-day {
+            min-height: 60px;
+            padding: 4px;
+        }
+
+        .day-number {
+            font-size: 0.625rem;
+        }
+
+        .trade-value {
+            font-size: 0.625rem;
+        }
+
+        .trade-details,
+        .trade-metrics {
+            display: none;
+        }
+
+        .calendar-summary {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .calendar-summary .badge {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+        }
+    }
