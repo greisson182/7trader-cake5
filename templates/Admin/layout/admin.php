@@ -25,7 +25,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <!-- Custom Styles -->
-    <link href="<?=HOME?>adm/css/style.css" rel="stylesheet">
+    <link href="<?= HOME ?>adm/css/style.css" rel="stylesheet">
 
     <script>
         const csrfToken = '<?= $csrfToken ?>';
@@ -116,14 +116,20 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 <span class="badge bg-primary ms-2"><?= ucfirst($logado->role) ?></span>
                             </a>
                             <ul class="dropdown-menu glass dropdown-menu-end sub-menu">
-                                <li><a class="dropdown-item" href="/admin/users/edit/<?= $logado->id ?>">
+                                <li>
+                                    <a class="dropdown-item" href="/admin/users/edit/<?= $logado->id ?>">
                                         <i class="bi bi-person-gear me-2"></i>
                                         Editar Perfil
-                                    </a></li>
-                                <li><a class="dropdown-item" href="/admin/operations_costs">
+                                    </a>
+                                </li>
+                                <?php if ($logado->role !== 'admin') { ?>
+                                <li>
+                                    <a class="dropdown-item" href="/admin/operations_costs">
                                         <i class="bi bi-gear-fill me-2"></i>
                                         Configurações
-                                    </a></li>
+                                    </a>
+                                </li>
+                                <?php } ?>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
@@ -212,8 +218,8 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="<?=HOME?>adm/js/theme.js"></script>
-    <script src="<?=HOME?>adm/js/value-colors.js"></script>
+    <script src="<?= HOME ?>adm/js/theme.js"></script>
+    <script src="<?= HOME ?>adm/js/value-colors.js"></script>
 
     <!-- Custom JavaScript for enhanced UX -->
     <script>
