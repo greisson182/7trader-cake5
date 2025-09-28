@@ -8,12 +8,17 @@ use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
+use Cake\Datasource\FactoryLocator;
+
 
 class StudiesTable extends Table
 {
     public function initialize(array $config): void
     {
         parent::initialize($config);
+
+        $this->setTable('Operations');
+        $this->setTable('OperationsCosts');
 
         $this->setTable('studies');
         $this->setDisplayField('id');
@@ -85,8 +90,8 @@ class StudiesTable extends Table
 
     public function getCostTrades($study)
     {
-        $this->Operations = $this->fetchTable('Operations');
-        $this->OperationsCosts = $this->fetchTable('OperationsCosts');
+        $this->Operations = FactoryLocator::get('Table')->get('Operations');
+        $this->OperationsCosts = FactoryLocator::get('Table')->get('OperationsCosts');
 
         $operations = $this->Operations->find('all')->where([
             'study_id' => $study['id'],

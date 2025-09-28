@@ -110,7 +110,7 @@ class UsersController extends AppController
 
                     $session = $this->request->getSession();
 
-                    $Usuario = $this->Users->find('all')->contain(['Groupps', 'Profiles'])->where(['Users.id' => $id])->first();
+                    $Usuario = $this->Users->find('all')->contain(['Groupps', 'Profiles', 'Students'])->where(['Users.id' => $id])->first();
 
                     $session->write('logado', $Usuario);
 
@@ -251,7 +251,7 @@ class UsersController extends AppController
 
                         $this->Users->save($Usuario);
 
-                        $Usuario = $this->Users->find('all')->contain(['Groupps', 'Profiles'])->where(['Users.id' => $User->id])->first();
+                        $Usuario = $this->Users->find('all')->contain(['Groupps', 'Profiles', 'Students'])->where(['Users.id' => $User->id])->first();
 
                         $session->write('logado', $Usuario);
 

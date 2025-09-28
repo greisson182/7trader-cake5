@@ -29,7 +29,7 @@ class AppController extends Controller
 		if ($this->request->getParam('prefix'))
 			$prefix = $this->request->getParam('prefix');
 
-		$Settings = $this->fetchTable('settings');
+		$Settings = $this->fetchTable('Settings');
 
 		$Config = $Settings->find('all')->first();
 

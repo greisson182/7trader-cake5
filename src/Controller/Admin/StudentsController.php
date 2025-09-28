@@ -514,7 +514,6 @@ class StudentsController extends AppController
                 ->select([
                     'year' => 'YEAR(study_date)',
                     'month' => 'MONTH(study_date)',
-                    'month_name' => 'MONTHNAME(study_date)',
                     'total_studies' => 'COUNT(*)',
                     'total_wins' => 'SUM(wins)',
                     'total_losses' => 'SUM(losses)',
@@ -527,14 +526,26 @@ class StudentsController extends AppController
                     'account_ids' => 'GROUP_CONCAT(DISTINCT Studies.account_id)',
                     'account_names' => 'GROUP_CONCAT(DISTINCT Accounts.name)'
                 ])
-                ->contain(['Accounts'])
+                ->leftJoin(['Accounts' => 'accounts'], ['Accounts.id = Studies.account_id'])
                 ->where([
-                    'student_id' => $id,
-                    'YEAR(study_date)' => $selectedYear
+                    'Studies.student_id' => $id,
+                    'YEAR(Studies.study_date)' => $selectedYear
                 ])
-                ->groupBy(['YEAR(study_date)', 'MONTH(study_date)'])
+                ->groupBy(['YEAR(Studies.study_date)', 'MONTH(Studies.study_date)'])
                 ->orderBy(['year' => 'DESC', 'month' => 'DESC'])
                 ->toArray();
+
+            // Adicionar nome do mês em PHP
+            $monthNames = [
+                1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+                5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+                9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
+            ];
+            
+            foreach ($monthlyData as &$data) {
+                $data['month_name'] = $monthNames[(int)$data['month']] ?? 'Mês';
+            }
+            unset($data);
 
             // Calcular estatísticas gerais usando CakePHP ORM
             $overallStatsQuery = $studiesTable->find()
@@ -588,7 +599,17 @@ class StudentsController extends AppController
                     'Studies.student_id' => $id,
                     'YEAR(Studies.study_date)' => $selectedYear
                 ])
-                ->groupBy(['YEAR(Studies.study_date)', 'MONTH(Studies.study_date)', 'Studies.market_id', 'Studies.account_id'])
+                ->groupBy([
+                    'DATE_FORMAT(Studies.study_date, \'%Y-%m\')',
+                    'YEAR(Studies.study_date)', 
+                    'MONTH(Studies.study_date)', 
+                    'Studies.market_id', 
+                    'Studies.account_id',
+                    'Markets.currency',
+                    'Markets.name',
+                    'Markets.code',
+                    'Accounts.name'
+                ])
                 ->orderBy(['year' => 'ASC', 'month' => 'ASC', 'Markets.name' => 'ASC'])
                 ->toArray();
 
@@ -687,7 +708,7 @@ class StudentsController extends AppController
             $currentMonth = (int)$this->request->getQuery('month', date('n'));
             $currentYear = (int)$this->request->getQuery('year', date('Y'));
 
-            $calendarData = $this->get_calendar_data($id, $currentYear, $currentMonth);
+            $calendarData = $this->get_calendar_data((int)$id, $currentYear, $currentMonth);
 
             // Buscar contas ativas para o filtro
             $accountsTable = $this->fetchTable('Accounts');

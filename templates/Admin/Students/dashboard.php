@@ -474,19 +474,24 @@ echo $this->Html->css('/adm/css/dashboard.css?v=' . time(), ['block' => 'style']
                 const maxValue = Math.max(...data);
                 const range = maxValue - minValue;
 
-                if (minValue < 0 && maxValue > 0) {
+                // Helper function to clamp values between 0 and 1
+                function clamp(value, min = 0, max = 1) {
+                    return Math.max(min, Math.min(max, value));
+                }
+
+                if (minValue < 0 && maxValue > 0 && range > 0) {
                     // Mixed positive and negative values
-                    const zeroPosition = Math.abs(minValue) / range;
+                    const zeroPosition = clamp(Math.abs(minValue) / range);
 
                     // Red gradient for negative values (bottom)
                     gradient.addColorStop(0, 'rgba(255, 59, 48, 0.3)');
-                    gradient.addColorStop(zeroPosition - 0.01, 'rgba(255, 59, 48, 0.1)');
+                    gradient.addColorStop(clamp(zeroPosition - 0.01), 'rgba(255, 59, 48, 0.1)');
 
                     // Transition at zero line
                     gradient.addColorStop(zeroPosition, 'rgba(255, 255, 255, 0.05)');
 
                     // Green gradient for positive values (top)
-                    gradient.addColorStop(zeroPosition + 0.01, 'rgba(0, 255, 136, 0.1)');
+                    gradient.addColorStop(clamp(zeroPosition + 0.01), 'rgba(0, 255, 136, 0.1)');
                     gradient.addColorStop(1, 'rgba(0, 255, 136, 0.3)');
                 } else if (maxValue <= 0) {
                     // All negative values - red gradient
