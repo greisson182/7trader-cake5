@@ -25,7 +25,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <!-- Custom Styles -->
-    <link href="/adm/css/style.css" rel="stylesheet">
+    <link href="<?=HOME?>adm/css/style.css" rel="stylesheet">
 
     <script>
         const csrfToken = '<?= $csrfToken ?>';
@@ -212,8 +212,8 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/adm/js/theme.js"></script>
-    <script src="/adm/js/value-colors.js"></script>
+    <script src="<?=HOME?>adm/js/theme.js"></script>
+    <script src="<?=HOME?>adm/js/value-colors.js"></script>
 
     <!-- Custom JavaScript for enhanced UX -->
     <script>
