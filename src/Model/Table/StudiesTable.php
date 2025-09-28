@@ -8,7 +8,6 @@ use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
-use Cake\ORM\TableRegistry;
 
 class StudiesTable extends Table
 {
@@ -86,8 +85,8 @@ class StudiesTable extends Table
 
     public function getCostTrades($study)
     {
-        $this->Operations = TableRegistry::getTableLocator()->get('Operations');
-        $this->OperationsCosts = TableRegistry::getTableLocator()->get('OperationsCosts');
+        $this->Operations = $this->fetchTable('Operations');
+        $this->OperationsCosts = $this->fetchTable('OperationsCosts');
 
         $operations = $this->Operations->find('all')->where([
             'study_id' => $study['id'],

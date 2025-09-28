@@ -47,7 +47,7 @@ class StudentsRegistrationController extends AppController
             exit;
         }
 
-        $usersTable = TableRegistry::getTableLocator()->get('Users');
+        $usersTable = $this->fetchTable('Users');
         $user = $usersTable->find()->where(['username' => $username])->first();
         
         $exists = !empty($user);
@@ -73,8 +73,8 @@ class StudentsRegistrationController extends AppController
             $this->Flash->error('Muitas tentativas de registro. Tente novamente em ' . ceil($timeUntilReset / 60) . ' minutos.');
         }
 
-        $studentsTable = TableRegistry::getTableLocator()->get('Students');
-        $usersTable = TableRegistry::getTableLocator()->get('Users');
+        $studentsTable = $this->fetchTable('Students');
+        $usersTable = $this->fetchTable('Users');
 
         $student = $studentsTable->newEmptyEntity();
         $user = $usersTable->newEmptyEntity();

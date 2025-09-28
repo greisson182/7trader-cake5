@@ -27,9 +27,9 @@ class WelcomeController extends AppController
         }
 
         // Load necessary tables
-        $studentsTable = TableRegistry::getTableLocator()->get('Students');
-        $studiesTable = TableRegistry::getTableLocator()->get('Studies');
-        $usersTable = TableRegistry::getTableLocator()->get('Users');
+        $studentsTable = $this->fetchTable('Students');
+        $studiesTable = $this->fetchTable('Studies');
+        $usersTable = $this->fetchTable('Users');
 
         // Total de estudantes
         $totalStudents = $studentsTable->find()->count();

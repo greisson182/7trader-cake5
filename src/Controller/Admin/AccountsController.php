@@ -1,20 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Controller;
+namespace App\Controller\Admin;
 
-/**
- * Accounts Controller
- *
- * @property \App\Model\Table\AccountsTable $Accounts
- */
+use App\Controller\AppController;
+
 class AccountsController extends AppController
 {
-    /**
-     * Index method
-     *
-     * @return \Cake\Http\Response|null|void Renders view
-     */
+
     public function index()
     {
         $query = $this->Accounts->find();
@@ -23,24 +16,12 @@ class AccountsController extends AppController
         $this->set(compact('accounts'));
     }
 
-    /**
-     * View method
-     *
-     * @param string|null $id Account id.
-     * @return \Cake\Http\Response|null|void Renders view
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function view($id = null)
     {
         $account = $this->Accounts->get($id, contain: ['Studies']);
         $this->set(compact('account'));
     }
 
-    /**
-     * Add method
-     *
-     * @return \Cake\Http\Response|null|void Redirects on successful add, renders view otherwise.
-     */
     public function add()
     {
         $account = $this->Accounts->newEmptyEntity();
@@ -56,13 +37,6 @@ class AccountsController extends AppController
         $this->set(compact('account'));
     }
 
-    /**
-     * Edit method
-     *
-     * @param string|null $id Account id.
-     * @return \Cake\Http\Response|null|void Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function edit($id = null)
     {
         $account = $this->Accounts->get($id, contain: []);
@@ -78,13 +52,6 @@ class AccountsController extends AppController
         $this->set(compact('account'));
     }
 
-    /**
-     * Delete method
-     *
-     * @param string|null $id Account id.
-     * @return \Cake\Http\Response|null Redirects to index.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

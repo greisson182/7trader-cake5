@@ -18,7 +18,7 @@ class PagesController extends AppController
 
 	public function view($url)
 	{
-		$Settings = TableRegistry::getTableLocator()->get('Settings');
+		$Settings = $this->fetchTable('Settings');
 		$Config = $Settings->find('all')->first();
 
 		if ($url == "index.php") {
@@ -41,7 +41,7 @@ class PagesController extends AppController
 
 		$page = $this->Pages->getPaginaBySlug($url);
 
-		$Posts = TableRegistry::getTableLocator()->get('Posts');
+		$Posts = $this->fetchTable('Posts');
 		$PostsPage = $Posts->getPostBySlug($url);
 
 		$q = "";
@@ -118,11 +118,11 @@ class PagesController extends AppController
 
 	public function blog($slug)
 	{
-		$Settings = TableRegistry::getTableLocator()->get('Settings');
+		$Settings = $this->fetchTable('Settings');
 
 		$Config = $Settings->find('all')->first();
 
-		$Posts = TableRegistry::getTableLocator()->get('Posts');
+		$Posts = $this->fetchTable('Posts');
 
 		$page = $this->Pages->getPaginaBySlug('blog');
 
@@ -142,7 +142,7 @@ class PagesController extends AppController
 		$res = new \stdClass();
 		$res->status = 0;
 
-		$Settings = TableRegistry::getTableLocator()->get('Settings');
+		$Settings = $this->fetchTable('Settings');
 
 		$Config = $Settings->find('all')->first();
 

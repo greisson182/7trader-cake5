@@ -149,7 +149,7 @@ class UsersController extends AppController
         $res = new \stdClass();
         $res->status = 0;
 
-        $Settings = TableRegistry::getTableLocator()->get('Settings');
+        $Settings = $this->fetchTable('Settings');
 
         $Config = $Settings->find('all')->first();
 
@@ -279,9 +279,9 @@ class UsersController extends AppController
 
         if ($this->request->is('post')) {
 
-            $InitTokens = TableRegistry::getTableLocator()->get('Tokens');
-            $Settings = TableRegistry::getTableLocator()->get('Settings');
-            $InitSendings = TableRegistry::getTableLocator()->get('Sendings');
+            $InitTokens = $this->fetchTable('Tokens');
+            $Settings = $this->fetchTable('Settings');
+            $InitSendings = $this->fetchTable('Sendings');
 
             $Config = $Settings->find('all')->first();
 
@@ -354,7 +354,7 @@ class UsersController extends AppController
     public function pass_recover($token = null)
     {
 
-        $InitTokens = TableRegistry::getTableLocator()->get('Tokens');
+        $InitTokens = $this->fetchTable('Tokens');
 
         $tokendb = $InitTokens->find('all')->where(['token' => $token, 'created BETWEEN NOW() -INTERVAL 10 HOUR AND NOW()'])->first();
 

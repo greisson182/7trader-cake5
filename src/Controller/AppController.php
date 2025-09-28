@@ -29,7 +29,7 @@ class AppController extends Controller
 		if ($this->request->getParam('prefix'))
 			$prefix = $this->request->getParam('prefix');
 
-		$Settings = FactoryLocator::get('Table')->get('settings');
+		$Settings = $this->fetchTable('settings');
 
 		$Config = $Settings->find('all')->first();
 
@@ -37,8 +37,8 @@ class AppController extends Controller
 
 		if ($prefix == 'Admin') {
 
-			$Usuarios = TableRegistry::getTableLocator()->get('Users');
-			$InitFiles = TableRegistry::getTableLocator()->get('Files');
+			$Usuarios = $this->fetchTable('Users');
+			$InitFiles = $this->fetchTable('Files');
 
 			if ($Config->maintenance) {
 				$this->viewBuilder()->setLayout('maintenance');
@@ -80,7 +80,7 @@ class AppController extends Controller
 					$users_accesses = 0;
 					$size_amount = 0;
 
-					$InitGroupps = TableRegistry::getTableLocator()->get('Groupps');
+					$InitGroupps = $this->fetchTable('Groupps');
 
 					$groupp = $InitGroupps->get($logado->groupp->id);
 
@@ -151,7 +151,7 @@ class AppController extends Controller
 
 				$this->viewBuilder()->setLayout('site');
 
-				$Pages = TableRegistry::getTableLocator()->get('Pages');
+				$Pages = $this->fetchTable('Pages');
 				
 				$pages = $Pages->getMenu();
 				
@@ -183,7 +183,7 @@ class AppController extends Controller
 
 		if (isset($logado->id)) {
 
-			$InitUsers = TableRegistry::getTableLocator()->get('Users');
+			$InitUsers = $this->fetchTable('Users');
 
 			$userdb = $InitUsers->get($logado->id);
 
@@ -218,7 +218,7 @@ class AppController extends Controller
 
 		if (isset($logado->profile_id)) {
 
-			$PermissionsProfiles = TableRegistry::getTableLocator()->get('PermissionsProfiles');
+			$PermissionsProfiles = $this->fetchTable('PermissionsProfiles');
 
 			$permissions = array();
 
@@ -300,7 +300,7 @@ class AppController extends Controller
 
 		if (isset($logado->profile_id)) {
 
-			$InitPermissionsProfiles = TableRegistry::getTableLocator()->get('PermissionsProfiles');
+			$InitPermissionsProfiles = $this->fetchTable('PermissionsProfiles');
 
 			$permissionsdb = $InitPermissionsProfiles->find('all')->where(['profile_id' => $logado->profile_id])->toArray();
 
@@ -376,7 +376,7 @@ class AppController extends Controller
 	public function accessApi($groupp_id = null)
 	{
 
-		$InitGroupps = TableRegistry::getTableLocator()->get('Groupps');
+		$InitGroupps = $this->fetchTable('Groupps');
 
 		$grouppDB = $InitGroupps->get($groupp_id);
 
@@ -431,7 +431,7 @@ class AppController extends Controller
 
 		set_time_limit(0);
 
-		$Settings = TableRegistry::getTableLocator()->get('Settings');
+		$Settings = $this->fetchTable('Settings');
 
 		$Config = $Settings->find('all')->first();
 
