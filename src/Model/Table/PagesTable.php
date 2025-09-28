@@ -108,7 +108,7 @@ class PagesTable extends Table
     {
         return $this->find()
             ->select(['title', 'slug', 'link'])
-            ->order(['Pages.order' => 'asc'])
+            ->orderBy(['Pages.order' => 'asc'])
             ->all();
     }
 

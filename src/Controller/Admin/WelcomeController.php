@@ -36,7 +36,7 @@ class WelcomeController extends AppController
 
         // Estudantes ativos (com usuários ativos)
         $activeStudents = $studentsTable->find()
-            ->innerJoinWith('Users', function ($q) {
+            ->matching('Users', function ($q) {
                 return $q->where(['Users.active' => 1]);
             })
             ->count();
@@ -64,7 +64,7 @@ class WelcomeController extends AppController
                 'total_losses' => $studentsTable->find()->func()->sum('Studies.losses')
             ])
             ->leftJoinWith('Studies')
-            ->innerJoinWith('Users', function ($q) {
+            ->matching('Users', function ($q) {
                 return $q->where(['Users.active' => 1]);
             })
             ->groupBy(['Students.id', 'Students.name'])
@@ -83,7 +83,7 @@ class WelcomeController extends AppController
                 'total_losses' => $studentsTable->find()->func()->sum('Studies.losses')
             ])
             ->leftJoinWith('Studies')
-            ->innerJoinWith('Users', function ($q) {
+            ->matching('Users', function ($q) {
                 return $q->where(['Users.active' => 1]);
             })
             ->groupBy(['Students.id', 'Students.name'])

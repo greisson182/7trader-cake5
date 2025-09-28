@@ -548,7 +548,7 @@ class CoursesController extends AppController
                 $videosQuery->where(['is_preview' => 1]);
             }
 
-            $videos = $videosQuery->order(['order_position' => 'ASC', 'created' => 'ASC'])
+            $videos = $videosQuery->orderBy(['order_position' => 'ASC', 'created' => 'ASC'])
                 ->toArray();
 
             $this->set('course', $course);

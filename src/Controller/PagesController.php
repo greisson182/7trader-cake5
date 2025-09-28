@@ -72,12 +72,12 @@ class PagesController extends AppController
 			$sobrenos = $this->Pages->getPaginaById(3);
 			$faq = $this->Pages->getPaginaById(4);
 			$contato = $this->Pages->getPaginaById(5);
-			$blogs = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 3])->order(["created" => "DESC"])->toArray();
+			$blogs = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 3])->orderBy(["created" => "DESC"])->toArray();
 		}
 		if ($url == 'blog') {
 
-			$blogs = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 6])->order(["created" => "DESC"])->toArray();
-			$blogsPopulares = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 5])->order(["view" => "DESC"])->toArray();
+			$blogs = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 6])->orderBy(["created" => "DESC"])->toArray();
+			$blogsPopulares = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 5])->orderBy(["view" => "DESC"])->toArray();
 		}
 
 		$noticias = [];
@@ -110,7 +110,7 @@ class PagesController extends AppController
 			$Config->title = $title_layout;
 			$Config->description = strip_tags($PostsPage->summary);
 
-			$blogsPopulares = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 3])->order(["view" => "DESC"])->toArray();
+			$blogsPopulares = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 3])->orderBy(["view" => "DESC"])->toArray();
 		}
 
 		$this->set(compact('q', 'page', 'PostsPage', 'noticias', 'title_layout', 'Config', 'comofunciona', 'sobrenos', 'faq', 'home', 'contato', 'faqs', 'servicos', 'documentos', 'blogs', 'blogsPopulares'));
@@ -126,8 +126,8 @@ class PagesController extends AppController
 
 		$page = $this->Pages->getPaginaBySlug('blog');
 
-		$blogs = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 6])->order(["created" => "DESC"])->toArray();
-		$blogsPopulares = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 5])->order(["view" => "DESC"])->toArray();
+		$blogs = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 6])->orderBy(["created" => "DESC"])->toArray();
+		$blogsPopulares = $Posts->find('all', ['conditions' => ['categorie_id' => 5], 'limit' => 5])->orderBy(["view" => "DESC"])->toArray();
 
 		$PostsPage = $Posts->getPostBySlug($slug);
 

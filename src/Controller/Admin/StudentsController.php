@@ -54,8 +54,9 @@ class StudentsController extends AppController
 
             // Buscar estudantes com dados do usuário associado
             $students = $studentsTable->find()
-                ->contain(['Users'])
-                ->where(['Users.active' => 1])
+                ->contain(['Users' => function ($q) {
+                    return $q->where(['Users.active' => 1]);
+                }])
                 ->orderBy(['Students.name' => 'ASC'])
                 ->toArray();
 
@@ -363,13 +364,13 @@ class StudentsController extends AppController
 
             // Métricas gerais
             $totalStudents = $studentsTable->find()
-                ->innerJoinWith('Users', function ($q) {
+                ->matching('Users', function ($q) {
                     return $q->where(['Users.active' => 1]);
                 })
                 ->count();
 
             $activeStudents = $studentsTable->find()
-                ->innerJoinWith('Users', function ($q) {
+                ->matching('Users', function ($q) {
                     return $q->where(['Users.active' => 1]);
                 })
                 ->count();
@@ -384,7 +385,7 @@ class StudentsController extends AppController
                     'total_studies' => $studentsTable->find()->func()->count('Studies.id')
                 ])
                 ->leftJoinWith('Studies')
-                ->innerJoinWith('Users', function ($q) {
+                ->matching('Users', function ($q) {
                     return $q->where(['Users.active' => 1]);
                 })
                 ->groupBy(['Students.id', 'Students.name'])
@@ -403,7 +404,7 @@ class StudentsController extends AppController
                     'total_losses' => $studentsTable->find()->func()->sum('Studies.losses')
                 ])
                 ->leftJoinWith('Studies')
-                ->innerJoinWith('Users', function ($q) {
+                ->matching('Users', function ($q) {
                     return $q->where(['Users.active' => 1]);
                 })
                 ->groupBy(['Students.id', 'Students.name'])
@@ -663,7 +664,7 @@ class StudentsController extends AppController
                 ->leftJoinWith('Studies', function ($q) use ($selectedYear) {
                     return $q->where(['YEAR(Studies.study_date)' => $selectedYear]);
                 })
-                ->innerJoinWith('Users', function ($q) {
+                ->matching('Users', function ($q) {
                     return $q->where(['Users.active' => 1]);
                 })
                 ->groupBy(['Students.id', 'Students.name'])
@@ -684,7 +685,7 @@ class StudentsController extends AppController
                 ->leftJoinWith('Studies', function ($q) use ($selectedYear) {
                     return $q->where(['YEAR(Studies.study_date)' => $selectedYear]);
                 })
-                ->innerJoinWith('Users', function ($q) {
+                ->matching('Users', function ($q) {
                     return $q->where(['Users.active' => 1]);
                 })
                 ->groupBy(['Students.id', 'Students.name'])
@@ -1003,20 +1004,27 @@ class StudentsController extends AppController
                 ->where($conditions)
                 ->first();*/
 
-            $studies =   $studiesTable->find()
+            // Debug: Log das condições para verificar a query
+            error_log("Condições da query: " . json_encode($conditions));
+            
+            // Buscar todos os estudos que atendem aos critérios de filtro
+            $studies = $studiesTable->find()
                 ->where($conditions)
-                ->first();
+                ->toArray();
+                
+            // Debug: Log do número de estudos encontrados
+            error_log("Número de estudos encontrados: " . count($studies));
 
-            $overallStats =  [
+            $overallStats = [
                 'total_studies' => 0,
                 'total_wins' => 0,
                 'total_losses' => 0,
+                'total_trades' => 0,
                 'total_profit_loss' => 0,
                 'avg_profit_loss' => 0,
                 'first_study_date' => null,
                 'last_study_date' => null
             ];
-
 
             foreach ($studies as $key => $study) {
                 // Calcular custo de operação para cada estudo
@@ -1029,13 +1037,22 @@ class StudentsController extends AppController
                 $overallStats['total_losses'] += $study['losses'];
                 $overallStats['total_trades'] += $study['wins'] + $study['losses'];
                 $overallStats['total_profit_loss'] += $studies[$key]['profit_loss'];
-                $overallStats['avg_profit_loss'] = $overallStats['total_profit_loss'] / $overallStats['total_studies'];
-                $overallStats['first_study_date'] = $overallStats['first_study_date'] ?: $study['study_date'];
-                $overallStats['last_study_date'] = $overallStats['last_study_date'] ?: $study['study_date'];
+                
+                // Definir datas de primeiro e último estudo
+                if ($overallStats['first_study_date'] === null || $study['study_date'] < $overallStats['first_study_date']) {
+                    $overallStats['first_study_date'] = $study['study_date'];
+                }
+                if ($overallStats['last_study_date'] === null || $study['study_date'] > $overallStats['last_study_date']) {
+                    $overallStats['last_study_date'] = $study['study_date'];
+                }
             }
 
-            // Calcular métricas adicionais
-            $overallStats['total_trades'] = $overallStats['total_wins'] + $overallStats['total_losses'];
+            // Calcular média de profit/loss
+            if ($overallStats['total_studies'] > 0) {
+                $overallStats['avg_profit_loss'] = $overallStats['total_profit_loss'] / $overallStats['total_studies'];
+            }
+
+            // Calcular taxa de acerto
             $overallStats['overall_win_rate'] = $overallStats['total_trades'] > 0
                 ? round(($overallStats['total_wins'] / $overallStats['total_trades']) * 100, 2)
                 : 0;

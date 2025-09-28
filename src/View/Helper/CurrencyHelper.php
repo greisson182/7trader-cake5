@@ -91,14 +91,19 @@ class CurrencyHelper extends Helper
     }
 
     /**
-     * Formatar valor com conversão automática baseada na moeda do usuário
+     * Formata valor para exibição na moeda preferida do usuário
      *
-     * @param float $value Valor original (sempre em BRL no banco)
+     * @param float|null $value Valor original (sempre em BRL no banco)
      * @param string $userCurrency Moeda preferida do usuário
      * @return string Valor formatado na moeda do usuário
      */
-    public static function formatForUser(float $value, string $userCurrency = 'BRL'): string
+    public static function formatForUser(?float $value, string $userCurrency = 'BRL'): string
     {
+        // Se o valor for null, retorna 0 formatado
+        if ($value === null) {
+            $value = 0.0;
+        }
+
         if ($userCurrency === 'USD') {
             $convertedValue = self::convert($value, 'BRL', 'USD');
             return self::format($convertedValue, 'USD');
