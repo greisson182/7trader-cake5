@@ -765,11 +765,11 @@ echo $this->Html->css('/adm/css/dashboard.css?v=' . time(), ['block' => 'style']
             }
         }
 
-        // Animate stat numbers
+        // Update stat numbers without animation
         document.querySelectorAll('.stat-number').forEach(el => {
             const originalText = el.textContent;
             
-            // Check if element has a data-target attribute (for custom animation targets)
+            // Check if element has a data-target attribute (for custom targets)
             let finalValue;
             if (el.hasAttribute('data-target')) {
                 finalValue = parseFloat(el.getAttribute('data-target')) || 0;
@@ -812,22 +812,22 @@ echo $this->Html->css('/adm/css/dashboard.css?v=' . time(), ['block' => 'style']
                 }
             }
 
+            // Animate value with consistent formatting
             let currentValue = 0;
-            const increment = finalValue / 50;
+            const increment = finalValue / 50; // 50 steps for smooth animation
             const timer = setInterval(() => {
                 currentValue += increment;
                 if (currentValue >= finalValue) {
                     currentValue = finalValue;
                     clearInterval(timer);
                 }
-
-                // Check if this element contains currency
+                
                 if (originalText.includes('$') || originalText.includes('R$')) {
                     el.textContent = formatCurrency(currentValue, userCurrency);
                 } else if (originalText.includes('%')) {
-                    el.textContent = Math.floor(currentValue).toLocaleString() + '%';
+                    el.textContent = Math.floor(currentValue).toLocaleString('pt-BR') + '%';
                 } else {
-                    el.textContent = Math.floor(currentValue).toLocaleString();
+                    el.textContent = Math.floor(currentValue).toLocaleString('pt-BR');
                 }
             }, 30);
         });
@@ -890,7 +890,8 @@ echo $this->Html->css('/adm/css/dashboard.css?v=' . time(), ['block' => 'style']
             // Load initial dashboard data even without filters - get yearly data
             setTimeout(() => {
                 loadCalendarData();
-                updateDashboardStats(currentCalendarYear); // No month parameter = yearly data
+                // Removed automatic updateDashboardStats call to prevent overriding initial values
+                // updateDashboardStats(currentCalendarYear); // No month parameter = yearly data
             }, 100);
         }
 
@@ -1145,7 +1146,8 @@ echo $this->Html->css('/adm/css/dashboard.css?v=' . time(), ['block' => 'style']
             // Update total trades card
             const totalTradesElement = document.querySelector('.stat-number[data-stat="trades"]');
             if (totalTradesElement) {
-                totalTradesElement.textContent = totalTrades.toLocaleString();
+                const targetValue = parseInt(totalTrades) || 0;
+                totalTradesElement.textContent = targetValue.toLocaleString('pt-BR');
             }
 
             // Update profit/loss card
@@ -1664,8 +1666,9 @@ echo $this->Html->css('/adm/css/dashboard.css?v=' . time(), ['block' => 'style']
                     const stats = data.data;
                     
                     // Update total studies
+                    const totalStudiesValue = parseInt(stats.total_studies) || 0;
                     document.getElementById('total-studies-stat').textContent = 
-                        new Intl.NumberFormat('pt-BR').format(stats.total_studies);
+                        totalStudiesValue.toLocaleString('pt-BR');
                     
                     // Update win rate
                     const winRateElement = document.getElementById('winrate-stat');
@@ -1674,7 +1677,8 @@ echo $this->Html->css('/adm/css/dashboard.css?v=' . time(), ['block' => 'style']
                     // Update total trades
                     const totalTradesFilterElement = document.getElementById('total-trades-stat');
                     if (totalTradesFilterElement) {
-                        totalTradesFilterElement.textContent = new Intl.NumberFormat('pt-BR').format(stats.total_trades);
+                        const targetValue = parseInt(stats.total_trades) || 0;
+                        totalTradesFilterElement.textContent = targetValue.toLocaleString('pt-BR');
                         console.log('Updated total trades (filtered) to:', stats.total_trades);
                     } else {
                         console.error('Element total-trades-stat not found in updateFilteredStats!');
@@ -1764,7 +1768,8 @@ echo $this->Html->css('/adm/css/dashboard.css?v=' . time(), ['block' => 'style']
                     const totalStudiesElement = document.getElementById('total-studies-stat');
                     console.log('Total studies element found:', totalStudiesElement);
                     if (totalStudiesElement) {
-                        totalStudiesElement.textContent = new Intl.NumberFormat('pt-BR').format(stats.total_studies);
+                        const totalStudiesValue = parseInt(stats.total_studies) || 0;
+                        totalStudiesElement.textContent = totalStudiesValue.toLocaleString('pt-BR');
                         console.log('Updated total studies to:', stats.total_studies);
                     } else {
                         console.error('Element total-studies-stat not found!');
@@ -1780,37 +1785,15 @@ echo $this->Html->css('/adm/css/dashboard.css?v=' . time(), ['block' => 'style']
                         console.error('Element winrate-stat not found!');
                     }
                     
-                    // Update total trades with animation
+                    // Update total trades without animation
                     const totalTradesElement = document.getElementById('total-trades-stat');
                     console.log('Total trades element found:', totalTradesElement);
                     if (totalTradesElement) {
-                        // Animate from current value to new value
-                        const currentValue = parseInt(totalTradesElement.textContent.replace(/\D/g, '')) || 0;
                         const targetValue = parseInt(stats.total_trades) || 0;
+                        console.log('Setting total trades directly to:', targetValue);
                         
-                        console.log('Animating total trades from:', currentValue, 'to:', targetValue);
-                        
-                        // Animate the value
-                        let animatedValue = currentValue;
-                        const increment = (targetValue - currentValue) / 50; // 50 steps for smooth animation
-                        
-                        const animationTimer = setInterval(() => {
-                            if (increment > 0) {
-                                animatedValue += increment;
-                                if (animatedValue >= targetValue) {
-                                    animatedValue = targetValue;
-                                    clearInterval(animationTimer);
-                                }
-                            } else {
-                                animatedValue += increment;
-                                if (animatedValue <= targetValue) {
-                                    animatedValue = targetValue;
-                                    clearInterval(animationTimer);
-                                }
-                            }
-                            
-                            totalTradesElement.textContent = Math.floor(animatedValue).toLocaleString('pt-BR');
-                        }, 20); // Update every 20ms for smooth animation
+                        // Set value directly without animation
+                        totalTradesElement.textContent = targetValue.toLocaleString('pt-BR');
                         
                         console.log('Updated total trades to:', stats.total_trades);
                     } else {

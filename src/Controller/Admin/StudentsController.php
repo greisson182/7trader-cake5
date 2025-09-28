@@ -547,23 +547,15 @@ class StudentsController extends AppController
             }
             unset($data);
 
-            // Calcular estatísticas gerais usando CakePHP ORM
-            $overallStatsQuery = $studiesTable->find()
-                ->select([
-                    'total_studies' => 'COUNT(*)',
-                    'total_wins' => 'SUM(wins)',
-                    'total_losses' => 'SUM(losses)',
-                    'total_profit_loss' => 'SUM(profit_loss)',
-                    'first_study_date' => 'MIN(study_date)',
-                    'last_study_date' => 'MAX(study_date)'
-                ])
+            // Buscar todos os estudos para calcular estatísticas com taxa
+            $studies = $studiesTable->find()
                 ->where([
                     'student_id' => $id,
                     'YEAR(study_date)' => $selectedYear
                 ])
-                ->first();
+                ->toArray();
 
-            $overallStats = $overallStatsQuery ? $overallStatsQuery->toArray() : [
+            $overallStats = [
                 'total_studies' => 0,
                 'total_wins' => 0,
                 'total_losses' => 0,
@@ -571,6 +563,21 @@ class StudentsController extends AppController
                 'first_study_date' => null,
                 'last_study_date' => null
             ];
+
+            // Calcular estatísticas incluindo a taxa
+            foreach ($studies as $key => $study) {
+                // Calcular custo de operação para cada estudo
+                $amount_cost = $studiesTable->getCostTrades($study);
+                $studies[$key]['profit_loss'] = $amount_cost + (float)$study['profit_loss'];
+
+                // Acumular estatísticas
+                $overallStats['total_studies']++;
+                $overallStats['total_wins'] += $study['wins'];
+                $overallStats['total_losses'] += $study['losses'];
+                $overallStats['total_profit_loss'] += $studies[$key]['profit_loss'];
+                $overallStats['first_study_date'] = $overallStats['first_study_date'] ?: $study['study_date'];
+                $overallStats['last_study_date'] = $overallStats['last_study_date'] ?: $study['study_date'];
+            }
 
             // Calcular métricas adicionais
             $overallStats['total_trades'] = $overallStats['total_wins'] + $overallStats['total_losses'];
