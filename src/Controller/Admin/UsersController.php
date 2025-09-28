@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AppController;
+use App\Middleware\RateLimitMiddleware;
+use Cake\Http\Exception\TooManyRequestsException;
 use Cake\ORM\TableRegistry;
 
 class UsersController extends AppController
@@ -208,6 +210,20 @@ class UsersController extends AppController
 
     public function login()
     {
+        // Apply rate limiting
+        $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit'); // 5 attempts per 5 minutes
+        $clientIp = $this->getClientIp();
+        
+        // Check rate limit before processing
+        $remainingAttempts = $rateLimiter->getRemainingAttempts($clientIp);
+        if ($remainingAttempts <= 0) {
+            $timeUntilReset = $rateLimiter->getTimeUntilReset($clientIp);
+            $this->Flash->error('Muitas tentativas de login. Tente novamente em ' . ceil($timeUntilReset / 60) . ' minutos.');
+            $Entusuario = $this->Users->newEmptyEntity();
+            $this->set(['User' => $Entusuario]);
+            return;
+        }
+        
         $Entusuario = $this->Users->newEmptyEntity();
         $session = $this->request->getSession();
 
@@ -216,6 +232,8 @@ class UsersController extends AppController
         }
 
         if ($this->request->is('post')) {
+            // Record the login attempt for rate limiting
+            $this->recordFailedAttempt($clientIp);
 
             $registro = $this->request->getData();
 
@@ -235,6 +253,9 @@ class UsersController extends AppController
                     $registro['password2'] = password_hash(trim($registro['pass']), PASSWORD_DEFAULT);
 
                     if (!empty($User->password) && password_verify(trim($registro['pass']), $User->password)) {
+                        // Successful login - clear rate limit for this IP
+                        $key = 'rate_limit_' . md5($clientIp);
+                        \Cake\Cache\Cache::delete($key, 'rate_limit');
 
                         $Usuario = $this->Users->get($User->id);
 

@@ -6,9 +6,9 @@ namespace App\Controller;
 
 use App\Controller\AppController;
 use App\Middleware\RateLimitMiddleware;
+use Cake\Http\Exception\TooManyRequestsException;
 use Cake\Event\EventInterface;
 use Cake\ORM\TableRegistry;
-use Cake\Http\Exception\TooManyRequestsException;
 
 class StudentsRegistrationController extends AppController
 {
@@ -236,66 +236,5 @@ class StudentsRegistrationController extends AppController
         $this->set(compact('student', 'user'));
     }
 
-    private function getClientIp(): string
-    {
-        $serverParams = $this->request->getServerParams();
-        
-        // Check for IP from various headers (for proxy/load balancer scenarios)
-        $ipHeaders = [
-            'HTTP_CF_CONNECTING_IP',     // Cloudflare
-            'HTTP_CLIENT_IP',            // Proxy
-            'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
-            'HTTP_X_FORWARDED',          // Proxy
-            'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
-            'HTTP_FORWARDED_FOR',        // Proxy
-            'HTTP_FORWARDED',            // Proxy
-            'REMOTE_ADDR'                // Standard
-        ];
-        
-        foreach ($ipHeaders as $header) {
-            if (!empty($serverParams[$header])) {
-                $ip = $serverParams[$header];
-                // Handle comma-separated IPs (X-Forwarded-For can contain multiple IPs)
-                if (strpos($ip, ',') !== false) {
-                    $ip = trim(explode(',', $ip)[0]);
-                }
-                // Validate IP
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                    return $ip;
-                }
-            }
-        }
-        
-        // Fallback to REMOTE_ADDR
-        return $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
-    }
-
-    private function recordFailedAttempt(string $clientIp): void
-    {
-        $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit');
-        // Force record an attempt by simulating middleware processing
-        $key = 'rate_limit_' . md5($clientIp);
-        $attempts = \Cake\Cache\Cache::read($key, 'rate_limit') ?: [];
-        $attempts[] = time();
-        \Cake\Cache\Cache::write($key, $attempts, 'rate_limit');
-    }
-
-    public function getRateLimitStatus()
-    {
-        $this->autoRender = false;
-        $this->request->allowMethod(['post']);
-        
-        $clientIp = $this->getClientIp();
-        $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit');
-        
-        $remainingAttempts = $rateLimiter->getRemainingAttempts($clientIp);
-        $timeUntilReset = $rateLimiter->getTimeUntilReset($clientIp);
-        
-        echo json_encode([
-            'remaining_attempts' => $remainingAttempts,
-            'time_until_reset' => $timeUntilReset,
-            'max_attempts' => 5
-        ]);
-        exit;
-    }
+   
 }
