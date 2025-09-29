@@ -82,7 +82,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     <?php if (!empty($studiesByMonth)): ?>
         <?php foreach ($studiesByMonth as $monthKey => $monthData): ?>
             <div class="card month-card mb-4" data-month-key="<?= h($monthKey) ?>">
-                <div class="card-header month-header" style="cursor: pointer;">
+                <div class="card-header-old month-header bg-month-studies" style="cursor: pointer;">
                     <div class="row align-items-center">
                         <div class="col-md-3">
                             <h5 class="mb-0">

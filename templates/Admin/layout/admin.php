@@ -24,9 +24,6 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-    <!-- Custom Styles -->
-    <link href="<?= HOME ?>adm/css/style.css" rel="stylesheet">
-
     <script>
         const csrfToken = '<?= $csrfToken ?>';
     </script>
@@ -123,12 +120,12 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                     </a>
                                 </li>
                                 <?php if ($logado->role !== 'admin') { ?>
-                                <li>
-                                    <a class="dropdown-item" href="/admin/operations_costs">
-                                        <i class="bi bi-gear-fill me-2"></i>
-                                        Configurações
-                                    </a>
-                                </li>
+                                    <li>
+                                        <a class="dropdown-item" href="/admin/operations_costs">
+                                            <i class="bi bi-gear-fill me-2"></i>
+                                            Configurações
+                                        </a>
+                                    </li>
                                 <?php } ?>
                                 <li>
                                     <hr class="dropdown-divider">
@@ -408,5 +405,8 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         createStaticAdminCandlesticks();
     </script>
 </body>
+
+<!-- Custom Styles -->
+<link href="<?= HOME ?>adm/css/style.css" rel="stylesheet">
 
 </html>

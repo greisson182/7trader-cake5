@@ -11,6 +11,12 @@ use Exception;
 
 class ImportsController extends AppController
 {
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->loadComponent('Flash');
+        $this->checkSession();
+    }
 
     private function validateAndMapCsvHeaders($headers, $platform = 'profit')
     {
@@ -295,7 +301,7 @@ class ImportsController extends AppController
                                 'profit_loss' => 0.00
                             ];
                         }
-                        
+
                         // Contar cada operação individual como win ou loss
                         $operationResult = $operationData['operation_result'];
                         if ($operationResult > 0) {
@@ -306,7 +312,7 @@ class ImportsController extends AppController
                             // Se for zero, considerar como win conforme solicitado
                             $operationsByMarket[$marketId]['wins']++;
                         }
-                        
+
                         $operationsByMarket[$marketId]['profit_loss'] += $operationResult;
                         $operationsByMarket[$marketId]['operations'][] = $operationData;
                     }

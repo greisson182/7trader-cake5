@@ -9,58 +9,10 @@
                     Cursos de Trading
                 </h1>
                 <p class="lead text-light opacity-75">
-                    Aprenda com nossos especialistas e domine o mercado financeiro
+                    Aprenda a ler o movimento do mercado e identificar padrões de trading.
                 </p>
             </div>
         </div>
-
-        <!-- Filtros -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card bg-dark border-secondary">
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-md-3">
-                                <select class="form-select bg-dark text-white border-secondary" id="filterCategory">
-                                    <option value="">Todas as Categorias</option>
-                                    <option value="Análise Técnica">Análise Técnica</option>
-                                    <option value="Análise Fundamentalista">Análise Fundamentalista</option>
-                                    <option value="Day Trade">Day Trade</option>
-                                    <option value="Swing Trade">Swing Trade</option>
-                                    <option value="Psicologia">Psicologia</option>
-                                    <option value="Gestão de Risco">Gestão de Risco</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <select class="form-select bg-dark text-white border-secondary" id="filterDifficulty">
-                                    <option value="">Todas as Dificuldades</option>
-                                    <option value="Iniciante">Iniciante</option>
-                                    <option value="Intermediário">Intermediário</option>
-                                    <option value="Avançado">Avançado</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <select class="form-select bg-dark text-white border-secondary" id="filterPrice">
-                                    <option value="">Todos os Preços</option>
-                                    <option value="free">Gratuitos</option>
-                                    <option value="paid">Pagos</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="input-group">
-                                    <input type="text" class="form-control bg-dark text-white border-secondary" 
-                                           placeholder="Buscar cursos..." id="searchInput">
-                                    <button class="btn btn-success" type="button">
-                                        <i class="fas fa-search"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Lista de Cursos -->
         <div class="row" id="coursesContainer">
             <?php if (empty($courses)): ?>

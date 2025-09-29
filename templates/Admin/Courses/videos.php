@@ -107,7 +107,7 @@
                     </a>
                 </div>
             <?php else: ?>
-                <div class="table-responsive">
+                <div class="table-responsive admin-table">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>

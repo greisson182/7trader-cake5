@@ -282,6 +282,9 @@
     padding-right: 24px;
 }
 
+
+
+
 /* Dark Mode Admin Tables */
 [data-theme="dark"] .admin-table {
     background: rgba(255, 255, 255, 0.03);
@@ -307,6 +310,12 @@
 
 [data-theme="dark"] .admin-table .table tbody td {
     color: #ffffff;
+}
+
+/* Specific override for videos-list table */
+[data-theme="dark"] tbody#videos-list td {
+    color: #000 !important;
+    background-color: transparent !important;
 }
 
 /* Enhanced Badge Styles for Admin */
@@ -460,4 +469,20 @@
 .alert-admin.alert-info {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     color: white;
+}
+
+[data-theme="dark"] #videos-list.table>h6 {
+    color: #000 !important;
+}
+
+[data-theme="dark"] #videos-list.table>small {
+    color: #000 !important;
+}
+
+[data-theme="dark"] .bg-month-studies {
+    background-color: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 204, 106, 0.05) 100%) !important;
+    color: white;
+    border: none;
+    padding: var(--space-lg);
+    font-weight: 600;
 }
