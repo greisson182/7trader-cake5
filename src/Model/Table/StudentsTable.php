@@ -43,12 +43,6 @@ class StudentsTable extends Table
             ->notEmptyString('name');
 
         $validator
-            ->email('email')
-            ->requirePresence('email', 'create')
-            ->notEmptyString('email')
-            ->add('email', 'unique', ['rule' => 'validateUnique', 'provider' => 'table']);
-
-        $validator
             ->scalar('phone')
             ->maxLength('phone', 20)
             ->allowEmptyString('phone');
@@ -58,7 +52,6 @@ class StudentsTable extends Table
 
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->isUnique(['email']), ['errorField' => 'email']);
 
         return $rules;
     }

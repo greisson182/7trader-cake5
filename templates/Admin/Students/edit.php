@@ -37,14 +37,6 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 Por favor, forneça um nome válido.
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email"
-                                value="<?= isset($student['email']) ? htmlspecialchars($student['email']) : '' ?>" required>
-                            <div class="invalid-feedback">
-                                Por favor, forneça um email válido.
-                            </div>
-                        </div>
 
                         <!-- User Access Control Section -->
                         <hr>

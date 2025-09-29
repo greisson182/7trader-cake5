@@ -101,7 +101,6 @@ class UsersController extends AppController
                 if ($user->role === 'student' && $user->student_id) {
                     $studentsTable = $this->fetchTable('Students');
                     $student = $studentsTable->get($user->student_id);
-                    $student->email = $user->email;
                     $studentsTable->save($student);
                 }
 

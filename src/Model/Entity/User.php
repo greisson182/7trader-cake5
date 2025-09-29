@@ -21,7 +21,6 @@ class User extends Entity
         'student' => true,
         'groupp' => true,
         'profile' => true,
-        'salt' => true,
         'last_login' => true,
         'status' => true,
         'blocked' => true,

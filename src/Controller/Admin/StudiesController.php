@@ -187,7 +187,6 @@ class StudiesController extends AppController
                     'Studies.created',
                     'Studies.modified',
                     'student_name' => 'Students.name',
-                    'student_email' => 'Students.email',
                     'market_name' => 'Markets.name',
                     'market_code' => 'Markets.code',
                     'market_description' => 'Markets.description',
@@ -222,7 +221,6 @@ class StudiesController extends AppController
                 $study['student'] = [
                     'id' => $study['student_id'],
                     'name' => $study['student_name'],
-                    'email' => $study['student_email'] ?? $study['username'] // Usar email do estudante ou username como fallback
                 ];
 
                 // Adicionar dados do mercado ao array do study

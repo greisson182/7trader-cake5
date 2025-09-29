@@ -20,7 +20,6 @@
                         </div>
                         <div class="card-body">
                             <p><strong>Name:</strong> <?= htmlspecialchars($student['name']) ?></p>
-                            <p><strong>Email:</strong> <?= htmlspecialchars($student['email']) ?></p>
                             <p><strong>Member Since:</strong> <?= date('Y-m-d', strtotime($student['created'])) ?></p>
                             <p><strong>Last Updated:</strong> <?= date('Y-m-d H:i:s', strtotime($student['modified'])) ?></p>
                         </div>

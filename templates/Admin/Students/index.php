@@ -32,7 +32,6 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                     <i class="bi bi-person-circle"></i>
                                 </div>
                                 <h5 class="card-title fw-bold mb-1"><?= h($student['name']) ?></h5>
-                                <p class="text-muted small mb-0"><?= h($student['email']) ?></p>
                             </div>
 
                             <!-- Student Info -->

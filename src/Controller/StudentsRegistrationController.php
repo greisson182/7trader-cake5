@@ -164,7 +164,6 @@ class StudentsRegistrationController extends AppController
                     // Create student entity
                     $student = $studentsTable->patchEntity($student, [
                         'name' => trim($data['name']),
-                        'email' => strtolower(trim($data['email'])),
                         'phone' => !empty($data['phone']) ? trim($data['phone']) : null
                     ]);
 
@@ -177,7 +176,7 @@ class StudentsRegistrationController extends AppController
                                 $errorMessages[] = $error;
                             }
                         }
-                        throw new \Exception('Erro nos dados do estudante: ' . implode(', ', $errorMessages));
+                        throw new \Exception('Erro ao criar a conta: ' . implode(', ', $errorMessages));
                     }
 
                     // Create user entity
@@ -188,7 +187,7 @@ class StudentsRegistrationController extends AppController
                         'role' => 'student',
                         'student_id' => $student->id,
                         'active' => true,
-                        'status' => 'active',
+                        'status' => 'a',
                         'blocked' => false,
                         'name' => trim($data['name']),
                         'profile_id' => 2,
