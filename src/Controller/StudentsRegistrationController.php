@@ -120,11 +120,11 @@ class StudentsRegistrationController extends AppController
             // Validate password
             if (empty($data['password']) || !is_string($data['password'])) {
                 $errors['password'] = 'Senha é obrigatória';
-            } elseif (strlen($data['password']) < 8) {
+            } /*elseif (strlen($data['password']) < 8) {
                 $errors['password'] = 'Senha deve ter pelo menos 8 caracteres';
             } elseif (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/', $data['password'])) {
                 $errors['password'] = 'Senha deve conter pelo menos uma letra minúscula, uma maiúscula e um número';
-            }
+            }*/
 
             // Validate password confirmation
             if (empty($data['confirm_password']) || $data['password'] !== $data['confirm_password']) {
