@@ -139,12 +139,6 @@ class StudentsRegistrationController extends AppController
                 }
             }
 
-            // Check for existing email in students table
-            $existingStudent = $studentsTable->find()->where(['email' => $data['email']])->first();
-            if ($existingStudent) {
-                $errors['email'] = 'Este e-mail já está cadastrado';
-            }
-
             // Check for existing username in users table
             $existingUser = $usersTable->find()->where(['username' => $data['username']])->first();
             if ($existingUser) {
@@ -165,9 +159,6 @@ class StudentsRegistrationController extends AppController
                     $this->Flash->error($message);
                 }
             } else {
-                // Start transaction
-                $connection = $studentsTable->getConnection();
-                $connection->begin();
 
                 try {
                     // Create student entity
@@ -216,14 +207,9 @@ class StudentsRegistrationController extends AppController
                         throw new \Exception('Erro na conta de usuário: ' . implode(', ', $errorMessages));
                     }
 
-                    // Commit transaction
-                    $connection->commit();
-
                     $this->Flash->success(__('Conta criada com sucesso! Você pode fazer login agora.'));
                     return $this->redirect(['prefix' => 'Admin', 'controller' => 'Users', 'action' => 'login']);
                 } catch (\Exception $e) {
-                    // Rollback transaction
-                    $connection->rollback();
                     
                     // Record failed attempt for rate limiting
                     $this->recordFailedAttempt($clientIp);
