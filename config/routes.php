@@ -10,8 +10,8 @@ return function (RouteBuilder $routes): void {
 
     $routes->scope('/', function (RouteBuilder $builder): void {
 
-        $builder->connect('/', ['prefix' => 'Admin', 'controller' => 'users', 'action' => 'login']);
-        //$builder->connect('/', ['controller' => 'Pages', 'action' => 'view','inicial']);
+        //$builder->connect('/', ['prefix' => 'Admin', 'controller' => 'users', 'action' => 'login']);
+        $builder->connect('/', ['controller' => 'Pages', 'action' => 'view','inicial']);
         $builder->connect('/blog/*', ['controller' => 'Posts', 'action' => 'index']);
         $builder->connect('/busca/*', ['controller' => 'Posts', 'action' => 'search']);
 

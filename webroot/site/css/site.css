@@ -272,6 +272,33 @@ body {
     width: 80%;
 }
 
+@media (max-width: 991.98px) {
+    .trading-navbar .navbar-collapse {
+        background: rgba(0, 0, 0, 0.95);
+        border: 1px solid rgba(0, 255, 136, 0.22);
+        border-radius: 16px;
+        padding: 0.75rem;
+        margin-top: 0.75rem;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .trading-navbar .navbar-nav {
+        gap: 0.25rem !important;
+    }
+
+    .trading-navbar .navbar-nav .nav-item {
+        width: 100%;
+    }
+
+    .trading-navbar .navbar-nav .nav-link {
+        padding: 0.85rem 0.9rem !important;
+    }
+
+    .trading-navbar .navbar-nav .btn {
+        width: 100%;
+    }
+}
+
 /* Trading Dropdown */
 .trading-dropdown {
     background: var(--trading-dark) !important;
@@ -341,7 +368,7 @@ body {
     align-items: center;
     position: relative;
     overflow: hidden;
-    margin-top: 80px;
+    margin-top: 0;
 }
 
 .hero-section::before {
@@ -353,6 +380,23 @@ body {
     bottom: 0;
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%2300C851" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
     opacity: 0.3;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.hero-section::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/site/images/candles.png');
+    background-repeat: repeat;
+    background-size: 900px auto;
+    opacity: 0.05;
+    filter: grayscale(1) contrast(1.2);
+    transform: rotate(-6deg) scale(1.1);
+    z-index: 0;
+    pointer-events: none;
+    mask-image: radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.2) 70%, transparent 100%);
 }
 
 .hero-section .display-4 {
@@ -383,6 +427,7 @@ body {
     transition: all 0.3s ease;
     border: 2px solid transparent !important;
     background: var(--trading-white);
+    color: var(--trading-dark);
     box-shadow: var(--shadow-md);
     border-radius: 16px;
 }
@@ -411,6 +456,11 @@ body {
     color: var(--trading-medium);
     font-weight: 600;
     font-size: 1.1rem;
+}
+
+.hero-section .stat-item p {
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
 }
 
 /* Navigation */
@@ -2612,5 +2662,196 @@ footer h5 {
     .img-banner {
         filter:
             saturate(1.6) contrast(1.1) brightness(1.05) drop-shadow(0 0 15px rgba(0, 233, 68, 0.5)) drop-shadow(0 0 30px rgba(0, 233, 68, 0.3)) drop-shadow(0 0 45px rgba(0, 233, 68, 0.2));
+    }
+}
+
+.trading-navbar {
+    top: 0;
+}
+
+.site-main {
+    padding-top: 80px;
+}
+
+.pricing-card {
+    border: 1px solid rgba(0, 255, 136, 0.25);
+}
+
+.pricing-card.featured {
+    border-color: rgba(0, 255, 136, 0.65);
+    box-shadow: 0 0 0 1px rgba(0, 255, 136, 0.2), var(--shadow-neon);
+}
+
+.pricing-badge {
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.35);
+    color: var(--trading-primary);
+}
+
+.pricing-badge.featured {
+    background: var(--gradient-neon);
+    border: 1px solid rgba(0, 255, 136, 0.55);
+    color: var(--trading-dark);
+}
+
+.offer-price {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--trading-primary);
+}
+
+.pricing-price {
+    font-size: 2.2rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--trading-white);
+}
+
+.pricing-price .pricing-currency {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--trading-primary);
+    margin-right: 0.25rem;
+}
+
+.trading-card {
+    background: rgba(26, 26, 26, 0.85);
+    border: 1px solid rgba(0, 255, 136, 0.22) !important;
+    color: var(--trading-white);
+    backdrop-filter: blur(16px);
+}
+
+.trading-card.featured {
+    border-color: rgba(0, 255, 136, 0.6) !important;
+    box-shadow: 0 0 0 1px rgba(0, 255, 136, 0.18), var(--shadow-neon);
+}
+
+.trading-card .text-secondary,
+.trading-card .text-muted {
+    color: var(--trading-light) !important;
+}
+
+.trading-card .form-label {
+    color: var(--trading-white);
+}
+
+.trading-accordion .accordion-item {
+    background: rgba(26, 26, 26, 0.75);
+    border: 1px solid rgba(0, 255, 136, 0.25);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.trading-accordion .accordion-button {
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--trading-white);
+    font-weight: 600;
+}
+
+.trading-accordion .accordion-button:not(.collapsed) {
+    background: rgba(0, 255, 136, 0.12);
+    color: var(--trading-white);
+    box-shadow: none;
+}
+
+.trading-accordion .accordion-button:focus {
+    border-color: rgba(0, 255, 136, 0.55);
+    box-shadow: 0 0 0 0.25rem rgba(0, 255, 136, 0.15);
+}
+
+.trading-accordion .accordion-body {
+    color: var(--trading-light);
+}
+
+.site-footer {
+    background: var(--trading-dark);
+    border-top: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.site-footer a {
+    color: var(--trading-light);
+    text-decoration: none;
+}
+
+.site-footer a:hover {
+    color: var(--trading-primary);
+    text-decoration: underline;
+}
+
+#ofertas {
+    position: relative;
+    overflow: hidden;
+}
+
+#ofertas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/site/images/candles.png');
+    background-repeat: repeat;
+    background-size: 720px auto;
+    opacity: 0.06;
+    filter: grayscale(1) contrast(1.2);
+    transform: rotate(-8deg) scale(1.15);
+    pointer-events: none;
+}
+
+#ofertas::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 10%, rgba(0, 255, 136, 0.10) 0%, transparent 55%),
+        radial-gradient(circle at 80% 30%, rgba(0, 255, 136, 0.08) 0%, transparent 55%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.10) 100%);
+    pointer-events: none;
+}
+
+#ofertas .container {
+    position: relative;
+    z-index: 1;
+}
+
+#depoimentos,
+#contato {
+    position: relative;
+    overflow: hidden;
+}
+
+#depoimentos::before,
+#contato::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/site/images/candles.png');
+    background-repeat: repeat;
+    background-size: 760px auto;
+    opacity: 0.05;
+    filter: grayscale(1) contrast(1.2);
+    transform: rotate(-8deg) scale(1.15);
+    pointer-events: none;
+}
+
+#depoimentos::after,
+#contato::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 25% 15%, rgba(0, 255, 136, 0.10) 0%, transparent 55%),
+        radial-gradient(circle at 75% 35%, rgba(0, 255, 136, 0.08) 0%, transparent 55%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.12) 100%);
+    pointer-events: none;
+}
+
+#depoimentos .container,
+#contato .container {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .site-main {
+        padding-top: 110px;
     }
 }

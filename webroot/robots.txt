@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /painel
+Disallow: /login
+Disallow: /recupera
+Allow: /
+
+Sitemap: /sitemap.xml

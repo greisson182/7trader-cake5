@@ -429,10 +429,6 @@ class UsersController extends AppController
         $session = $this->request->getSession();
         $logado = $session->read('logado');
 
-        $Usuario = $this->Users->get($logado->id);
-
-        $this->Users->save($Usuario);
-
         $this->autoRender = false;
 
         $session->delete('logado');

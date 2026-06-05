@@ -89,39 +89,54 @@ if (statsSection) {
 // Contact form handling
 const contactForm = document.querySelector('#contactForm');
 if (contactForm) {
-    contactForm.addEventListener('submit', function (e) {
+    contactForm.addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        // Get form data
         const formData = new FormData(this);
         const data = Object.fromEntries(formData);
 
-        // Basic validation
-        if (!data.name || !data.email || !data.message) {
+        if (data.full_name) {
+            return;
+        }
+
+        if (!data.contactsName || !data.contactsEmail || !data.contactsMassage) {
             showAlert('Por favor, preencha todos os campos obrigatórios.', 'danger');
             return;
         }
 
-        // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(data.email)) {
+        if (!emailRegex.test(data.contactsEmail)) {
             showAlert('Por favor, insira um email válido.', 'danger');
             return;
         }
 
-        // Show loading state
         const submitBtn = this.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
         submitBtn.textContent = 'Enviando...';
         submitBtn.disabled = true;
 
-        // Simulate form submission (replace with actual endpoint)
-        setTimeout(() => {
-            showAlert('Mensagem enviada com sucesso! Entraremos em contato em breve.', 'success');
-            this.reset();
+        try {
+            const response = await fetch(this.getAttribute('action') || '/envia_contato', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const json = await response.json().catch(() => null);
+            if (json && json.status === 1) {
+                showAlert('Mensagem enviada com sucesso! Entraremos em contato em breve.', 'success');
+                this.reset();
+            } else {
+                showAlert('Não foi possível enviar sua mensagem agora. Tente novamente.', 'danger');
+            }
+        } catch (err) {
+            showAlert('Erro de conexão ao enviar. Verifique sua internet e tente novamente.', 'danger');
+        } finally {
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
-        }, 2000);
+        }
     });
 }
 
