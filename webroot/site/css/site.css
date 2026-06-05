@@ -2715,6 +2715,20 @@ footer h5 {
     margin-right: 0.25rem;
 }
 
+.urgency-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(0, 255, 136, 0.10);
+    border: 1px solid rgba(0, 255, 136, 0.35);
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.2px;
+}
+
 .trading-card {
     background: rgba(26, 26, 26, 0.85);
     border: 1px solid rgba(0, 255, 136, 0.22) !important;
@@ -2765,6 +2779,49 @@ footer h5 {
     color: var(--trading-light);
 }
 
+.about-photo {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 255, 136, 0.22);
+    background: radial-gradient(circle at 30% 20%, rgba(0, 255, 136, 0.18) 0%, rgba(26, 26, 26, 0.85) 55%, rgba(0, 0, 0, 0.9) 100%);
+    box-shadow: var(--shadow-lg);
+    aspect-ratio: 4 / 5;
+}
+
+.about-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.about-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: rgba(255, 255, 255, 0.85);
+    gap: 0.5rem;
+}
+
+.about-photo-placeholder i {
+    font-size: 3rem;
+    color: rgba(0, 255, 136, 0.8);
+}
+
+.about-badge {
+    background: rgba(0, 255, 136, 0.12);
+    border: 1px solid rgba(0, 255, 136, 0.28);
+    color: rgba(255, 255, 255, 0.92);
+    padding: 0.5rem 0.75rem;
+    font-weight: 700;
+}
+
 .site-footer {
     background: var(--trading-dark);
     border-top: 1px solid rgba(0, 255, 136, 0.2);
@@ -2778,6 +2835,30 @@ footer h5 {
 .site-footer a:hover {
     color: var(--trading-primary);
     text-decoration: underline;
+}
+
+.footer-social {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 255, 136, 0.18);
+    background: rgba(0, 0, 0, 0.25);
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+}
+
+.footer-social:hover {
+    color: var(--trading-primary);
+    border-color: rgba(0, 255, 136, 0.35);
+    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.12);
+    text-decoration: none;
+}
+
+.footer-social i {
+    font-size: 1.15rem;
 }
 
 #ofertas {

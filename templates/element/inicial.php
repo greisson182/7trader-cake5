@@ -2,7 +2,7 @@
     <div class="container position-relative py-5">
         <div class="row align-items-center g-5">
             <div class="col-lg-7">
-                <p class="text-uppercase fw-bold mb-2" style="letter-spacing: 2px; color: var(--trading-primary-light);">Day Trade • Price Action • Gatilhos</p>
+                <p class="text-uppercase fw-bold mb-2" style="letter-spacing: 2px; color: var(--trading-primary-light);">Day Trade • Price Action • Gatilhos • Fibonacci</p>
                 <h1 class="display-4 mb-3">
                     Treinamento prático para operar com <span class="text-success">consistência</span>
                 </h1>
@@ -17,13 +17,13 @@
                 <div class="row mt-5 g-3 stats-section">
                     <div class="col-4">
                         <div class="stat-item">
-                            <h3 class="counter" data-target="120">0</h3>
-                            <p class="mb-0">Aulas e setups</p>
+                            <h3 class="counter" data-target="40">0</h3>
+                            <p class="mb-0">Aulas</p>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="stat-item">
-                            <h3 class="counter" data-target="12">0</h3>
+                            <h3 class="counter" data-target="8">0</h3>
                             <p class="mb-0">Semanas guiadas</p>
                         </div>
                     </div>
@@ -51,7 +51,7 @@
                             </div>
                             <div>
                                 <div class="fw-bold">Curso</div>
-                                <div class="text-muted small">Base completa de price action e gatilhos, com rotina e exercícios.</div>
+                                <div class="text-muted small">Base completa de price action e gatilhos, fibonacci, com rotina e exercícios.</div>
                             </div>
                         </div>
 
@@ -61,7 +61,7 @@
                             </div>
                             <div>
                                 <div class="fw-bold">Mentoria em grupo</div>
-                                <div class="text-muted small">Encontros ao vivo com correções e acompanhamento de evolução.</div>
+                                <div class="text-muted small">40 Encontros ao vivo com orientação, correções e acompanhamento em grupo.</div>
                             </div>
                         </div>
 
@@ -71,7 +71,7 @@
                             </div>
                             <div>
                                 <div class="fw-bold">Mentoria particular</div>
-                                <div class="text-muted small">Plano individual, análise de operações e ajustes finos no seu operacional.</div>
+                                <div class="text-muted small">Plano individual, 10h de análise de operações e ajustes finos no seu operacional.</div>
                             </div>
                         </div>
                     </div>
@@ -144,6 +144,57 @@
     </div>
 </section>
 
+<section id="sobre" class="content-section dark">
+    <div class="container">
+        <h2 class="section-title neon">Sobre mim</h2>
+        <p class="section-subtitle">Conheça a história por trás do método.</p>
+
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-5">
+                <div class="about-photo">
+                    <?php
+                    $photoPublicPath = '/site/images/caricatura-daytrade.png';
+                    $photoFsPath = WWW_ROOT . 'site' . DS . 'images' . DS . 'caricatura-daytrade.png';
+                    $hasPhoto = file_exists($photoFsPath);
+                    ?>
+                    <?php if ($hasPhoto) : ?>
+                        <img class="about-photo-img" src="<?= h($photoPublicPath) ?>" alt="Greisson Trader">
+                    <?php else : ?>
+                        <div class="about-photo-placeholder">
+                            <i class="fa-solid fa-user"></i>
+                            <div class="small mt-2">Adicionar foto</div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="modern-card">
+                    <h3 class="h4 mb-2">Greisson Trader</h3>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge rounded-pill about-badge"><i class="fa-brands fa-bitcoin me-2"></i>Cripto desde 2016</span>
+                        <span class="badge rounded-pill about-badge"><i class="fa-solid fa-chart-line me-2"></i>B3 desde 2021</span>
+                        <span class="badge rounded-pill about-badge"><i class="fa-solid fa-bullseye me-2"></i>85% de assertividade</span>
+                    </div>
+
+                    <p class="text-muted mb-3">
+                        Minha trajetória no mercado financeiro começou em 2016, investindo em Bitcoin e outras criptomoedas. Ao longo dos anos, obtive bons resultados nesse mercado, o que me fez acreditar que a migração para a B3 seria um passo natural.
+
+Em 2021, iniciei minhas operações em mini índice e mini dólar, confiante de que já era um trader bem-sucedido. No entanto, encontrei uma realidade diferente. Passei por dificuldades, enfrentei perdas e descobri que o mercado exige muito mais do que confiança: exige método, disciplina e capacidade de adaptação.
+
+A virada aconteceu quando conheci os ensinamentos de Ariel, cuja metodologia baseada em Price Action, Fibonacci e Candles Gatilhos transformou minha forma de enxergar o mercado. A partir desse conhecimento, passei a desenvolver uma leitura mais clara da movimentação dos preços, operando sem indicadores e focando exclusivamente na estrutura do mercado.
+
+Hoje, aplico esse método com consistência e compartilho minha experiência para ajudar outros traders a encurtarem o caminho que levei anos para percorrer.
+                    </p>
+                    <p class="text-muted mb-0 small">
+                        Resultados passados não garantem resultados futuros. O foco é método, gestão de risco e disciplina.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section id="ofertas" class="content-section light">
     <div class="container">
         <h2 class="section-title">O que você recebe</h2>
@@ -164,6 +215,7 @@
                             <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Estratégias de price action e gatilhos</span></li>
                             <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Checklist de contexto e execução</span></li>
                             <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Exercícios e plano de estudo</span></li>
+                            <li class="d-flex gap-2"><i class="fa-solid fa-chart-pie text-success mt-1"></i><span>Sistema de controle de estudos com relatórios de operações e assertividade</span></li>
                             <li class="d-flex gap-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Acesso por tempo estendido</span></li>
                         </ul>
                         <a href="#planos" class="btn btn-outline-success w-100">Ver plano de curso</a>
@@ -185,9 +237,10 @@
                             <span class="badge rounded-pill bg-success">Mais escolhida</span>
                         </div>
                         <ul class="list-unstyled mb-4">
-                            <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Encontros semanais com análise de mercado</span></li>
+                            <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>40 aulas ao vivo (2h cada) com análise de mercado</span></li>
                             <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Correção de diário e plano de evolução</span></li>
                             <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Comunidade para tirar dúvidas</span></li>
+                            <li class="d-flex gap-2"><i class="fa-solid fa-chart-pie text-success mt-1"></i><span>Sistema de controle de estudos com relatórios de operações e assertividade</span></li>
                             <li class="d-flex gap-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Acesso ao curso incluso</span></li>
                         </ul>
                         <a href="#planos" class="btn btn-success w-100">Ver mentoria em grupo</a>
@@ -205,12 +258,17 @@
                                 <div class="text-secondary fw-semibold">Plano individual</div>
                             </div>
                         </div>
+                        <div class="urgency-badge mb-3">
+                            <i class="fa-solid fa-bolt me-2"></i>Vagas limitadas • o valor pode subir conforme a demanda
+                        </div>
                         <ul class="list-unstyled mb-4">
                             <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Mapeamento do seu operacional e rotina</span></li>
+                            <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-clock text-success mt-1"></i><span>10 aulas individuais (1h cada)</span></li>
                             <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Regras, gestão e ajustes no seu setup</span></li>
                             <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Reuniões 1:1 e metas por semana</span></li>
                             <li class="d-flex gap-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Feedback direto e acompanhamento</span></li>
                             <li class="d-flex gap-2"><i class="fa-solid fa-gift text-success mt-1"></i><span>Bônus: curso + mentoria em grupo inclusos</span></li>
+                            <li class="d-flex gap-2"><i class="fa-solid fa-chart-pie text-success mt-1"></i><span>Sistema de controle de estudos com relatórios de operações e assertividade</span></li>
                         </ul>
                         <a href="#planos" class="btn btn-outline-success w-100">Ver mentoria particular</a>
                     </div>
@@ -238,6 +296,7 @@
                         <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Acesso às aulas e materiais</span></li>
                         <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Checklist de preparação</span></li>
                         <li class="d-flex gap-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Plano de estudo</span></li>
+                        <li class="d-flex gap-2"><i class="fa-solid fa-chart-pie text-success mt-1"></i><span>Sistema de controle de estudos com relatórios de operações e assertividade</span></li>
                     </ul>
                     <a href="#contato" class="btn btn-outline-success w-100">Quero o curso</a>
                 </div>
@@ -252,10 +311,11 @@
                     <div class="pricing-price mb-3"><span class="pricing-currency">R$</span> 997,00</div>
                     <p class="text-muted mb-4">Para quem quer evolução com acompanhamento ao vivo.</p>
                     <ul class="list-unstyled mb-4">
-                        <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Reuniões ao vivo semanais</span></li>
+                        <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>40 aulas ao vivo (2h cada)</span></li>
                         <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Correção de diário</span></li>
                         <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Comunidade</span></li>
                         <li class="d-flex gap-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Curso incluso</span></li>
+                        <li class="d-flex gap-2"><i class="fa-solid fa-chart-pie text-success mt-1"></i><span>Sistema de controle de estudos com relatórios de operações e assertividade</span></li>
                     </ul>
                     <a href="#contato" class="btn btn-success w-100">Quero a mentoria em grupo</a>
                 </div>
@@ -267,13 +327,18 @@
                         <h3 class="h4 mb-0">Mentoria particular</h3>
                         <span class="badge rounded-pill pricing-badge">Premium</span>
                     </div>
-                    <div class="pricing-price mb-3"><span class="pricing-currency">R$</span> 2.997,00</div>
+                    <div class="urgency-badge mb-3">
+                        <i class="fa-solid fa-bolt me-2"></i>Vagas limitadas • o valor pode subir conforme a demanda
+                    </div>
+                    <div class="pricing-price mb-3"><span class="pricing-currency">R$</span> 3.997,00</div>
                     <p class="text-muted mb-4">Para ajustar o operacional com plano individual e feedback direto.</p>
                     <ul class="list-unstyled mb-4">
                         <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Plano individual de execução</span></li>
+                        <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-clock text-success mt-1"></i><span>10 aulas individuais (1h cada)</span></li>
                         <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Reuniões 1:1</span></li>
                         <li class="d-flex gap-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Acompanhamento e metas</span></li>
                         <li class="d-flex gap-2"><i class="fa-solid fa-gift text-success mt-1"></i><span>Bônus: curso + mentoria em grupo inclusos</span></li>
+                        <li class="d-flex gap-2"><i class="fa-solid fa-chart-pie text-success mt-1"></i><span>Sistema de controle de estudos com relatórios de operações e assertividade</span></li>
                     </ul>
                     <a href="#contato" class="btn btn-outline-success w-100">Quero a mentoria particular</a>
                 </div>
@@ -379,7 +444,7 @@
 <section id="contato" class="content-section light">
     <div class="container">
         <h2 class="section-title">Contato</h2>
-        <p class="section-subtitle">Envie sua mensagem para receber detalhes, valores e disponibilidade.</p>
+        <p class="section-subtitle">Clique no botão e fale com a equipe pelo WhatsApp para receber detalhes, valores e disponibilidade.</p>
 
         <div class="row g-4">
             <div class="col-lg-6">
@@ -387,28 +452,17 @@
                     <div class="card-body p-4">
                         <h3 class="h4 mb-3">Fale com a equipe</h3>
                         <p class="text-secondary mb-4">Conte seu nível, sua rotina e qual formato você busca (curso, mentoria em grupo ou particular).</p>
-
-                        <form id="contactForm" action="/envia_contato" method="post">
-                            <input type="text" name="full_name" value="" class="d-none" tabindex="-1" autocomplete="off">
-
-                            <div class="mb-3">
-                                <label class="form-label">Nome</label>
-                                <input type="text" class="form-control" name="contactsName" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="contactsEmail" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Telefone/WhatsApp</label>
-                                <input type="text" class="form-control" name="contactsPhone">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Mensagem</label>
-                                <textarea class="form-control" name="contactsMassage" rows="4" required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-success w-100">Enviar mensagem</button>
-                        </form>
+                        <?php
+                        $whatsNumber = '5541992752998';
+                        $whatsText = rawurlencode('Olá! Quero informações sobre o curso e as mentorias (grupo e particular).');
+                        $whatsUrl = "https://wa.me/{$whatsNumber}?text={$whatsText}";
+                        ?>
+                        <a class="btn btn-success w-100" href="<?= h($whatsUrl) ?>" target="_blank" rel="noopener">
+                            <i class="fa-brands fa-whatsapp me-2"></i>Chamar no WhatsApp
+                        </a>
+                        <div class="text-muted small mt-3">
+                            Atendimento via WhatsApp. Responderemos o mais rápido possível.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -459,6 +513,9 @@
             <a class="small" href="#home">Topo</a>
             <a class="small" href="#planos">Planos</a>
             <a class="small" href="#contato">Contato</a>
+            <a class="footer-social" href="https://www.youtube.com/@7trader_" target="_blank" rel="noopener" aria-label="Canal no YouTube">
+                <i class="fa-brands fa-youtube"></i>
+            </a>
         </div>
     </div>
 </footer>
