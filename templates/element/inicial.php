@@ -71,7 +71,7 @@
                             </div>
                             <div>
                                 <div class="fw-bold">Mentoria particular</div>
-                                <div class="text-muted small">Plano individual, 10h de análise de operações e ajustes finos no seu operacional.</div>
+                                <div class="text-muted small">Plano individual, 10 aulas de 1h cada de análise de operações e ajustes finos na leitura do operacional.</div>
                             </div>
                         </div>
                     </div>
