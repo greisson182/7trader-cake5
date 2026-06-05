@@ -1,5 +1,16 @@
 <?php
-$pageTitle = $title_layout ?? ($Config->title ?? '7 Trader');
+$brandName = trim((string)($Config->title ?? '7 Trader'));
+$rawTitle = null;
+if (!empty($PostsPage->title)) {
+    $rawTitle = (string)$PostsPage->title;
+} elseif (!empty($page->title)) {
+    $rawTitle = (string)$page->title;
+} elseif (!empty($title_layout)) {
+    $rawTitle = (string)$title_layout;
+} else {
+    $rawTitle = $brandName;
+}
+$rawTitle = trim(preg_replace('/^\s*-\s*/', '', $rawTitle));
 $pageDescription = $Config->description ?? 'Treinamentos de day trade no mercado financeiro com price action e gatilhos. Curso, mentoria em grupo e mentoria particular.';
 $pageImage = $Config->image ?? null;
 $canonicalUrl = $this->Url->build($this->getRequest()->getUri()->getPath() ?: '/', ['fullBase' => true]);
@@ -13,13 +24,19 @@ if (empty($ogImage)) {
     $ogImage = $this->Url->build((string)$ogImage, ['fullBase' => true]);
 }
 $isHome = $this->getRequest()->getUri()->getPath() === '/';
+$seoTitle = $rawTitle;
+if ($isHome) {
+    $seoTitle = "Curso e Mentoria de Day Trade | Price Action e Candle Gatilho e Fibonacci | {$brandName}";
+} elseif (stripos($seoTitle, $brandName) === false) {
+    $seoTitle = "{$seoTitle} | {$brandName}";
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= h($pageTitle) ?></title>
+    <title><?= h($seoTitle) ?></title>
     <link rel="icon" href="/favicon.png" type="image/x-icon">
     <link rel="canonical" href="<?= h($canonicalUrl) ?>">
     <meta name="description" content="<?= h($pageDescription) ?>">
@@ -27,14 +44,14 @@ $isHome = $this->getRequest()->getUri()->getPath() === '/';
 
     <meta property="og:locale" content="pt_BR">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="<?= h($Config->title ?? '7 Trader') ?>">
-    <meta property="og:title" content="<?= h($pageTitle) ?>">
+    <meta property="og:site_name" content="<?= h($brandName) ?>">
+    <meta property="og:title" content="<?= h($seoTitle) ?>">
     <meta property="og:description" content="<?= h($pageDescription) ?>">
     <meta property="og:url" content="<?= h($canonicalUrl) ?>">
     <meta property="og:image" content="<?= h($ogImage) ?>">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="<?= h($pageTitle) ?>">
+    <meta name="twitter:title" content="<?= h($seoTitle) ?>">
     <meta name="twitter:description" content="<?= h($pageDescription) ?>">
     <meta name="twitter:image" content="<?= h($ogImage) ?>">
     <meta name="theme-color" content="#00ff88">

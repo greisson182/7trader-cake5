@@ -7,7 +7,11 @@
                     Treinamento prático para operar com <span class="text-success">consistência</span>
                 </h1>
                 <p class="lead text-muted mb-4">
-                    Aprenda leitura de contexto, estrutura e gatilhos de entrada com gestão de risco objetiva.
+                    Aprenda a interpretar o mercado através da leitura de contexto, estrutura, Fibonacci e candles gatilhos, identificando operações alinhadas ao movimento macro e buscando oportunidades de alta relação risco-retorno, que podem alcançar 10:1 ou mais.
+
+A metodologia é aplicada em diferentes mercados, como Nasdaq, Bitcoin, Índice Brasileiro (WIN), Forex e outros ativos de alta liquidez, sempre com foco em operar a favor do movimento predominante, aumentando a probabilidade de acerto e evitando entradas contra a tendência principal.
+
+Desenvolva uma leitura clara do mercado, com entradas objetivas, gestão de risco profissional e uma visão estratégica baseada na movimentação real do preço, sem depender de indicadores ou sinais prontos.
                     Escolha entre <strong>curso</strong>, <strong>mentoria em grupo</strong> e <strong>mentoria particular</strong>.
                 </p>
                 <div class="d-flex flex-wrap gap-3">
@@ -88,7 +92,7 @@
 <section id="metodologia" class="content-section dark">
     <div class="container">
         <h2 class="section-title neon">Metodologia</h2>
-        <p class="section-subtitle">Do contexto ao gatilho: decisão simples, execução limpa e risco controlado.</p>
+        <p class="section-subtitle">Do contexto macro ao gatilho de entrada micro: decisão simples, execução limpa e risco controlado.</p>
 
         <div class="row g-4">
             <div class="col-md-6 col-lg-4">
@@ -97,7 +101,7 @@
                         <div class="feature-icon" style="width: 56px; height: 56px;"><i class="fa-solid fa-layer-group"></i></div>
                         <h3 class="h5 mb-0">Leitura de contexto</h3>
                     </div>
-                    <p class="text-muted mb-0">Entenda tendência, força e zonas relevantes para operar onde o preço “fala mais alto”.</p>
+                    <p class="text-muted mb-0">Entenda tendência macro, força e zonas relevantes para operar onde o preço “fala mais alto”.</p>
                 </div>
             </div>
 
@@ -117,7 +121,7 @@
                         <div class="feature-icon" style="width: 56px; height: 56px;"><i class="fa-solid fa-bullseye"></i></div>
                         <h3 class="h5 mb-0">Gatilhos e execução</h3>
                     </div>
-                    <p class="text-muted mb-0">Entrada com confirmação, stop técnico e alvo por contexto (sem “achismo”).</p>
+                    <p class="text-muted mb-0">Entrada com confirmação, stop técnico e alvo por contexto macro (sem “achismo”).</p>
                 </div>
             </div>
 
@@ -330,7 +334,7 @@ Hoje, aplico esse método com consistência e compartilho minha experiência par
                     <div class="urgency-badge mb-3">
                         <i class="fa-solid fa-bolt me-2"></i>Vagas limitadas • o valor pode subir conforme a demanda
                     </div>
-                    <div class="pricing-price mb-3"><span class="pricing-currency">R$</span> 3.997,00</div>
+                    <div class="pricing-price mb-3"><span class="pricing-currency">R$</span> 2.997,00</div>
                     <p class="text-muted mb-4">Para ajustar o operacional com plano individual e feedback direto.</p>
                     <ul class="list-unstyled mb-4">
                         <li class="d-flex gap-2 mb-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Plano individual de execução</span></li>
