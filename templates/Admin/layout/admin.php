@@ -170,16 +170,6 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         </li>
                     <?php endif; ?>
 
-                    <!-- Theme Toggle -->
-                    <li class="nav-item d-flex align-items-center">
-                        <label class="theme-toggle">
-                            <input type="checkbox" id="theme-toggle">
-                            <span class="theme-slider">
-                                <i class="bi bi-sun theme-icon sun-icon"></i>
-                                <i class="bi bi-moon theme-icon moon-icon"></i>
-                            </span>
-                        </label>
-                    </li>
                 </ul>
             </div>
         </div>
