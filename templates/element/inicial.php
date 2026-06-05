@@ -9,7 +9,7 @@
                 <p class="lead text-muted mb-4">
                     Aprenda a interpretar o mercado através da leitura de contexto, estrutura, Fibonacci e candles gatilhos, identificando operações alinhadas ao movimento macro e buscando oportunidades de alta relação risco-retorno, que podem alcançar 10:1 ou mais.
 
-A metodologia é aplicada em diferentes mercados, como Nasdaq, Bitcoin, Índice Brasileiro (WIN), Forex e outros ativos de alta liquidez, sempre com foco em operar a favor do movimento predominante, aumentando a probabilidade de acerto e evitando entradas contra a tendência principal.
+A metodologia é aplicada em diferentes mercados, como mercados americanos, Bitcoin, Índice Brasileiro, Forex e outros ativos de alta liquidez, sempre com foco em operar a favor do movimento predominante, aumentando a probabilidade de acerto e evitando entradas contra a tendência principal.
 
 Desenvolva uma leitura clara do mercado, com entradas objetivas, gestão de risco profissional e uma visão estratégica baseada na movimentação real do preço, sem depender de indicadores ou sinais prontos.
                     Escolha entre <strong>curso</strong>, <strong>mentoria em grupo</strong> e <strong>mentoria particular</strong>.
