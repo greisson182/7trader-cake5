@@ -6,9 +6,9 @@
 $csrfToken = $this->request->getAttribute('csrfToken');
 ?>
 <div class="mentorships add content fade-in-up">
-    <div class="d-flex justify-content-between align-items-center mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="display-6 fw-bold mb-2">
+            <h1 class="h3 fw-bold mb-2">
                 <i class="bi bi-plus-circle-fill me-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                 Nova Mentoria
             </h1>
@@ -24,7 +24,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         <div class="card-body">
             <?= $this->Form->create($mentorship) ?>
             <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
-            <div class="row g-4">
+            <div class="row g-3">
                 <div class="col-md-8">
                     <label for="name" class="form-label fw-semibold">Nome da Mentoria *</label>
                     <input type="text" class="form-control" id="name" name="name" required
@@ -61,7 +61,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-3 mt-5 pt-4 border-top">
+            <div class="d-flex justify-content-end gap-3 mt-4 pt-4 border-top">
                 <a href="/admin/mentorships" class="btn btn-outline-secondary">
                     <i class="bi bi-x-circle me-2"></i>
                     Cancelar

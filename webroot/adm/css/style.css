@@ -1456,6 +1456,18 @@ span.text-danger {
 
 /* Estilos específicos para tema escuro */
 [data-theme="dark"] .table {
+  /* O Bootstrap 5.3 pinta cada célula com estas variáveis (não com o
+     background do .table), então sem isso as linhas ficam claras mesmo
+     com o fundo escuro definido acima. */
+  --bs-table-bg: transparent;
+  --bs-table-color: #ffffff;
+  --bs-table-border-color: rgba(255, 255, 255, 0.08);
+  --bs-table-striped-bg: rgba(0, 255, 136, 0.04);
+  --bs-table-striped-color: #ffffff;
+  --bs-table-hover-bg: rgba(0, 255, 136, 0.08);
+  --bs-table-hover-color: #ffffff;
+  --bs-table-active-bg: rgba(0, 255, 136, 0.1);
+  --bs-table-active-color: #ffffff;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -1619,6 +1631,18 @@ span.text-danger {
   color: var(--text-primary);
   font-weight: 600;
   margin-bottom: var(--space-sm);
+}
+
+/* Text Input Dark Mode Styling (input, textarea) - mirrors .form-select below,
+   sem isso o campo cai no --glass-bg genérico (verde neon translúcido no dark) */
+[data-theme="dark"] .form-control {
+  background: rgba(26, 26, 26, 0.9);
+  color: #ffffff;
+  border-color: rgba(0, 255, 136, 0.3);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* Select and Option Dark Mode Styling */

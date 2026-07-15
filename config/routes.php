@@ -1,6 +1,7 @@
 <?php
 
 use Cake\Routing\Route\DashedRoute;
+use Cake\Routing\Route\Route;
 use Cake\Routing\RouteBuilder;
 use Cake\Http\Middleware\CsrfProtectionMiddleware;
 
@@ -51,6 +52,25 @@ return function (RouteBuilder $routes): void {
         $routes->connect('/courses/purchase-students/*', ['controller' => 'courses', 'action' => 'purchaseStudents']);
 
         $routes->connect('/students/monthly-studies/*', ['controller' => 'students', 'action' => 'monthlyStudies']);
+
+        // Ações com nome em snake_case: usam a classe de rota base (sem inflexão de
+        // action) porque DashedRoute converteria "get_monthly_stats_ajax" para
+        // "getMonthlyStatsAjax" mesmo vindo de um default fixo, quebrando o dispatch.
+        $routes->connect(
+            '/students/get_calendar_data_ajax/*',
+            ['controller' => 'Students', 'action' => 'get_calendar_data_ajax'],
+            ['routeClass' => Route::class]
+        );
+        $routes->connect(
+            '/students/get_filtered_stats_ajax/*',
+            ['controller' => 'Students', 'action' => 'get_filtered_stats_ajax'],
+            ['routeClass' => Route::class]
+        );
+        $routes->connect(
+            '/students/get_monthly_stats_ajax/*',
+            ['controller' => 'Students', 'action' => 'get_monthly_stats_ajax'],
+            ['routeClass' => Route::class]
+        );
 
        // $routes->applyMiddleware('csrf');
         $routes->setExtensions(['json', 'xml']);

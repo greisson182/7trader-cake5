@@ -1,11 +1,15 @@
 <?php
+/**
+ * @var \App\View\AppView $this
+ * @var \App\Model\Entity\Course $course
+ */
 $csrfToken = $this->request->getAttribute('csrfToken');
 ?>
 <div class="courses edit content fade-in-up">
     <!-- Header Section -->
-    <div class="d-flex justify-content-between align-items-center mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-            <h1 class="display-6 fw-bold mb-2">
+            <h1 class="h3 fw-bold mb-2">
                 <i class="bi bi-pencil-square me-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                 Editar Curso
             </h1>
@@ -23,186 +27,207 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         </div>
     </div>
 
-    <!-- Form Card -->
-    <div class="card glass">
-        <div class="card-body">
-            <?= $this->Form->create($course) ?>
-            <div class="row g-4">
-                <!-- Basic Information -->
-                <div class="col-12">
-                    <h5 class="fw-bold mb-3">
-                        <i class="bi bi-info-circle me-2"></i>
-                        Informações Básicas
-                    </h5>
-                </div>
-
-                <div class="col-md-8">
-                    <label for="title" class="form-label fw-semibold">
-                        <i class="bi bi-type me-1"></i>
-                        Título do Curso *
-                    </label>
-                    <input type="text" class="form-control" id="title" name="title" required
-                        value="<?= h($course['title']) ?>" placeholder="Ex: Fundamentos do Trading">
-                </div>
-
-                <div class="col-md-4">
-                    <label for="difficulty" class="form-label fw-semibold">
-                        <i class="bi bi-mortarboard me-1"></i>
-                        Nível de Dificuldade
-                    </label>
-                    <select class="form-select" id="difficulty" name="difficulty">
-                        <option value="Iniciante" <?= $course['difficulty'] === 'Iniciante' ? 'selected' : '' ?>>Iniciante</option>
-                        <option value="Intermediário" <?= $course['difficulty'] === 'Intermediário' ? 'selected' : '' ?>>Intermediário</option>
-                        <option value="Avançado" <?= $course['difficulty'] === 'Avançado' ? 'selected' : '' ?>>Avançado</option>
-                    </select>
-                </div>
-
-                <div class="col-12">
-                    <label for="description" class="form-label fw-semibold">
-                        <i class="bi bi-text-paragraph me-1"></i>
-                        Descrição
-                    </label>
-                    <textarea class="form-control" id="description" name="description" rows="4"
-                        placeholder="Descreva o conteúdo e objetivos do curso..."><?= h($course['description']) ?></textarea>
-                </div>
-
-                <!-- Course Details -->
-                <div class="col-12 mt-5">
-                    <h5 class="fw-bold mb-3">
-                        <i class="bi bi-gear me-2"></i>
-                        Detalhes do Curso
-                    </h5>
-                </div>
-
-                <div class="col-md-6">
-                    <label for="category" class="form-label fw-semibold">
-                        <i class="bi bi-tag me-1"></i>
-                        Categoria
-                    </label>
-                    <input type="text" class="form-control" id="category" name="category"
-                        value="<?= h($course['category']) ?>" placeholder="Ex: Trading Básico, Análise Técnica">
-                </div>
-
-                <div class="col-md-6">
-                    <label for="instructor" class="form-label fw-semibold">
-                        <i class="bi bi-person me-1"></i>
-                        Instrutor
-                    </label>
-                    <input type="text" class="form-control" id="instructor" name="instructor"
-                        value="<?= h($course['instructor']) ?>" placeholder="Nome do instrutor">
-                </div>
-
-                <div class="col-md-6">
-                    <label for="duration_minutes" class="form-label fw-semibold">
-                        <i class="bi bi-clock me-1"></i>
-                        Duração Estimada (minutos)
-                    </label>
-                    <input type="number" class="form-control" id="duration_minutes" name="duration_minutes"
-                        min="0" value="<?= h($course['duration_minutes']) ?>" placeholder="Ex: 120">
-                </div>
-
-                <div class="col-md-6">
-                    <label for="thumbnail" class="form-label fw-semibold">
-                        <i class="bi bi-image me-1"></i>
-                        URL da Thumbnail
-                    </label>
-                    <input type="url" class="form-control" id="thumbnail" name="thumbnail"
-                        value="<?= h($course['thumbnail']) ?>" placeholder="https://exemplo.com/imagem.jpg">
-                </div>
-
-                <!-- Pricing -->
-                <div class="col-12 mt-5">
-                    <h5 class="fw-bold mb-3">
-                        <i class="bi bi-currency-dollar me-2"></i>
-                        Preço e Acesso
-                    </h5>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="is_free" name="is_free"
-                            <?= $course['is_free'] ? 'checked' : '' ?>>
-                        <label class="form-check-label fw-semibold" for="is_free">
-                            <i class="bi bi-gift me-1"></i>
-                            Curso Gratuito
-                        </label>
-                    </div>
-                </div>
-
-                <div class="col-md-6" id="price-field" style="display: <?= $course['is_free'] ? 'none' : 'block' ?>;">
-                    <label for="price" class="form-label fw-semibold">
-                        <i class="bi bi-currency-dollar me-1"></i>
-                        Preço (R$)
-                    </label>
-                    <input type="number" class="form-control" id="price" name="price"
-                        min="0" step="0.01" value="<?= h($course['price']) ?>" placeholder="0.00">
-                </div>
-
-                <!-- Status -->
-                <div class="col-md-6">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
-                            <?= $course['is_active'] ? 'checked' : '' ?>>
-                        <label class="form-check-label fw-semibold" for="is_active">
-                            <i class="bi bi-toggle-on me-1"></i>
-                            Curso Ativo
-                        </label>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <label for="order_position" class="form-label fw-semibold">
-                        <i class="bi bi-sort-numeric-up me-1"></i>
-                        Posição na Ordenação
-                    </label>
-                    <input type="number" class="form-control" id="order_position" name="order_position"
-                        min="0" value="<?= h($course['order_position']) ?>" placeholder="0">
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="d-flex justify-content-end gap-3 mt-5 pt-4 border-top">
-                <a href="/admin/courses" class="btn btn-outline-secondary">
-                    <i class="bi bi-x-circle me-2"></i>
-                    Cancelar
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle me-2"></i>
-                    Salvar Alterações
-                </button>
-            </div>
-            <?= $this->Form->button(__('Submit')) ?>
-            <?= $this->Form->end() ?>
-        </div>
-    </div>
-
-    <!-- Course Statistics -->
-    <div class="row mt-4">
-        <div class="col-md-6">
+    <?= $this->Form->create($course, ['type' => 'file']) ?>
+    <input type="hidden" name="_csrfToken" value="<?= h($csrfToken) ?>">
+    <div class="row g-3">
+        <!-- Main Form -->
+        <div class="col-lg-8">
             <div class="card glass">
-                <div class="card-body text-center">
-                    <i class="bi bi-play-circle display-4 text-primary mb-3"></i>
-                    <h5 class="fw-bold">Vídeos do Curso</h5>
-                    <p class="text-muted mb-3">Total de vídeos cadastrados</p>
-                    <h3 class="text-primary fw-bold"><?= isset($course['video_count']) ? $course['video_count'] : '0' ?></h3>
-                    <a href="/admin/courses/videos/<?= $course['id'] ?>" class="btn btn-outline-primary btn-sm">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Basic Information -->
+                        <div class="col-12">
+                            <h5 class="fw-bold mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Informações Básicas
+                            </h5>
+                        </div>
+
+                        <div class="col-md-8">
+                            <label for="title" class="form-label fw-semibold">
+                                <i class="bi bi-type me-1"></i>
+                                Título do Curso *
+                            </label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                value="<?= h($course['title']) ?>" placeholder="Ex: Fundamentos do Trading">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="difficulty" class="form-label fw-semibold">
+                                <i class="bi bi-mortarboard me-1"></i>
+                                Nível de Dificuldade
+                            </label>
+                            <select class="form-select" id="difficulty" name="difficulty">
+                                <option value="Iniciante" <?= $course['difficulty'] === 'Iniciante' ? 'selected' : '' ?>>Iniciante</option>
+                                <option value="Intermediário" <?= $course['difficulty'] === 'Intermediário' ? 'selected' : '' ?>>Intermediário</option>
+                                <option value="Avançado" <?= $course['difficulty'] === 'Avançado' ? 'selected' : '' ?>>Avançado</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="description" class="form-label fw-semibold">
+                                <i class="bi bi-text-paragraph me-1"></i>
+                                Descrição
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="4"
+                                placeholder="Descreva o conteúdo e objetivos do curso..."><?= h($course['description']) ?></textarea>
+                        </div>
+
+                        <!-- Course Details -->
+                        <div class="col-12 mt-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="bi bi-gear me-2"></i>
+                                Detalhes do Curso
+                            </h5>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="category" class="form-label fw-semibold">
+                                <i class="bi bi-tag me-1"></i>
+                                Categoria
+                            </label>
+                            <input type="text" class="form-control" id="category" name="category"
+                                value="<?= h($course['category']) ?>" placeholder="Ex: Trading Básico, Análise Técnica">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="instructor" class="form-label fw-semibold">
+                                <i class="bi bi-person me-1"></i>
+                                Instrutor
+                            </label>
+                            <input type="text" class="form-control" id="instructor" name="instructor"
+                                value="<?= h($course['instructor']) ?>" placeholder="Nome do instrutor">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="duration_minutes" class="form-label fw-semibold">
+                                <i class="bi bi-clock me-1"></i>
+                                Duração Estimada (minutos)
+                            </label>
+                            <input type="number" class="form-control" id="duration_minutes" name="duration_minutes"
+                                min="0" value="<?= h($course['duration_minutes']) ?>" placeholder="Ex: 120">
+                        </div>
+
+                        <!-- Pricing -->
+                        <div class="col-12 mt-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="bi bi-currency-dollar me-2"></i>
+                                Preço e Acesso
+                            </h5>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="is_free" name="is_free"
+                                    <?= $course['is_free'] ? 'checked' : '' ?>>
+                                <label class="form-check-label fw-semibold" for="is_free">
+                                    <i class="bi bi-gift me-1"></i>
+                                    Curso Gratuito
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6" id="price-field" style="display: <?= $course['is_free'] ? 'none' : 'block' ?>;">
+                            <label for="price" class="form-label fw-semibold">
+                                <i class="bi bi-currency-dollar me-1"></i>
+                                Preço (R$)
+                            </label>
+                            <input type="number" class="form-control" id="price" name="price"
+                                min="0" step="0.01" value="<?= h($course['price']) ?>" placeholder="0.00">
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                    <?= $course['is_active'] ? 'checked' : '' ?>>
+                                <label class="form-check-label fw-semibold" for="is_active">
+                                    <i class="bi bi-toggle-on me-1"></i>
+                                    Curso Ativo
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="order_position" class="form-label fw-semibold">
+                                <i class="bi bi-sort-numeric-up me-1"></i>
+                                Posição na Ordenação
+                            </label>
+                            <input type="number" class="form-control" id="order_position" name="order_position"
+                                min="0" value="<?= h($course['order_position']) ?>" placeholder="0">
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-3 mt-4 pt-4 border-top">
+                        <a href="/admin/courses" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <!-- Course Image -->
+            <div class="card glass mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">
+                        <i class="bi bi-image me-2"></i>
+                        Imagem do Curso
+                    </h6>
+
+                    <div class="thumbnail-preview mb-3">
+                        <img id="thumbnailPreview"
+                             src="<?= h($course['thumbnail']) ?>"
+                             alt="Prévia da imagem do curso"
+                             class="<?= empty($course['thumbnail']) ? 'd-none' : '' ?>">
+                        <div id="thumbnailPlaceholder" class="thumbnail-placeholder <?= empty($course['thumbnail']) ? '' : 'd-none' ?>">
+                            <i class="bi bi-image"></i>
+                            <span>Nenhuma imagem definida</span>
+                        </div>
+                    </div>
+
+                    <label for="thumbnail_upload" class="form-label fw-semibold small">
+                        <i class="bi bi-upload me-1"></i>
+                        Enviar imagem do computador
+                    </label>
+                    <input type="file" class="form-control form-control-sm" id="thumbnail_upload" name="thumbnail_upload"
+                        accept="image/jpeg,image/png,image/webp,image/gif">
+                    <div class="form-text">JPG, PNG, WEBP ou GIF, até 5MB. Proporção 16:9 recomendada (ex: 1280x720px).</div>
+                </div>
+            </div>
+
+            <!-- Course Statistics -->
+            <div class="card glass">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Estatísticas
+                    </h6>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted"><i class="bi bi-play-circle me-1"></i>Vídeos</span>
+                        <span class="fw-bold fs-5"><?= (int)($course['video_count'] ?? 0) ?></span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted"><i class="bi bi-people me-1"></i>Inscritos</span>
+                        <span class="fw-bold fs-5"><?= (int)($course['enrollment_count'] ?? 0) ?></span>
+                    </div>
+                    <a href="/admin/courses/videos/<?= $course['id'] ?>" class="btn btn-outline-primary btn-sm w-100">
                         <i class="bi bi-collection-play me-1"></i>
                         Gerenciar Vídeos
                     </a>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card glass">
-                <div class="card-body text-center">
-                    <i class="bi bi-people display-4 text-success mb-3"></i>
-                    <h5 class="fw-bold">Estudantes Inscritos</h5>
-                    <p class="text-muted mb-3">Total de inscrições</p>
-                    <h3 class="text-success fw-bold"><?= isset($course['enrollment_count']) ? $course['enrollment_count'] : '0' ?></h3>
-                </div>
-            </div>
-        </div>
     </div>
+    <?= $this->Form->end() ?>
 </div>
 
 <script>
@@ -223,14 +248,24 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         }
 
         isFreeCheckbox.addEventListener('change', togglePriceField);
+
+        // Preview local imediato ao escolher o arquivo
+        const preview = document.getElementById('thumbnailPreview');
+        const placeholder = document.getElementById('thumbnailPlaceholder');
+        const uploadInput = document.getElementById('thumbnail_upload');
+        uploadInput.addEventListener('change', function() {
+            const uploadedFile = uploadInput.files[0];
+            if (!uploadedFile) {
+                return;
+            }
+            preview.src = URL.createObjectURL(uploadedFile);
+            preview.classList.remove('d-none');
+            placeholder.classList.add('d-none');
+        });
     });
 </script>
 
 <style>
-    .form-label {
-        color: var(--bs-gray-700);
-    }
-
     .form-control:focus,
     .form-select:focus {
         border-color: var(--bs-primary);
@@ -245,5 +280,41 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     .card {
         border: none;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .thumbnail-preview {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: var(--radius-sm, 8px);
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .thumbnail-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .thumbnail-placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        color: var(--bs-gray-500, #adb5bd);
+        border: 2px dashed rgba(255, 255, 255, 0.15);
+        border-radius: var(--radius-sm, 8px);
+    }
+
+    .thumbnail-placeholder i {
+        font-size: 2.5rem;
+    }
+
+    .thumbnail-placeholder span {
+        font-size: 0.85rem;
     }
 </style>

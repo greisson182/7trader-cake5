@@ -192,6 +192,7 @@ class StudiesController extends AppController
                     'market_description' => 'Markets.description',
                     'currency' => 'Markets.currency',
                     'username' => 'Users.username',
+                    'email' => 'Users.email',
                     'role' => 'Users.role',
                     'active' => 'Users.active'
                 ])
@@ -221,6 +222,7 @@ class StudiesController extends AppController
                 $study['student'] = [
                     'id' => $study['student_id'],
                     'name' => $study['student_name'],
+                    'email' => $study['email'],
                 ];
 
                 // Adicionar dados do mercado ao array do study

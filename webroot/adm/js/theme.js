@@ -52,7 +52,8 @@ class ThemeManager {
     }
 
     getSystemTheme() {
-        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        // Tema fixo em dark - a preferência de cor do sistema operacional é ignorada.
+        return 'dark';
     }
 
     getStoredTheme() {
@@ -119,10 +120,4 @@ if (document.readyState === 'loading') {
     themeManager = new ThemeManager();
 }
 
-// Listen for system theme changes
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (themeManager && !themeManager.getStoredTheme()) {
-        themeManager.setTheme(e.matches ? 'dark' : 'light');
-        themeManager.updateToggleState();
-    }
-});
+// Tema fixo em dark: mudanças de preferência de cor do sistema operacional são ignoradas de propósito.

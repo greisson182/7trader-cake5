@@ -119,7 +119,7 @@
                         </div>
                         
                         <!-- Informações do Vídeo -->
-                        <div class="col-lg-4">
+                        <div class="col-lg-3">
                             <div class="card">
                                 <div class="card-header">
                                     <h5 class="card-title mb-0">

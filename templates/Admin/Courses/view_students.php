@@ -3,7 +3,7 @@ $title = htmlspecialchars($course['title']) . ' - 7 Trader';
 $description = htmlspecialchars(substr($course['description'], 0, 160));
 ?>
 
-<div class="container-fluid py-5" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); min-height: 100vh;">
+<div class="container-fluid py-4" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); min-height: 100vh;">
     <div class="container">
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="mb-4">
@@ -150,7 +150,7 @@ $description = htmlspecialchars(substr($course['description'], 0, 160));
             </div>
             
             <!-- Lista de Vídeos -->
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <div class="card bg-dark border-secondary">
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0">

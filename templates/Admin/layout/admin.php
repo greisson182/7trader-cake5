@@ -24,6 +24,9 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
+    <!-- Custom Styles (precisa vir antes do primeiro paint pra evitar flash do tema claro do Bootstrap) -->
+    <link href="<?= HOME ?>adm/css/style.css" rel="stylesheet">
+
     <script>
         const csrfToken = '<?= $csrfToken ?>';
     </script>
@@ -33,9 +36,21 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg glass fixed-top">
         <div class="container">
-            <a href="/admin/students/dashboard" class="navbar-brand">
-                <strong class="footer-title-admin">7</strong><span style="color:#fff!important; -webkit-text-fill-color: white;">Trader</span>
-            </a>
+            <?php
+            if ($logado->role === 'admin') {
+            ?>
+                <a href="/admin" class="navbar-brand">
+                    <strong class="footer-title-admin">7</strong><span style="color:#fff!important; -webkit-text-fill-color: white;">Trader</span>
+                </a>
+            <?php
+            } else {
+            ?>
+                <a href="/admin/students/dashboard" class="navbar-brand">
+                    <strong class="footer-title-admin">7</strong><span style="color:#fff!important; -webkit-text-fill-color: white;">Trader</span>
+                </a>
+            <?php
+            }
+            ?>
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <i class="fas fa-bars text-white"></i>
             </button>
@@ -407,8 +422,5 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         createStaticAdminCandlesticks();
     </script>
 </body>
-
-<!-- Custom Styles -->
-<link href="<?= HOME ?>adm/css/style.css" rel="stylesheet">
 
 </html>

@@ -6,24 +6,24 @@
 $csrfToken = $this->request->getAttribute('csrfToken');
 ?>
 <div class="mentorships index content fade-in-up">
-    <div class="d-flex justify-content-between align-items-center mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="display-6 fw-bold mb-2">
-                <i class="bi bi-people-fill me-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+            <h1 class="h3 fw-bold mb-1">
+                <i class="bi bi-people-fill me-2 icon-accent"></i>
                 Mentorias
             </h1>
             <p class="text-muted mb-0">Gerenciar mentorias em grupo e particulares</p>
         </div>
-        <a href="/admin/mentorships/add" class="btn btn-primary btn-lg">
+        <a href="/admin/mentorships/add" class="btn btn-primary">
             <i class="bi bi-plus-circle me-2"></i>
             Nova Mentoria
         </a>
     </div>
 
     <?php if (!empty($mentorships)): ?>
-        <div class="row g-4">
+        <div class="row g-3">
             <?php foreach ($mentorships as $mentorship): ?>
-                <div class="col-lg-4 col-md-6">
+                <div class="col-lg-3 col-md-6">
                     <div class="card glass h-100">
                         <div class="card-body d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
@@ -37,8 +37,8 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 <?php endif; ?>
                             </div>
 
-                            <h5 class="card-title fw-bold mb-2"><?= h($mentorship->name) ?></h5>
-                            <p class="card-text text-muted small mb-3 flex-grow-1">
+                            <h6 class="card-title fw-bold mb-1"><?= h($mentorship->name) ?></h6>
+                            <p class="card-text text-muted small mb-2 clamp-2">
                                 <?= h(substr((string)$mentorship->description, 0, 120)) ?><?= strlen((string)$mentorship->description) > 120 ? '...' : '' ?>
                             </p>
 
@@ -46,22 +46,20 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 R$ <?= number_format((float)$mentorship->price, 2, ',', '.') ?>
                             </div>
 
-                            <div class="d-grid gap-2">
-                                <a href="/admin/mentorships/view/<?= $mentorship->id ?>" class="btn btn-primary">
+                            <div class="course-actions mt-auto">
+                                <a href="/admin/mentorships/view/<?= $mentorship->id ?>" class="btn btn-primary btn-sm flex-grow-1">
                                     <i class="bi bi-eye me-1"></i>Visualizar
                                 </a>
-                                <div class="btn-group" role="group">
-                                    <a href="/admin/mentorships/edit/<?= $mentorship->id ?>" class="btn btn-outline-warning btn-sm">
-                                        <i class="bi bi-pencil"></i> Editar
-                                    </a>
-                                    <form method="post" action="/admin/mentorships/delete/<?= $mentorship->id ?>" style="display: inline;"
-                                          onsubmit="return confirm('Tem certeza que deseja excluir esta mentoria?');">
-                                        <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
+                                <a href="/admin/mentorships/edit/<?= $mentorship->id ?>" class="btn btn-outline-warning btn-sm" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="post" action="/admin/mentorships/delete/<?= $mentorship->id ?>" class="d-inline"
+                                      onsubmit="return confirm('Tem certeza que deseja excluir esta mentoria?');">
+                                    <input type="hidden" name="_csrfToken" value="<?= h($csrfToken) ?>">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -69,12 +67,10 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             <?php endforeach; ?>
         </div>
     <?php else: ?>
-        <div class="empty-state text-center py-5">
-            <div class="empty-icon mb-4">
-                <i class="bi bi-people" style="font-size: 4rem; color: var(--bs-gray-400);"></i>
-            </div>
-            <h3 class="text-muted mb-3">Nenhuma mentoria cadastrada</h3>
-            <p class="text-muted mb-4">Cadastre as mentorias em grupo e particular para vender no site</p>
+        <div class="empty-block">
+            <i class="bi bi-people"></i>
+            <h5 class="text-muted mb-2">Nenhuma mentoria cadastrada</h5>
+            <p class="text-muted mb-3">Cadastre as mentorias em grupo e particular para vender no site</p>
             <a href="/admin/mentorships/add" class="btn btn-primary">
                 <i class="bi bi-plus-circle me-2"></i>
                 Criar Primeira Mentoria
@@ -82,3 +78,37 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         </div>
     <?php endif; ?>
 </div>
+
+<style>
+    .icon-accent {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.5em;
+    }
+
+    .course-actions {
+        display: flex;
+        gap: 0.35rem;
+    }
+
+    .empty-block {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-muted, #b0b0b0);
+    }
+
+    .empty-block i {
+        font-size: 3rem;
+        opacity: 0.4;
+        display: block;
+        margin-bottom: 1rem;
+    }
+</style>

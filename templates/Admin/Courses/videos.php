@@ -7,9 +7,9 @@
 ?>
 <div class="course-videos content fade-in-up">
     <!-- Header Section -->
-    <div class="d-flex justify-content-between align-items-center mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="display-6 fw-bold mb-2">
+            <h1 class="h3 fw-bold mb-2">
                 <i class="bi bi-collection-play me-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                 Gerenciar Vídeos
             </h1>
@@ -97,7 +97,7 @@
         </div>
         <div class="card-body p-0">
             <?php if (empty($videos)): ?>
-                <div class="text-center py-5">
+                <div class="text-center py-4">
                     <i class="bi bi-collection-play display-1 text-muted mb-3"></i>
                     <h5 class="text-muted">Nenhum vídeo cadastrado</h5>
                     <p class="text-muted mb-4">Adicione vídeos para começar a construir seu curso.</p>

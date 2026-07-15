@@ -6,9 +6,9 @@
  */
 ?>
 <div class="mentorships view content fade-in-up">
-    <div class="d-flex justify-content-between align-items-center mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="display-6 fw-bold mb-2"><?= h($mentorship->name) ?></h1>
+            <h1 class="h3 fw-bold mb-2"><?= h($mentorship->name) ?></h1>
             <span class="badge bg-<?= $mentorship->type === 'particular' ? 'warning text-dark' : 'info' ?>">
                 <?= $mentorship->type === 'particular' ? 'Particular' : 'Em grupo' ?>
             </span>
@@ -28,7 +28,7 @@
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-3">
         <div class="col-md-8">
             <div class="card glass">
                 <div class="card-body">

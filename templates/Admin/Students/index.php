@@ -23,14 +23,14 @@ foreach ($students as $student) {
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-            <h1 class="display-6 fw-bold mb-2">
-                <i class="bi bi-people-fill me-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+            <h1 class="h3 fw-bold mb-1">
+                <i class="bi bi-people-fill me-2 icon-accent"></i>
                 Estudantes
             </h1>
             <p class="text-muted mb-0">Gerenciar e acompanhar o progresso dos estudantes</p>
         </div>
         <?php if ($isAdmin): ?>
-            <a href="/admin/students/add" class="btn btn-primary btn-lg">
+            <a href="/admin/students/add" class="btn btn-primary">
                 <i class="bi bi-person-plus me-2"></i>
                 Novo Estudante
             </a>
@@ -108,26 +108,24 @@ foreach ($students as $student) {
                                 Cadastrado em <?= date('d/m/Y', strtotime($student->created)) ?>
                             </div>
 
-                            <div class="mt-auto d-grid gap-2">
-                                <a href="/admin/students/dashboard/<?= $student->id ?>" class="btn btn-primary btn-sm">
+                            <div class="mt-auto course-actions">
+                                <a href="/admin/students/dashboard/<?= $student->id ?>" class="btn btn-primary btn-sm flex-grow-1">
                                     <i class="fas fa-chart-bar me-1"></i>Dashboard
                                 </a>
                                 <?php if ($isAdmin): ?>
-                                    <div class="btn-group" role="group">
-                                        <a href="/admin/students/view/<?= $student->id ?>" class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="/admin/students/edit/<?= $student->id ?>" class="btn btn-outline-warning btn-sm">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form method="post" action="/admin/students/delete/<?= $student->id ?>" style="display: inline;"
-                                            onsubmit="return confirm('Tem certeza que deseja excluir este estudante?');">
-                                            <input type="hidden" name="_csrfToken" value="<?= h($csrfToken) ?>">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
+                                    <a href="/admin/students/view/<?= $student->id ?>" class="btn btn-outline-light btn-sm" title="Visualizar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/admin/students/edit/<?= $student->id ?>" class="btn btn-outline-warning btn-sm" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="post" action="/admin/students/delete/<?= $student->id ?>" class="d-inline"
+                                        onsubmit="return confirm('Tem certeza que deseja excluir este estudante?');">
+                                        <input type="hidden" name="_csrfToken" value="<?= h($csrfToken) ?>">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -142,27 +140,19 @@ foreach ($students as $student) {
 
     <?php else: ?>
         <!-- Empty State -->
-        <div class="row justify-content-center">
-            <div class="col-lg-6">
-                <div class="card glass text-center">
-                    <div class="card-body py-5">
-                        <div class="empty-state">
-                            <i class="bi bi-people display-1 text-muted mb-4"></i>
-                            <h3 class="fw-bold mb-3">Nenhum Estudante Ainda</h3>
-                            <p class="text-muted mb-4">
-                                Comece adicionando seu primeiro estudante para começar a acompanhar o progresso.
-                            </p>
-                            <?php if ($isAdmin): ?>
-                                <a href="/admin/students/add" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-user-plus me-2"></i>Criar Primeiro Estudante
-                                </a>
-                            <?php else: ?>
-                                <p class="text-muted small">Entre em contato com seu administrador para adicionar estudantes.</p>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="empty-block">
+            <i class="bi bi-people"></i>
+            <h5 class="text-muted mb-2">Nenhum Estudante Ainda</h5>
+            <p class="text-muted mb-3">
+                Comece adicionando seu primeiro estudante para começar a acompanhar o progresso.
+            </p>
+            <?php if ($isAdmin): ?>
+                <a href="/admin/students/add" class="btn btn-primary">
+                    <i class="fas fa-user-plus me-2"></i>Criar Primeiro Estudante
+                </a>
+            <?php else: ?>
+                <p class="text-muted small">Entre em contato com seu administrador para adicionar estudantes.</p>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 </div>
@@ -195,6 +185,12 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <style>
+    .icon-accent {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
     .quick-stat {
         background: rgba(255, 255, 255, 0.05);
         border-radius: var(--radius-sm);
@@ -208,6 +204,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     .quick-stat input.form-control {
         text-align: left;
+        background: transparent;
+        border: none;
+        padding: 0;
+    }
+
+    .quick-stat input.form-control:focus {
+        box-shadow: none;
     }
 
     .student-card {
@@ -217,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     .student-card:hover {
         transform: translateY(-4px);
-        box-shadow: var(--shadow-lg), 0 0 20px rgba(102, 126, 234, 0.15);
+        box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 255, 136, 0.15);
     }
 
     .student-avatar-sm {
@@ -236,7 +239,21 @@ document.addEventListener('DOMContentLoaded', function () {
         min-width: 0;
     }
 
-    .empty-state i {
-        opacity: 0.3;
+    .course-actions {
+        display: flex;
+        gap: 0.35rem;
+    }
+
+    .empty-block {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-muted, #b0b0b0);
+    }
+
+    .empty-block i {
+        font-size: 3rem;
+        opacity: 0.4;
+        display: block;
+        margin-bottom: 1rem;
     }
 </style>

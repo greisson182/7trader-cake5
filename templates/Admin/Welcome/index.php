@@ -4,7 +4,10 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1 class="h3 mb-0 text-gray-800">Dashboard Administrativo</h1>
+                    <h1 class="h3 fw-bold mb-1">
+                        <i class="bi bi-speedometer2 me-2 icon-accent"></i>
+                        Dashboard Administrativo
+                    </h1>
                     <p class="mb-0 text-muted">Visão geral do sistema e performance dos alunos</p>
                 </div>
                 <div>
@@ -75,10 +78,11 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card glass">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Performance Mensal (Últimos 12 meses)</h5>
-                </div>
                 <div class="card-body">
+                    <h6 class="section-title">
+                        <i class="bi bi-graph-up-arrow me-2"></i>
+                        Performance Mensal (Últimos 12 meses)
+                    </h6>
                     <canvas id="monthlyChart" height="100"></canvas>
                 </div>
             </div>
@@ -90,21 +94,20 @@
         <!-- Top 5 Alunos -->
         <div class="col-lg-6">
             <div class="card glass h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-trophy text-warning"></i> Top 5 Alunos
-                    </h5>
-                </div>
                 <div class="card-body">
+                    <h6 class="section-title">
+                        <i class="bi bi-trophy text-warning me-2"></i>
+                        Top 5 Alunos
+                    </h6>
                     <?php if (!empty($topStudents)): ?>
                         <?php foreach ($topStudents as $index => $student): ?>
-                            <div class="d-flex align-items-center mb-3 <?= $index < count($topStudents) - 1 ? 'border-bottom pb-3' : '' ?>">
+                            <div class="d-flex align-items-center mb-2 <?= $index < count($topStudents) - 1 ? 'border-bottom pb-2' : '' ?>">
                                 <div class="rank-badge me-3">
                                     <span class="badge bg-warning text-dark"><?= $index + 1 ?></span>
                                 </div>
                                 <div class="flex-grow-1">
                                     <h6 class="mb-1">
-                                        <a href="/admin/students/view/<?= $student['id'] ?>" class="text-decoration-none">
+                                        <a href="/admin/students/view/<?= $student['id'] ?>" class="text-decoration-none student-link">
                                             <?= h($student['name']) ?>
                                         </a>
                                     </h6>
@@ -134,21 +137,20 @@
         <!-- Alunos que Precisam de Atenção -->
         <div class="col-lg-6">
             <div class="card glass h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-exclamation-triangle text-warning"></i> Precisam de Atenção
-                    </h5>
-                </div>
                 <div class="card-body">
+                    <h6 class="section-title">
+                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                        Precisam de Atenção
+                    </h6>
                     <?php if (!empty($worstStudents)): ?>
                         <?php foreach ($worstStudents as $index => $student): ?>
-                            <div class="d-flex align-items-center mb-3 <?= $index < count($worstStudents) - 1 ? 'border-bottom pb-3' : '' ?>">
+                            <div class="d-flex align-items-center mb-2 <?= $index < count($worstStudents) - 1 ? 'border-bottom pb-2' : '' ?>">
                                 <div class="rank-badge me-3">
                                     <span class="badge bg-danger"><?= $index + 1 ?></span>
                                 </div>
                                 <div class="flex-grow-1">
                                     <h6 class="mb-1">
-                                        <a href="/admin/students/view/<?= $student['id'] ?>" class="text-decoration-none">
+                                        <a href="/admin/students/view/<?= $student['id'] ?>" class="text-decoration-none student-link">
                                             <?= h($student['name']) ?>
                                         </a>
                                     </h6>
@@ -180,12 +182,11 @@
     <div class="row">
         <div class="col-12">
             <div class="card glass">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-clock-history"></i> Atividade Recente
-                    </h5>
-                </div>
                 <div class="card-body">
+                    <h6 class="section-title">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Atividade Recente
+                    </h6>
                     <?php if (!empty($recentActivity)): ?>
                         <div class="table-responsive">
                             <table class="table table-hover">
@@ -204,7 +205,7 @@
                                     <?php foreach ($recentActivity as $activity): ?>
                                         <tr>
                                             <td>
-                                                <a href="/admin/students/view/<?= $activity['student_id'] ?>" class="text-decoration-none">
+                                                <a href="/admin/students/view/<?= $activity['student_id'] ?>" class="text-decoration-none student-link">
                                                     <?= h($activity['student_name']) ?>
                                                 </a>
                                             </td>
@@ -337,3 +338,33 @@
         });
     });
 </script>
+
+<style>
+    .icon-accent {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .section-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--text-primary, #fff);
+        margin-bottom: var(--space-md, 1rem);
+        padding-bottom: var(--space-sm, 0.5rem);
+        border-bottom: 1px solid var(--glass-border, rgba(0, 255, 136, 0.2));
+    }
+
+    .section-title i {
+        color: #00ff88;
+    }
+
+    .student-link {
+        color: var(--text-primary, #fff);
+        font-weight: 600;
+    }
+
+    .student-link:hover {
+        color: #00ff88;
+    }
+</style>

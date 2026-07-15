@@ -1,8 +1,8 @@
 
-<div class="container-fluid py-5" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); min-height: 100vh;">
+<div class="container-fluid py-4" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); min-height: 100vh;">
     <div class="container">
         <!-- Header -->
-        <div class="row mb-5">
+        <div class="row mb-4">
             <div class="col-12 text-center">
                 <h1 class="display-4 fw-bold text-white mb-3">
                     <i class="fas fa-graduation-cap text-success me-3"></i>
@@ -17,7 +17,7 @@
         <div class="row" id="coursesContainer">
             <?php if (empty($courses)): ?>
                 <div class="col-12">
-                    <div class="card bg-dark border-secondary text-center py-5">
+                    <div class="card bg-dark border-secondary text-center py-4">
                         <div class="card-body">
                             <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
                             <h4 class="text-white">Nenhum curso disponível</h4>
@@ -47,7 +47,7 @@
                     $difficultyColor = $difficultyColors[$course['difficulty']] ?? 'secondary';
                     ?>
                     
-                    <div class="col-lg-4 col-md-6 mb-4 course-card" 
+                    <div class="col-lg-3 col-md-6 mb-4 course-card" 
                          data-category="<?= htmlspecialchars($course['category']) ?>"
                          data-difficulty="<?= htmlspecialchars($course['difficulty']) ?>"
                          data-price="<?= $course['is_free'] ? 'free' : 'paid' ?>"
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 noResultsMsg.id = 'noResultsMessage';
                 noResultsMsg.className = 'col-12';
                 noResultsMsg.innerHTML = `
-                    <div class="card bg-dark border-secondary text-center py-5">
+                    <div class="card bg-dark border-secondary text-center py-4">
                         <div class="card-body">
                             <i class="fas fa-search fa-3x text-muted mb-3"></i>
                             <h4 class="text-white">Nenhum curso encontrado</h4>
