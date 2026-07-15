@@ -33,6 +33,23 @@
                     echo $this->Form->control('google_publisher');
                     echo $this->Form->control('google_author');
                     echo $this->Form->control('aws_api');
+                    echo $this->Form->control('accesses');
+                    echo $this->Form->control('redirect_website');
+                    echo $this->Form->control('url_site');
+                    echo $this->Form->control('mp_access_token', [
+                        'type' => 'password',
+                        'autocomplete' => 'off',
+                        'placeholder' => $setting->mp_access_token ? '••••••••' : '',
+                        'help' => __('Deixe em branco para manter o valor atual.'),
+                    ]);
+                    echo $this->Form->control('mp_public_key');
+                    echo $this->Form->control('mp_webhook_secret', [
+                        'type' => 'password',
+                        'autocomplete' => 'off',
+                        'placeholder' => $setting->mp_webhook_secret ? '••••••••' : '',
+                        'help' => __('Deixe em branco para manter o valor atual.'),
+                    ]);
+                    echo $this->Form->control('mp_sandbox', ['label' => __('Modo sandbox (teste)')]);
                 ?>
             </fieldset>
             <?= $this->Form->button(__('Submit')) ?>

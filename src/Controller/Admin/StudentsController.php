@@ -5,18 +5,24 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AppController;
+use App\Service\StudentService;
+use App\Service\SettingsService;
 use Cake\Event\EventInterface;
 use Cake\Http\Response;
-use Cake\ORM\TableRegistry;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Exception;
 
 class StudentsController extends AppController
 {
+    private StudentService $_studentService;
+    private SettingsService $_settingsService;
+
     public function initialize(): void
     {
         parent::initialize();
         $this->loadComponent('Flash');
+        $this->_studentService = new StudentService();
+        $this->_settingsService = new SettingsService();
         $this->checkSession();
     }
 
@@ -44,22 +50,12 @@ class StudentsController extends AppController
     public function index()
     {
         try {
-            $studentsTable = $this->fetchTable('Students');
-
-            // Se for estudante, redirecionar para seu próprio dashboard
             if ($this->isStudent()) {
                 $currentStudentId = $this->getCurrentStudentId();
                 return $this->redirect(['action' => 'dashboard', $currentStudentId]);
             }
 
-            // Buscar estudantes com dados do usuário associado
-            $students = $studentsTable->find()
-                ->contain(['Users' => function ($q) {
-                    return $q->where(['Users.active' => 1]);
-                }])
-                ->orderBy(['Students.name' => 'ASC'])
-                ->toArray();
-
+            $students = $this->_studentService->getAllWithUsers();
             $this->set(compact('students'));
         } catch (Exception $e) {
             $this->Flash->error(__('Erro ao carregar estudantes: ' . $e->getMessage()));
@@ -70,9 +66,6 @@ class StudentsController extends AppController
     public function view(int $id)
     {
         try {
-            $studentsTable = $this->fetchTable('Students');
-
-            // Verificar se estudante pode acessar este registro
             if ($this->isStudent()) {
                 $currentStudentId = $this->getCurrentStudentId();
                 if ($currentStudentId != $id) {
@@ -81,15 +74,7 @@ class StudentsController extends AppController
                 }
             }
 
-            $student = $studentsTable->find()
-                ->contain(['Users'])
-                ->where(['Students.id' => $id])
-                ->first();
-
-            if (!$student) {
-                throw new RecordNotFoundException(__('Estudante não encontrado.'));
-            }
-
+            $student = $this->_studentService->getWithUser($id);
             $this->set(compact('student'));
         } catch (RecordNotFoundException $e) {
             $this->Flash->error($e->getMessage());
@@ -111,96 +96,27 @@ class StudentsController extends AppController
         if ($this->request->is('post')) {
             $data = $this->request->getData();
 
-            // Validação básica
             if (empty($data['name']) || empty($data['username']) || empty($data['email']) || empty($data['password'])) {
                 $this->Flash->error(__('Todos os campos são obrigatórios.'));
                 $this->set(compact('student', 'user'));
+                return null;
             }
 
-            // Validação de email
             if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
                 $this->Flash->error(__('Email inválido.'));
                 $this->set(compact('student', 'user'));
+                return null;
+            }
+
+            $duplicateMessage = $this->_studentService->findDuplicateUser($data['email'], $data['username']);
+            if ($duplicateMessage) {
+                $this->Flash->error($duplicateMessage);
+                $this->set(compact('student', 'user'));
+                return null;
             }
 
             try {
-                // Validar dados únicos
-                $existingUser = $usersTable->find()
-                    ->where([
-                        'OR' => [
-                            ['email' => $data['email']],
-                            ['username' => $data['username']]
-                        ]
-                    ])
-                    ->first();
-
-                if ($existingUser) {
-                    if ($existingUser->email === $data['email']) {
-                        $this->Flash->error(__('Este email já está em uso.'));
-                    } else {
-                        $this->Flash->error(__('Este nome de usuário já está em uso.'));
-                    }
-                    $this->set(compact('student', 'user'));
-                }
-
-                // Usar transação
-                $connection = $studentsTable->getConnection();
-                $connection->transactional(function () use ($data, $usersTable, $studentsTable, &$user, &$student) {
-                    // Criar usuário
-                    $userData = [
-                        'username' => $data['username'],
-                        'email' => $data['email'],
-                        'password' => password_hash($data['password'], PASSWORD_DEFAULT),
-                        'role' => 'student',
-                        'active' => 1
-                    ];
-
-                    $user = $usersTable->patchEntity($user, $userData, [
-                        'validate' => 'default',
-                        'fieldList' => ['username', 'email', 'password', 'role', 'active']
-                    ]);
-
-                    if ($user->hasErrors()) {
-                        $errors = [];
-                        foreach ($user->getErrors() as $field => $error) {
-                            $errors[] = is_array($error) ? implode(', ', $error) : $error;
-                        }
-                        throw new Exception(__('Erro de validação: ' . implode(', ', $errors)));
-                    }
-
-                    if (!$usersTable->save($user)) {
-                        throw new Exception(__('Erro ao criar usuário.'));
-                    }
-
-                    // Criar estudante
-                    $studentData = [
-                        'name' => $data['name'],
-                        'user_id' => $user->id
-                    ];
-
-                    $student = $studentsTable->patchEntity($student, $studentData, [
-                        'validate' => 'default',
-                        'fieldList' => ['name', 'user_id']
-                    ]);
-
-                    if ($student->hasErrors()) {
-                        $errors = [];
-                        foreach ($student->getErrors() as $field => $error) {
-                            $errors[] = is_array($error) ? implode(', ', $error) : $error;
-                        }
-                        throw new Exception(__('Erro de validação: ' . implode(', ', $errors)));
-                    }
-
-                    if (!$studentsTable->save($student)) {
-                        throw new Exception(__('Erro ao criar estudante.'));
-                    }
-
-                    // Atualizar student_id no usuário
-                    $user->student_id = $student->id;
-                    if (!$usersTable->save($user)) {
-                        throw new Exception(__('Erro ao atualizar referência do estudante.'));
-                    }
-                });
+                $this->_studentService->create($data);
 
                 $this->Flash->success(__('Estudante criado com sucesso.'));
                 return $this->redirect(['action' => 'index']);
@@ -211,74 +127,26 @@ class StudentsController extends AppController
 
         $this->set(compact('student', 'user'));
     }
-
     public function edit(int $id)
     {
-        $studentsTable = $this->fetchTable('Students');
-        $usersTable = $this->fetchTable('Users');
-
         try {
-            $student = $studentsTable->find()
-                ->contain(['Users'])
-                ->where(['Students.id' => $id])
-                ->first();
-
-            if (!$student) {
-                throw new RecordNotFoundException(__('Estudante não encontrado.'));
-            }
+            $student = $this->_studentService->getWithUser($id);
 
             if ($this->request->is(['patch', 'post', 'put'])) {
                 $data = $this->request->getData();
 
-                // Verificar dados únicos (excluindo o usuário atual)
-                $existingUser = $usersTable->find()
-                    ->where([
-                        'OR' => [
-                            ['email' => $data['email']],
-                            ['username' => $data['username']]
-                        ],
-                        'id !=' => $student->user->id
-                    ])
-                    ->first();
-
-                if ($existingUser) {
-                    if ($existingUser->email === $data['email']) {
-                        $this->Flash->error(__('Este email já está em uso.'));
-                    } else {
-                        $this->Flash->error(__('Este nome de usuário já está em uso.'));
-                    }
+                $duplicateMessage = $this->_studentService->findDuplicateUser(
+                    $data['email'],
+                    $data['username'],
+                    $student->user->id
+                );
+                if ($duplicateMessage) {
+                    $this->Flash->error($duplicateMessage);
                     $this->set(compact('student'));
+                    return null;
                 }
 
-                // Usar transação
-                $connection = $studentsTable->getConnection();
-                $connection->transactional(function () use ($data, $usersTable, $studentsTable, $student) {
-                    // Atualizar estudante
-                    $studentData = [
-                        'name' => $data['name']
-                    ];
-                    $student = $studentsTable->patchEntity($student, $studentData);
-                    if (!$studentsTable->save($student)) {
-                        throw new Exception(__('Erro ao atualizar estudante.'));
-                    }
-
-                    // Atualizar usuário
-                    $userData = [
-                        'username' => $data['username'],
-                        'email' => $data['email'],
-                        'active' => isset($data['active']) ? 1 : 0
-                    ];
-
-                    // Atualizar senha se fornecida
-                    if (!empty($data['password'])) {
-                        $userData['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
-                    }
-
-                    $student->user = $usersTable->patchEntity($student->user, $userData);
-                    if (!$usersTable->save($student->user)) {
-                        throw new Exception(__('Erro ao atualizar usuário.'));
-                    }
-                });
+                $this->_studentService->update($id, $data);
 
                 $this->Flash->success(__('Estudante atualizado com sucesso.'));
                 return $this->redirect(['action' => 'index']);
@@ -290,53 +158,15 @@ class StudentsController extends AppController
             return $this->redirect(['action' => 'index']);
         } catch (Exception $e) {
             $this->Flash->error(__('Erro ao atualizar estudante: ' . $e->getMessage()));
-            $this->set(compact('student'));
         }
     }
 
-    public function delete(int $id): Response
+    public function delete(int $id): ?Response
     {
         $this->request->allowMethod(['post', 'delete']);
 
-        $studentsTable = $this->fetchTable('Students');
-        $usersTable = $this->fetchTable('Users');
-        $studiesTable = $this->fetchTable('Studies');
-
         try {
-            $student = $studentsTable->find()
-                ->contain(['Users'])
-                ->where(['Students.id' => $id])
-                ->first();
-
-            if (!$student) {
-                throw new RecordNotFoundException(__('Estudante não encontrado.'));
-            }
-
-            // Verificar se há estudos associados
-            $studiesCount = $studiesTable->find()
-                ->where(['student_id' => $id])
-                ->count();
-
-            if ($studiesCount > 0) {
-                $this->Flash->error(__('Não é possível excluir este estudante pois ele possui estudos associados.'));
-                return $this->redirect(['action' => 'index']);
-            }
-
-            // Usar transação para deletar estudante e usuário
-            $connection = $studentsTable->getConnection();
-            $connection->transactional(function () use ($studentsTable, $usersTable, $student) {
-                // Deletar usuário associado
-                if ($student->user) {
-                    if (!$usersTable->delete($student->user)) {
-                        throw new Exception(__('Erro ao deletar usuário associado.'));
-                    }
-                }
-
-                // Deletar estudante
-                if (!$studentsTable->delete($student)) {
-                    throw new Exception(__('Erro ao deletar estudante.'));
-                }
-            });
+            $this->_studentService->delete($id);
 
             $this->Flash->success(__('Estudante deletado com sucesso.'));
             return $this->redirect(['action' => 'index']);
@@ -352,115 +182,17 @@ class StudentsController extends AppController
     public function metrics()
     {
         try {
-            $studentsTable = $this->fetchTable('Students');
-            $studiesTable = $this->fetchTable('Studies');
-            $usersTable = $this->fetchTable('Users');
-
-            // Se for estudante, mostrar apenas suas métricas
             if ($this->isStudent()) {
                 $currentStudentId = $this->getCurrentStudentId();
                 return $this->redirect(['action' => 'dashboard', $currentStudentId]);
             }
 
-            // Métricas gerais
-            $totalStudents = $studentsTable->find()
-                ->matching('Users', function ($q) {
-                    return $q->where(['Users.active' => 1]);
-                })
-                ->count();
-
-            $activeStudents = $studentsTable->find()
-                ->matching('Users', function ($q) {
-                    return $q->where(['Users.active' => 1]);
-                })
-                ->count();
-
-            $totalStudies = $studiesTable->find()->count();
-
-            // Estudantes com mais estudos
-            $topStudentsByStudies = $studentsTable->find()
-                ->select([
-                    'Students.id',
-                    'Students.name',
-                    'total_studies' => $studentsTable->find()->func()->count('Studies.id')
-                ])
-                ->leftJoinWith('Studies')
-                ->matching('Users', function ($q) {
-                    return $q->where(['Users.active' => 1]);
-                })
-                ->groupBy(['Students.id', 'Students.name'])
-                ->orderByDesc('total_studies')
-                ->limit(10)
-                ->toArray();
-
-            // Estudantes com melhor performance (profit/loss)
-            $topStudentsByProfit = $studentsTable->find()
-                ->select([
-                    'Students.id',
-                    'Students.name',
-                    'total_profit_loss' => $studentsTable->find()->func()->sum('Studies.profit_loss'),
-                    'total_studies' => $studentsTable->find()->func()->count('Studies.id'),
-                    'total_wins' => $studentsTable->find()->func()->sum('Studies.wins'),
-                    'total_losses' => $studentsTable->find()->func()->sum('Studies.losses')
-                ])
-                ->leftJoinWith('Studies')
-                ->matching('Users', function ($q) {
-                    return $q->where(['Users.active' => 1]);
-                })
-                ->groupBy(['Students.id', 'Students.name'])
-                ->orderByDesc('total_profit_loss')
-                ->limit(10)
-                ->toArray();
-
-            // Estudos recentes
-            $recentStudies = $studiesTable->find()
-                ->contain(['Students'])
-                ->orderByDesc('Studies.study_date')
-                ->limit(20)
-                ->toArray();
-
-            // Estatísticas gerais dos estudos
-            $overallStatsQuery = $studiesTable->find()
-                ->select([
-                    'total_studies' => $studiesTable->find()->func()->count('*'),
-                    'total_wins' => $studiesTable->find()->func()->sum('wins'),
-                    'total_losses' => $studiesTable->find()->func()->sum('losses'),
-                    'total_profit_loss' => $studiesTable->find()->func()->sum('profit_loss'),
-                    'avg_profit_loss' => $studiesTable->find()->func()->avg('profit_loss')
-                ])
-                ->first();
-
-            $overallStats = $overallStatsQuery ? $overallStatsQuery->toArray() : [
-                'total_studies' => 0,
-                'total_wins' => 0,
-                'total_losses' => 0,
-                'total_profit_loss' => 0,
-                'avg_profit_loss' => 0
-            ];
-
-            // Calcular métricas adicionais
-            $overallStats['total_trades'] = $overallStats['total_wins'] + $overallStats['total_losses'];
-            $overallStats['overall_win_rate'] = $overallStats['total_trades'] > 0
-                ? round(($overallStats['total_wins'] / $overallStats['total_trades']) * 100, 2)
-                : 0;
-
-            // Data atual para contexto
+            $metrics = $this->_studentService->getOverviewMetrics();
             $currentDate = date('Y-m-d');
             $currentYear = date('Y');
             $currentMonth = date('m');
 
-            $this->set(compact(
-                'totalStudents',
-                'activeStudents',
-                'totalStudies',
-                'topStudentsByStudies',
-                'topStudentsByProfit',
-                'recentStudies',
-                'overallStats',
-                'currentDate',
-                'currentYear',
-                'currentMonth'
-            ));
+            $this->set(array_merge($metrics, compact('currentDate', 'currentYear', 'currentMonth')));
         } catch (Exception $e) {
             $this->Flash->error(__('Erro ao carregar métricas: ' . $e->getMessage()));
             return $this->redirect(['controller' => 'Dashboard', 'action' => 'index']);
@@ -470,9 +202,7 @@ class StudentsController extends AppController
     public function dashboard($id = null)
     {
         try {
-            // Se não foi passado ID, pegar o estudante atual (se for estudante logado)
             if (!$id) {
-
                 $currentUser = $this->getCurrentUser();
                 if ($currentUser && $currentUser->role === 'student') {
                     $id = $currentUser->student_id;
@@ -482,218 +212,46 @@ class StudentsController extends AppController
                 }
             }
 
-
-            // Carregar os models necessários
-            $studentsTable = $this->fetchTable('Students');
-            $studiesTable = $this->fetchTable('Studies');
-            $marketsTable = $this->fetchTable('Markets');
-
-            // Buscar estudante com dados do usuário associado usando CakePHP ORM
-            $student = $studentsTable->find()
-                ->contain(['Users'])
-                ->where(['Students.id' => $id])
-                ->first();
-
-            if (!$student) {
-                $this->Flash->error(__('Estudante não encontrado.', 'error'));
-                return $this->redirect(['action' => 'index']);
-            }
-
-
-            // Buscar mercados ativos para o filtro
-            $markets = $marketsTable->find()
-                ->where(['active' => 1])
-                ->orderBy(['name' => 'ASC'])
-                ->toArray();
-
-
-            // Obter ano selecionado do parâmetro GET
             $selectedYear = $this->request->getQuery('year', date('Y'));
 
-            // Buscar dados dos estudos agrupados por mês usando CakePHP ORM
-            $monthlyData = $studiesTable->find()
-                ->select([
-                    'year' => 'YEAR(study_date)',
-                    'month' => 'MONTH(study_date)',
-                    'total_studies' => 'COUNT(*)',
-                    'total_wins' => 'SUM(wins)',
-                    'total_losses' => 'SUM(losses)',
-                    'total_trades' => 'SUM(wins + losses)',
-                    'avg_win_rate' => 'ROUND(AVG(CASE WHEN (wins + losses) > 0 THEN (wins / (wins + losses)) * 100 ELSE 0 END), 2)',
-                    'total_profit_loss' => 'SUM(profit_loss)',
-                    'first_study' => 'MIN(study_date)',
-                    'last_study' => 'MAX(study_date)',
-                    'market_ids' => 'GROUP_CONCAT(DISTINCT market_id)',
-                    'account_ids' => 'GROUP_CONCAT(DISTINCT Studies.account_id)',
-                    'account_names' => 'GROUP_CONCAT(DISTINCT Accounts.name)'
-                ])
-                ->leftJoin(['Accounts' => 'accounts'], ['Accounts.id = Studies.account_id'])
-                ->where([
-                    'Studies.student_id' => $id,
-                    'YEAR(Studies.study_date)' => $selectedYear
-                ])
-                ->groupBy(['YEAR(Studies.study_date)', 'MONTH(Studies.study_date)'])
-                ->orderBy(['year' => 'DESC', 'month' => 'DESC'])
-                ->toArray();
+            $dashboardData = $this->_studentService->getDashboardData((int)$id, $selectedYear);
+            $student = $dashboardData['student'];
+            $markets = $dashboardData['markets'];
+            $monthlyData = $dashboardData['monthlyData'];
+            $overallStats = $dashboardData['overallStats'];
+            $chartDataByMonth = $dashboardData['chartDataByMonth'];
 
-            // Adicionar nome do mês em PHP
-            $monthNames = [
-                1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
-                5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
-                9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
-            ];
-            
-            foreach ($monthlyData as &$data) {
-                $data['month_name'] = $monthNames[(int)$data['month']] ?? 'Mês';
-            }
-            unset($data);
-
-            // Buscar todos os estudos para calcular estatísticas com taxa
-            $studies = $studiesTable->find()
-                ->where([
-                    'student_id' => $id,
-                    'YEAR(study_date)' => $selectedYear
-                ])
-                ->toArray();
-
-            $overallStats = [
-                'total_studies' => 0,
-                'total_wins' => 0,
-                'total_losses' => 0,
-                'total_profit_loss' => 0,
-                'first_study_date' => null,
-                'last_study_date' => null
-            ];
-
-            // Calcular estatísticas incluindo a taxa
-            foreach ($studies as $key => $study) {
-                // Calcular custo de operação para cada estudo
-                $amount_cost = $studiesTable->getCostTrades($study);
-                $studies[$key]['profit_loss'] = $amount_cost + (float)$study['profit_loss'];
-
-                // Acumular estatísticas
-                $overallStats['total_studies']++;
-                $overallStats['total_wins'] += $study['wins'];
-                $overallStats['total_losses'] += $study['losses'];
-                $overallStats['total_profit_loss'] += $studies[$key]['profit_loss'];
-                $overallStats['first_study_date'] = $overallStats['first_study_date'] ?: $study['study_date'];
-                $overallStats['last_study_date'] = $overallStats['last_study_date'] ?: $study['study_date'];
-            }
-
-            // Calcular métricas adicionais
-            $overallStats['total_trades'] = $overallStats['total_wins'] + $overallStats['total_losses'];
-            $overallStats['overall_win_rate'] = $overallStats['total_trades'] > 0
-                ? round(($overallStats['total_wins'] / $overallStats['total_trades']) * 100, 2)
-                : 0;
-
-            // Buscar dados para gráfico usando CakePHP ORM
-            $chartDataRaw = $studiesTable->find()
-                ->select([
-                    'month_key' => "DATE_FORMAT(Studies.study_date, '%Y-%m')",
-                    'year' => 'YEAR(Studies.study_date)',
-                    'month' => 'MONTH(Studies.study_date)',
-                    'profit_loss' => 'SUM(Studies.profit_loss)',
-                    'wins' => 'SUM(Studies.wins)',
-                    'losses' => 'SUM(Studies.losses)',
-                    'Studies.market_id',
-                    'Studies.account_id',
-                    'Markets.currency',
-                    'market_name' => 'Markets.name',
-                    'market_code' => 'Markets.code',
-                    'account_name' => 'Accounts.name'
-                ])
-                ->contain(['Markets', 'Accounts'])
-                ->where([
-                    'Studies.student_id' => $id,
-                    'YEAR(Studies.study_date)' => $selectedYear
-                ])
-                ->groupBy([
-                    'DATE_FORMAT(Studies.study_date, \'%Y-%m\')',
-                    'YEAR(Studies.study_date)', 
-                    'MONTH(Studies.study_date)', 
-                    'Studies.market_id', 
-                    'Studies.account_id',
-                    'Markets.currency',
-                    'Markets.name',
-                    'Markets.code',
-                    'Accounts.name'
-                ])
-                ->orderBy(['year' => 'ASC', 'month' => 'ASC', 'Markets.name' => 'ASC'])
-                ->toArray();
-
-            // Preparar dados para o gráfico - agregados por mês
-            $chartDataByMonth = [];
-            foreach ($chartDataRaw as $data) {
-                $monthKey = $data['month_key'];
-                if (!isset($chartDataByMonth[$monthKey])) {
-                    $chartDataByMonth[$monthKey] = [
-                        'year' => $data['year'],
-                        'month' => $data['month'],
-                        'profit_loss' => 0,
-                        'wins' => 0,
-                        'losses' => 0,
-                        'markets' => []
-                    ];
-                }
-                $chartDataByMonth[$monthKey]['profit_loss'] += $data['profit_loss'];
-                $chartDataByMonth[$monthKey]['wins'] += $data['wins'];
-                $chartDataByMonth[$monthKey]['losses'] += $data['losses'];
-                $chartDataByMonth[$monthKey]['markets'][] = [
-                    'market_id' => $data['market_id'],
-                    'account_id' => $data['account_id'],
-                    'currency' => $data['currency'],
-                    'market_name' => $data['market_name'],
-                    'market_code' => $data['market_code'],
-                    'account_name' => $data['account_name'],
-                    'profit_loss' => $data['profit_loss'],
-                    'wins' => $data['wins'],
-                    'losses' => $data['losses']
-                ];
-            }
-
-            // Top 5 estudantes por profit/loss (para comparação)
+            $studentsTable = $this->fetchTable('Students');
             $topStudents = $studentsTable->find()
                 ->select([
-                    'Students.name',
-                    'Students.id',
+                    'Students.name', 'Students.id',
                     'total_profit_loss' => $studentsTable->find()->func()->sum('Studies.profit_loss'),
                     'total_studies' => $studentsTable->find()->func()->count('Studies.id'),
                     'total_wins' => $studentsTable->find()->func()->sum('Studies.wins'),
                     'total_losses' => $studentsTable->find()->func()->sum('Studies.losses')
                 ])
-                ->leftJoinWith('Studies', function ($q) use ($selectedYear) {
-                    return $q->where(['YEAR(Studies.study_date)' => $selectedYear]);
-                })
-                ->matching('Users', function ($q) {
-                    return $q->where(['Users.active' => 1]);
-                })
+                ->leftJoinWith('Studies', fn($q) => $q->where(['YEAR(Studies.study_date)' => $selectedYear]))
+                ->matching('Users', fn($q) => $q->where(['Users.active' => 1]))
                 ->groupBy(['Students.id', 'Students.name'])
                 ->orderByDesc('total_profit_loss')
                 ->limit(5)
                 ->toArray();
 
-            // Estudantes com pior performance (para comparação)
             $worstStudents = $studentsTable->find()
                 ->select([
-                    'Students.name',
-                    'Students.id',
+                    'Students.name', 'Students.id',
                     'total_profit_loss' => $studentsTable->find()->func()->sum('Studies.profit_loss'),
                     'total_studies' => $studentsTable->find()->func()->count('Studies.id'),
                     'total_wins' => $studentsTable->find()->func()->sum('Studies.wins'),
                     'total_losses' => $studentsTable->find()->func()->sum('Studies.losses')
                 ])
-                ->leftJoinWith('Studies', function ($q) use ($selectedYear) {
-                    return $q->where(['YEAR(Studies.study_date)' => $selectedYear]);
-                })
-                ->matching('Users', function ($q) {
-                    return $q->where(['Users.active' => 1]);
-                })
+                ->leftJoinWith('Studies', fn($q) => $q->where(['YEAR(Studies.study_date)' => $selectedYear]))
+                ->matching('Users', fn($q) => $q->where(['Users.active' => 1]))
                 ->groupBy(['Students.id', 'Students.name'])
                 ->orderByAsc('total_profit_loss')
                 ->limit(5)
                 ->toArray();
 
-            // Preparar dados para o gráfico
             $chartLabels = [];
             $chartProfitLoss = [];
             $chartWinRate = [];
@@ -705,20 +263,15 @@ class StudentsController extends AppController
                 $totalTrades = $data['wins'] + $data['losses'];
                 $chartWinRate[] = $totalTrades > 0 ? round(($data['wins'] / $totalTrades) * 100, 2) : 0;
                 $chartDataDetailed[] = [
-                    'month_key' => $monthKey,
-                    'year' => $data['year'],
-                    'month' => $data['month'],
-                    'markets' => $data['markets']
+                    'month_key' => $monthKey, 'year' => $data['year'],
+                    'month' => $data['month'], 'markets' => $data['markets']
                 ];
             }
 
-            // Buscar dados do calendário para o mês atual
             $currentMonth = (int)$this->request->getQuery('month', date('n'));
             $currentYear = (int)$this->request->getQuery('year', date('Y'));
-
             $calendarData = $this->get_calendar_data((int)$id, $currentYear, $currentMonth);
 
-            // Buscar contas ativas para o filtro
             $accountsTable = $this->fetchTable('Accounts');
             $accounts = $accountsTable->find()
                 ->where(['active' => 1])
@@ -726,22 +279,11 @@ class StudentsController extends AppController
                 ->toArray();
 
             $this->set(compact(
-                'student',
-                'monthlyData',
-                'overallStats',
-                'chartLabels',
-                'chartDataByMonth',
-                'chartProfitLoss',
-                'chartWinRate',
-                'chartDataDetailed',
-                'markets',
-                'accounts',
-                'selectedYear',
-                'topStudents',
-                'worstStudents',
-                'calendarData',
-                'currentMonth',
-                'currentYear'
+                'student', 'monthlyData', 'overallStats',
+                'chartLabels', 'chartDataByMonth', 'chartProfitLoss',
+                'chartWinRate', 'chartDataDetailed', 'markets',
+                'accounts', 'selectedYear', 'topStudents',
+                'worstStudents', 'calendarData', 'currentMonth', 'currentYear'
             ));
         } catch (\Exception $e) {
             $this->Flash->error(__('Erro ao carregar dashboard: ' . $e->getMessage(), 'error'));
@@ -777,10 +319,6 @@ class StudentsController extends AppController
             ->where($conditions)
             ->orderBy(['study_date' => 'ASC'])
             ->toArray();
-
-        // Debug: log the query and results
-        error_log("Calendar data query conditions: " . json_encode($conditions));
-        error_log("Studies found: " . count($studies));
 
         // Organizar dados por dia
         $dailyData = [];
@@ -990,30 +528,10 @@ class StudentsController extends AppController
                 $conditions['Studies.market_id'] = $marketId;
             }
 
-            /*   // Buscar estatísticas filtradas
-            $overallStatsQuery = $studiesTable->find()
-                ->select([
-                    'total_studies' => 'COUNT(*)',
-                    'total_wins' => 'SUM(wins)',
-                    'total_losses' => 'SUM(losses)',
-                    'total_profit_loss' => 'SUM(profit_loss)',
-                    'avg_profit_loss' => 'AVG(profit_loss)',
-                    'first_study_date' => 'MIN(study_date)',
-                    'last_study_date' => 'MAX(study_date)'
-                ])
-                ->where($conditions)
-                ->first();*/
-
-            // Debug: Log das condições para verificar a query
-            error_log("Condições da query: " . json_encode($conditions));
-            
             // Buscar todos os estudos que atendem aos critérios de filtro
             $studies = $studiesTable->find()
                 ->where($conditions)
                 ->toArray();
-                
-            // Debug: Log do número de estudos encontrados
-            error_log("Número de estudos encontrados: " . count($studies));
 
             $overallStats = [
                 'total_studies' => 0,

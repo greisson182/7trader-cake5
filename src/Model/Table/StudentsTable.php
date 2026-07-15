@@ -29,7 +29,7 @@ class StudentsTable extends Table
         $this->hasMany('Studies', [
             'foreignKey' => 'student_id',
         ]);
-        $this->hasMany('Users', [
+        $this->hasOne('Users', [
             'foreignKey' => 'student_id',
         ]);
     }

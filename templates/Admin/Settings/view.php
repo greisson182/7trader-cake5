@@ -59,6 +59,26 @@
                     <td><?= h($setting->aws_api) ?></td>
                 </tr>
                 <tr>
+                    <th><?= __('URL Site') ?></th>
+                    <td><?= h($setting->url_site) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Mercado Pago - Public Key') ?></th>
+                    <td><?= h($setting->mp_public_key) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Mercado Pago - Access Token') ?></th>
+                    <td><?= $setting->mp_access_token ? '••••••••' : '—' ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Mercado Pago - Webhook Secret') ?></th>
+                    <td><?= $setting->mp_webhook_secret ? '••••••••' : '—' ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Mercado Pago - Sandbox') ?></th>
+                    <td><?= $setting->mp_sandbox ? __('Sim') : __('Não') ?></td>
+                </tr>
+                <tr>
                     <th><?= __('Id') ?></th>
                     <td><?= $this->Number->format($setting->id) ?></td>
                 </tr>

@@ -82,7 +82,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     <?php if (!empty($studiesByMonth)): ?>
         <?php foreach ($studiesByMonth as $monthKey => $monthData): ?>
             <div class="card month-card mb-4" data-month-key="<?= h($monthKey) ?>">
-                <div class="card-header-old month-header bg-month-studies" style="cursor: pointer;">
+                <div class="month-header bg-month-studies">
                     <div class="row align-items-center">
                         <div class="col-md-3">
                             <h5 class="mb-0">
@@ -124,7 +124,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             <i class="fas fa-chevron-down expand-icon transition-all"></i>
                         </div>
                     </div>
-                    <div class="row mt-2">
+                    <div class="row">
                         <div class="col-md-3">
                             <div class="stat-item">
                                 <span class="stat-label">P&L Total</span>
@@ -320,7 +320,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             }
 
             // Atualizar P&L
-            const profitLossElement = header.querySelector('.row.mt-2 .stat-value');
+            const profitLossElement = header.querySelector('.col-md-3 .stat-value:last-child');
             if (profitLossElement) {
                 // Formatar valor com moeda
                 const formattedValue = new Intl.NumberFormat('pt-BR', {

@@ -3,7 +3,10 @@
  * @var \App\View\AppView $this
  * @var array $course
  * @var array $videos
+ * @var array $stats
+ * @var array $enrolledStudents
  */
+$csrfToken = $this->request->getAttribute('csrfToken');
 ?>
 <div class="courses view content fade-in-up">
     <!-- Header Section -->
@@ -180,6 +183,42 @@
                     <?php endif; ?>
                 </div>
             </div>
+
+            <!-- Alunos Inscritos -->
+            <div class="card glass mt-4">
+                <div class="card-header">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-people me-2"></i>
+                        Alunos Inscritos (<?= count($enrolledStudents) ?>)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <?php if (empty($enrolledStudents)): ?>
+                        <p class="text-muted mb-0">Nenhum aluno inscrito neste curso.</p>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($enrolledStudents as $enrollment): ?>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="fw-semibold"><?= h($enrollment->student->name ?? 'Aluno #' . $enrollment->student_id) ?></span>
+                                        <div class="text-muted small">
+                                            Inscrito em <?= h($enrollment->enrolled_at?->format('d/m/Y H:i')) ?>
+                                        </div>
+                                    </div>
+                                    <form method="post" action="/admin/courses/unenroll-student/<?= $course['id'] ?>/<?= $enrollment->student_id ?>"
+                                          onsubmit="return confirm('Desinscrever este aluno do curso?');">
+                                        <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-person-dash me-1"></i>
+                                            Desinscrever
+                                        </button>
+                                    </form>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
 
         <!-- Sidebar -->
@@ -197,7 +236,7 @@
                             </div>
                         </div>
                         <div class="col-6">
-                            <h4 class="text-success fw-bold mb-0">0</h4>
+                            <h4 class="text-success fw-bold mb-0"><?= (int)$stats['total_enrollments'] ?></h4>
                             <small class="text-muted">Inscritos</small>
                         </div>
                     </div>

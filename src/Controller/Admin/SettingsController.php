@@ -4,9 +4,18 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AppController;
+use App\Service\SettingsService;
 
 class SettingsController extends AppController
 {
+    private SettingsService $_settingsService;
+
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->_settingsService = new SettingsService();
+    }
+
     /**
      * Index method
      *
@@ -44,6 +53,7 @@ class SettingsController extends AppController
         if ($this->request->is('post')) {
             $setting = $this->Settings->patchEntity($setting, $this->request->getData());
             if ($this->Settings->save($setting)) {
+                $this->_settingsService->clearCache();
                 $this->Flash->success(__('The setting has been saved.'));
 
                 return $this->redirect(['action' => 'index']);
@@ -64,8 +74,18 @@ class SettingsController extends AppController
     {
         $setting = $this->Settings->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
-            $setting = $this->Settings->patchEntity($setting, $this->request->getData());
+            $data = $this->request->getData();
+
+            // Não sobrescrever segredos quando o campo é deixado em branco no formulário
+            foreach (['mp_access_token', 'mp_webhook_secret'] as $secretField) {
+                if (isset($data[$secretField]) && $data[$secretField] === '') {
+                    unset($data[$secretField]);
+                }
+            }
+
+            $setting = $this->Settings->patchEntity($setting, $data);
             if ($this->Settings->save($setting)) {
+                $this->_settingsService->clearCache();
                 $this->Flash->success(__('The setting has been saved.'));
 
                 return $this->redirect(['action' => 'index']);

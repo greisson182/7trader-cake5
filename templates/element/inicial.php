@@ -186,7 +186,7 @@ Desenvolva uma leitura clara do mercado, com entradas objetivas, gestão de risc
 
 Em 2021, iniciei minhas operações em mini índice e mini dólar, confiante de que já era um trader bem-sucedido. No entanto, encontrei uma realidade diferente. Passei por dificuldades, enfrentei perdas e descobri que o mercado exige muito mais do que confiança: exige método, disciplina e capacidade de adaptação.
 
-A virada aconteceu quando conheci os ensinamentos de Ariel, cuja metodologia baseada em Price Action, Fibonacci e Candles Gatilhos transformou minha forma de enxergar o mercado. A partir desse conhecimento, passei a desenvolver uma leitura mais clara da movimentação dos preços, operando sem indicadores e focando exclusivamente na estrutura do mercado.
+A virada aconteceu quando entendi sobre a movimentação candle a candle com o Price Action, Fibonacci e Candles Gatilhos transformou minha forma de enxergar o mercado. A partir desse conhecimento, passei a desenvolver uma leitura mais clara da movimentação dos preços, operando sem indicadores e focando exclusivamente na estrutura do mercado.
 
 Hoje, aplico esse método com consistência e compartilho minha experiência para ajudar outros traders a encurtarem o caminho que levei anos para percorrer.
                     </p>
@@ -302,7 +302,7 @@ Hoje, aplico esse método com consistência e compartilho minha experiência par
                         <li class="d-flex gap-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Plano de estudo</span></li>
                         <li class="d-flex gap-2"><i class="fa-solid fa-chart-pie text-success mt-1"></i><span>Sistema de controle de estudos com relatórios de operações e assertividade</span></li>
                     </ul>
-                    <a href="#contato" class="btn btn-outline-success w-100">Quero o curso</a>
+                    <a href="/checkout/curso/7" class="btn btn-outline-success w-100">Quero o curso</a>
                 </div>
             </div>
 
@@ -321,7 +321,7 @@ Hoje, aplico esse método com consistência e compartilho minha experiência par
                         <li class="d-flex gap-2"><i class="fa-solid fa-check text-success mt-1"></i><span>Curso incluso</span></li>
                         <li class="d-flex gap-2"><i class="fa-solid fa-chart-pie text-success mt-1"></i><span>Sistema de controle de estudos com relatórios de operações e assertividade</span></li>
                     </ul>
-                    <a href="#contato" class="btn btn-success w-100">Quero a mentoria em grupo</a>
+                    <a href="/checkout/mentoria/1" class="btn btn-success w-100">Quero a mentoria em grupo</a>
                 </div>
             </div>
 
@@ -344,7 +344,7 @@ Hoje, aplico esse método com consistência e compartilho minha experiência par
                         <li class="d-flex gap-2"><i class="fa-solid fa-gift text-success mt-1"></i><span>Bônus: curso + mentoria em grupo inclusos</span></li>
                         <li class="d-flex gap-2"><i class="fa-solid fa-chart-pie text-success mt-1"></i><span>Sistema de controle de estudos com relatórios de operações e assertividade</span></li>
                     </ul>
-                    <a href="#contato" class="btn btn-outline-success w-100">Quero a mentoria particular</a>
+                    <a href="/checkout/mentoria/2" class="btn btn-outline-success w-100">Quero a mentoria particular</a>
                 </div>
             </div>
         </div>

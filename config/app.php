@@ -8,7 +8,7 @@ use Cake\Mailer\Transport\MailTransport;
 use function Cake\Core\env;
 
 return [
-    'debug' => true,
+    'debug' => env('DEBUG', false),
     'App' => [
         'namespace' => 'App',
         'encoding' => env('APP_ENCODING', 'UTF-8'),

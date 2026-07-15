@@ -15,6 +15,12 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/blog/*', ['controller' => 'Posts', 'action' => 'index']);
         $builder->connect('/busca/*', ['controller' => 'Posts', 'action' => 'search']);
 
+        $builder->connect('/checkout/curso/*', ['controller' => 'Checkout', 'action' => 'course']);
+        $builder->connect('/checkout/mentoria/*', ['controller' => 'Checkout', 'action' => 'mentorship']);
+        $builder->connect('/checkout/retorno/sucesso', ['controller' => 'Checkout', 'action' => 'returnSuccess']);
+        $builder->connect('/checkout/retorno/pendente', ['controller' => 'Checkout', 'action' => 'returnPending']);
+        $builder->connect('/checkout/retorno/falha', ['controller' => 'Checkout', 'action' => 'returnFailure']);
+
         $builder->connect('/*', ['controller' => 'Pages', 'action' => 'view']);
         $builder->connect('/categoria/*', ['controller' => 'Categories', 'action' => 'view']);
 
@@ -49,7 +55,7 @@ return function (RouteBuilder $routes): void {
        // $routes->applyMiddleware('csrf');
         $routes->setExtensions(['json', 'xml']);
 
-        $routes->fallbacks('InflectedRoute');
+        $routes->fallbacks(DashedRoute::class);
     });
 
     // API routes
@@ -59,5 +65,6 @@ return function (RouteBuilder $routes): void {
 
         $builder->connect("/authorization", ["controller" => "Access", "action" => "authorization"]);
         $builder->connect("/validation", ["controller" => "Access", "action" => "validation"]);
+        $builder->connect("/mercadopago/webhook", ["controller" => "MercadoPagoWebhook", "action" => "notify"]);
     });
 };

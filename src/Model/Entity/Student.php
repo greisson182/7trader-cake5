@@ -15,6 +15,6 @@ class Student extends Entity
         'course_enrollments' => true,
         'student_progress' => true,
         'studies' => true,
-        'users' => true,
+        'user' => true,
     ];
 }

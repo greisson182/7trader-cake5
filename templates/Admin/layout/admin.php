@@ -93,6 +93,18 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 Cursos
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="/admin/mentorships" class="nav-link">
+                                <i class="bi bi-people me-1"></i>
+                                Mentorias
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/orders" class="nav-link">
+                                <i class="bi bi-receipt-cutoff me-1"></i>
+                                Pedidos
+                            </a>
+                        </li>
                     <?php } else { ?>
                         <li class="nav-item">
                             <a href="/admin/courses/courses-students" class="nav-link">

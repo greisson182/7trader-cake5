@@ -20,6 +20,13 @@ use Cake\ORM\Entity;
  * @property string|null $google_publisher
  * @property string|null $google_author
  * @property string|null $aws_api
+ * @property int|null $accesses
+ * @property bool|null $redirect_website
+ * @property string|null $url_site
+ * @property string|null $mp_access_token
+ * @property string|null $mp_public_key
+ * @property string|null $mp_webhook_secret
+ * @property bool $mp_sandbox
  * @property \Cake\I18n\DateTime|null $created
  * @property \Cake\I18n\DateTime|null $modified
  */
@@ -46,6 +53,13 @@ class Setting extends Entity
         'google_publisher' => true,
         'google_author' => true,
         'aws_api' => true,
+        'accesses' => true,
+        'redirect_website' => true,
+        'url_site' => true,
+        'mp_access_token' => true,
+        'mp_public_key' => true,
+        'mp_webhook_secret' => true,
+        'mp_sandbox' => true,
         'created' => true,
         'modified' => true,
     ];

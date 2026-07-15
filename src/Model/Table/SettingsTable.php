@@ -76,6 +76,25 @@ class SettingsTable extends Table
             ->maxLength('aws_api', 255)
             ->allowEmptyString('aws_api');
 
+        $validator
+            ->scalar('mp_access_token')
+            ->maxLength('mp_access_token', 255)
+            ->allowEmptyString('mp_access_token');
+
+        $validator
+            ->scalar('mp_public_key')
+            ->maxLength('mp_public_key', 255)
+            ->allowEmptyString('mp_public_key');
+
+        $validator
+            ->scalar('mp_webhook_secret')
+            ->maxLength('mp_webhook_secret', 255)
+            ->allowEmptyString('mp_webhook_secret');
+
+        $validator
+            ->boolean('mp_sandbox')
+            ->notEmptyString('mp_sandbox');
+
         return $validator;
     }
 }

@@ -186,6 +186,55 @@ INSERT INTO `markets` (`id`, `name`, `code`, `description`, `active`, `type`, `c
 	(1, 'Índice Futuro', 'WINFUT', '', 1, 'indice', 'BRL', '2025-09-23 12:49:14', '2025-09-23 13:00:59'),
 	(2, 'Dólar Futuro', 'WDOFUT', '', 1, 'indice', 'BRL', '2025-09-23 12:49:14', '2025-09-23 13:01:02');
 
+-- Copiando estrutura para tabela 7trader.mentorships
+DROP TABLE IF EXISTS `mentorships`;
+CREATE TABLE IF NOT EXISTS `mentorships` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `type` enum('grupo','particular') NOT NULL,
+  `description` text DEFAULT NULL,
+  `price` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `is_active` tinyint(1) DEFAULT 1,
+  `order_position` int(11) DEFAULT 0,
+  `created` datetime DEFAULT current_timestamp(),
+  `modified` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_type` (`type`),
+  KEY `idx_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Copiando estrutura para tabela 7trader.orders
+DROP TABLE IF EXISTS `orders`;
+CREATE TABLE IF NOT EXISTS `orders` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `item_type` enum('course','mentorship') NOT NULL,
+  `item_id` int(11) NOT NULL,
+  `buyer_name` varchar(255) NOT NULL,
+  `buyer_email` varchar(255) NOT NULL,
+  `buyer_phone` varchar(20) DEFAULT NULL,
+  `buyer_password_hash` varchar(255) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `status` enum('pending','approved','rejected','cancelled','refunded') NOT NULL DEFAULT 'pending',
+  `mp_preference_id` varchar(191) DEFAULT NULL,
+  `mp_payment_id` varchar(191) DEFAULT NULL,
+  `payment_method` varchar(50) DEFAULT NULL,
+  `student_id` int(11) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `fulfilled_at` datetime DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created` datetime DEFAULT current_timestamp(),
+  `modified` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_mp_preference_id` (`mp_preference_id`),
+  UNIQUE KEY `uniq_mp_payment_id` (`mp_payment_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_item` (`item_type`,`item_id`),
+  KEY `idx_buyer_email` (`buyer_email`),
+  KEY `idx_student` (`student_id`),
+  CONSTRAINT `orders_ibfk_student` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Copiando estrutura para tabela 7trader.permissions
 DROP TABLE IF EXISTS `permissions`;
 CREATE TABLE IF NOT EXISTS `permissions` (
@@ -242,6 +291,13 @@ CREATE TABLE IF NOT EXISTS `settings` (
   `google_publisher` varchar(255) DEFAULT NULL,
   `google_author` varchar(255) DEFAULT NULL,
   `aws_api` varchar(255) DEFAULT NULL,
+  `accesses` int(11) DEFAULT 0,
+  `redirect_website` tinyint(1) DEFAULT 0,
+  `url_site` varchar(500) DEFAULT NULL,
+  `mp_access_token` varchar(255) DEFAULT NULL,
+  `mp_public_key` varchar(255) DEFAULT NULL,
+  `mp_webhook_secret` varchar(255) DEFAULT NULL,
+  `mp_sandbox` tinyint(1) NOT NULL DEFAULT 1,
   `created` datetime DEFAULT NULL,
   `modified` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)

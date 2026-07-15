@@ -83,9 +83,17 @@ class CoursesController extends AppController
                 'completed_enrollments' => $completedEnrollments
             ];
 
+            // Buscar alunos inscritos (ativos) para permitir desinscrição manual
+            $enrolledStudents = $enrollmentsTable->find()
+                ->contain(['Students'])
+                ->where(['course_id' => $id, 'is_active' => 1])
+                ->orderBy(['enrolled_at' => 'DESC'])
+                ->toArray();
+
             $this->set('course', $course);
             $this->set('videos', $videos);
             $this->set('stats', $stats);
+            $this->set('enrolledStudents', $enrolledStudents);
         } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
             $this->Flash->error('Curso não encontrado.');
             return $this->redirect(['action' => 'index']);
@@ -234,6 +242,36 @@ class CoursesController extends AppController
             $this->Flash->error('Erro ao excluir curso: ' . $e->getMessage());
             return $this->redirect(['action' => 'index']);
         }
+    }
+
+    public function unenrollStudent($courseId = null, $studentId = null)
+    {
+        $this->request->allowMethod(['post', 'delete']);
+
+        try {
+            $enrollmentsTable = $this->fetchTable('CourseEnrollments');
+
+            $enrollment = $enrollmentsTable->find()
+                ->where(['course_id' => $courseId, 'student_id' => $studentId, 'is_active' => 1])
+                ->first();
+
+            if (!$enrollment) {
+                $this->Flash->error('Inscrição não encontrada ou já inativa.');
+                return $this->redirect(['action' => 'view', $courseId]);
+            }
+
+            $enrollment = $enrollmentsTable->patchEntity($enrollment, ['is_active' => 0], ['fieldList' => ['is_active']]);
+
+            if ($enrollmentsTable->save($enrollment)) {
+                $this->Flash->success('Aluno desinscrito do curso com sucesso.');
+            } else {
+                $this->Flash->error('Erro ao desinscrever aluno.');
+            }
+        } catch (\Exception $e) {
+            $this->Flash->error('Erro ao desinscrever aluno: ' . $e->getMessage());
+        }
+
+        return $this->redirect(['action' => 'view', $courseId]);
     }
 
     // Gerenciar vídeos do curso

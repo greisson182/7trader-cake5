@@ -87,6 +87,11 @@ class Application extends BaseApplication
             // https://book.cakephp.org/5/en/security/csrf.html#cross-site-request-forgery-csrf-middleware
             ->add(new CsrfProtectionMiddleware([
                  'httponly' => true,
+                 'skipCheckCallback' => function ($request) {
+                     // Notificações do Mercado Pago (e demais endpoints server-to-server
+                     // do prefixo Api) chegam sem token CSRF.
+                     return $request->getParam('prefix') === 'Api';
+                 },
              ]));
 
         return $middlewareQueue;

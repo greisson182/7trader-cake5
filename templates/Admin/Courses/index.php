@@ -3,6 +3,7 @@
  * @var \App\View\AppView $this
  * @var array $courses
  */
+$csrfToken = $this->request->getAttribute('csrfToken');
 ?>
 <div class="courses index content fade-in-up">
     <!-- Header Section -->
@@ -138,8 +139,9 @@
                                         <a href="/admin/courses/edit/<?= $course['id'] ?>" class="btn btn-outline-warning btn-sm">
                                             <i class="bi bi-pencil"></i> Editar
                                         </a>
-                                        <form method="post" action="/admin/courses/delete/<?= $course['id'] ?>" style="display: inline;" 
+                                        <form method="post" action="/admin/courses/delete/<?= $course['id'] ?>" style="display: inline;"
                                               onsubmit="return confirm('Tem certeza que deseja excluir este curso?');">
+                                            <input type="hidden" name="_csrfToken" value="<?= $csrfToken ?>">
                                             <button type="submit" class="btn btn-outline-danger btn-sm">
                                                 <i class="bi bi-trash"></i>
                                             </button>
