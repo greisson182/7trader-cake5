@@ -371,6 +371,8 @@ class CoursesController extends AppController
                 if (empty($data['title']) || empty($data['video_url'])) {
                     $this->Flash->error('Título e URL do vídeo são obrigatórios.');
                     $this->set('course', $course);
+                    $this->set('formData', $data);
+                    return null;
                 }
 
                 $courseVideosTable = $this->fetchTable('CourseVideos');
@@ -380,7 +382,12 @@ class CoursesController extends AppController
                     ->select(['max_pos' => $courseVideosTable->find()->func()->max('order_position')])
                     ->where(['course_id' => $courseId])
                     ->first();
-                $nextPosition = ($maxPosition->max_pos ?? 0) + 1;
+                // MAX() vem do banco como float/string sem type map; o validador integer()
+                // do CakePHP rejeita float mesmo quando é um número inteiro (ex: 2.0).
+                $nextPosition = (int)($maxPosition->max_pos ?? 0) + 1;
+
+                // Duração preenchida como minutos + segundos, combinados aqui
+                $durationSeconds = ((int)($data['duration_minutes'] ?? 0) * 60) + (int)($data['duration_seconds'] ?? 0);
 
                 // Preparar dados para salvar
                 $videoData = [
@@ -389,7 +396,7 @@ class CoursesController extends AppController
                     'description' => $data['description'] ?? '',
                     'video_url' => $data['video_url'],
                     'video_type' => $data['video_type'] ?? 'youtube',
-                    'duration_seconds' => (int)($data['duration_seconds'] ?? 0),
+                    'duration_seconds' => $durationSeconds,
                     'order_position' => $nextPosition,
                     'is_preview' => isset($data['is_preview']) ? 1 : 0,
                     'is_active' => isset($data['is_active']) ? 1 : 0
@@ -402,7 +409,8 @@ class CoursesController extends AppController
                     $this->Flash->success('Vídeo adicionado com sucesso!');
                     return $this->redirect(['action' => 'videos', $courseId]);
                 } else {
-                    $this->Flash->error('Erro ao salvar vídeo. Verifique os dados.');
+                    $this->Flash->error('Erro ao salvar vídeo: ' . $this->flattenEntityErrors($video));
+                    $this->set('formData', $data);
                 }
             }
 
@@ -435,13 +443,11 @@ class CoursesController extends AppController
                 if (empty($data['title']) || empty($data['video_url'])) {
                     $this->Flash->error('Título e URL do vídeo são obrigatórios.');
                     $this->set('video', $video);
+                    return null;
                 }
 
-                // Converter minutos para segundos se fornecido
-                $durationSeconds = null;
-                if (!empty($data['duration_minutes']) && is_numeric($data['duration_minutes'])) {
-                    $durationSeconds = (int)$data['duration_minutes'] * 60;
-                }
+                // Duração preenchida como minutos + segundos, combinados aqui
+                $durationSeconds = ((int)($data['duration_minutes'] ?? 0) * 60) + (int)($data['duration_seconds'] ?? 0);
 
                 // Preparar dados para atualização
                 $videoData = [
@@ -459,7 +465,7 @@ class CoursesController extends AppController
                     $this->Flash->success('Vídeo atualizado com sucesso!');
                     return $this->redirect(['action' => 'videos', $video->course_id]);
                 } else {
-                    $this->Flash->error('Erro ao atualizar vídeo. Verifique os dados.');
+                    $this->Flash->error('Erro ao atualizar vídeo: ' . $this->flattenEntityErrors($video));
                 }
             }
 
@@ -641,8 +647,9 @@ class CoursesController extends AppController
             $videosQuery = $this->fetchTable('CourseVideos')->find()
                 ->where(['course_id' => $courseId, 'is_active' => 1]);
 
-            // Se não inscrito e curso pago, mostrar apenas previews
-            if (!$isEnrolled && !$course->is_free) {
+            // Se não inscrito, mostrar apenas previews (mesmo em cursos gratuitos:
+            // "grátis" significa inscrição sem custo, não acesso sem se inscrever)
+            if (!$isEnrolled) {
                 $videosQuery->where(['is_preview' => 1]);
             }
 
@@ -699,14 +706,13 @@ class CoursesController extends AppController
                 return $this->redirect(['action' => 'view-students', $courseId]);
             }
 
-            // Verificar permissão para assistir
+            // Verificar permissão para assistir: vídeo de preview sempre libera;
+            // fora isso, precisa estar inscrito (mesmo em curso gratuito)
             $canWatch = false;
 
-            // Curso gratuito ou vídeo de preview
-            if ($course->is_free || $video->is_preview) {
+            if ($video->is_preview) {
                 $canWatch = true;
             } else {
-                // Verificar se está inscrito usando ORM
                 $enrollment = $this->fetchTable('CourseEnrollments')->find()
                     ->where(['student_id' => $studentId, 'course_id' => $courseId])
                     ->first();
@@ -883,16 +889,19 @@ class CoursesController extends AppController
                 // Atualizar progresso existente usando ORM
                 $progressData = [
                     'watched_seconds' => $watchTime,
-                    'watched_at' => date('Y-m-d H:i:s')
+                    'watched_at' => date('Y-m-d H:i:s'),
+                    'last_watched' => date('Y-m-d H:i:s'),
                 ];
 
                 if ($completed) {
-                    $progressData['completed_at'] = date('Y-m-d H:i:s');
+                    $progressData['completed'] = true;
+                    // Preserva a primeira data de conclusão em vez de sobrescrever a cada chamada.
+                    if (!$progress->completed_at) {
+                        $progressData['completed_at'] = date('Y-m-d H:i:s');
+                    }
                 }
 
                 $progress = $studentProgressTable->patchEntity($progress, $progressData);
-                
-
             } else {
                 // Criar novo progresso usando ORM
                 $progress = $studentProgressTable->newEmptyEntity();
@@ -901,10 +910,12 @@ class CoursesController extends AppController
                     'course_id' => $courseId,
                     'video_id' => $videoId,
                     'watched_seconds' => $watchTime,
-                    'watched_at' => date('Y-m-d H:i:s')
+                    'watched_at' => date('Y-m-d H:i:s'),
+                    'last_watched' => date('Y-m-d H:i:s'),
                 ];
 
                 if ($completed) {
+                    $progressData['completed'] = true;
                     $progressData['completed_at'] = date('Y-m-d H:i:s');
                 }
 
@@ -930,64 +941,48 @@ class CoursesController extends AppController
     public function purchase_students($courseId = null)
     {
         try {
-            if (!$this->isStudent()) {
-                $this->Flash->error('Apenas estudantes podem comprar cursos.');
-                return $this->redirect(['action' => 'courses-students']);
-            }
-            
-            $studentId = $this->getCurrentStudentId();
-            
-            // Verificar se curso existe e está ativo usando ORM
             $course = $this->fetchTable('Courses')->find()
-            ->where(['id' => $courseId, 'is_active' => 1])
-            ->first();
-            
+                ->where(['id' => $courseId, 'is_active' => 1])
+                ->first();
+
             if (!$course) {
                 $this->Flash->error('Curso não encontrado.');
                 return $this->redirect(['action' => 'courses-students']);
             }
-            
-            // Verificar se já está inscrito usando ORM
-            $existingEnrollment = $this->fetchTable('CourseEnrollments')->find()
-            ->where(['student_id' => $studentId, 'course_id' => $courseId])
-            ->first();
-            
-            if ($existingEnrollment) {
-                $this->Flash->info('Você já possui acesso a este curso.');
-                return $this->redirect(['action' => 'view-students', $courseId]);
+
+            if ($this->isStudent()) {
+                $studentId = $this->getCurrentStudentId();
+                $existingEnrollment = $this->fetchTable('CourseEnrollments')->find()
+                    ->where(['student_id' => $studentId, 'course_id' => $courseId])
+                    ->first();
+
+                if ($existingEnrollment) {
+                    $this->Flash->info('Você já possui acesso a este curso.');
+                    return $this->redirect(['action' => 'view-students', $courseId]);
+                }
             }
-            
-            // Se for curso gratuito, redirecionar para inscrição
+
             if ($course->is_free) {
                 return $this->redirect(['action' => 'enroll', $courseId]);
             }
-            
-            // Para desenvolvimento, simular compra automática
-            if ($this->request->is('post')) {
-                
-                // Simular processamento de pagamento usando ORM
-                $courseEnrollmentsTable = $this->fetchTable('CourseEnrollments');
-                $enrollment = $courseEnrollmentsTable->newEmptyEntity();
-                $enrollmentData = [
-                    'student_id' => $studentId,
-                    'course_id' => $courseId,
-                    'enrolled_at' => date('Y-m-d H:i:s')
-                ];
-                $enrollment = $courseEnrollmentsTable->patchEntity($enrollment, $enrollmentData);
 
-                if ($courseEnrollmentsTable->save($enrollment)) {
-                    $this->Flash->success('Compra realizada com sucesso! Agora você tem acesso ao curso.');
-                } else {
-                    $this->Flash->error('Erro ao processar compra. Tente novamente.');
-                }
-
-                return $this->redirect(['action' => 'view-students', $courseId]);
-            }
-
-            $this->set('course', $course);
+            // Cursos pagos são vendidos pelo checkout real (Mercado Pago).
+            return $this->redirect('/checkout/curso/' . $course->id);
         } catch (\Exception $e) {
             $this->Flash->error('Erro ao processar compra: ' . $e->getMessage());
             return $this->redirect(['action' => 'courses-students']);
         }
+    }
+
+    private function flattenEntityErrors(\Cake\Datasource\EntityInterface $entity): string
+    {
+        $messages = [];
+        foreach ($entity->getErrors() as $fieldErrors) {
+            foreach ($fieldErrors as $message) {
+                $messages[] = $message;
+            }
+        }
+
+        return implode(' ', $messages);
     }
 }

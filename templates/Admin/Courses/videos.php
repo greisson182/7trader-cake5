@@ -20,11 +20,11 @@
                 <i class="bi bi-plus-circle me-2"></i>
                 Adicionar Vídeo
             </a>
-            <a href="/admin/courses/view/<?= $course['id'] ?>" class="btn btn-outline-info">
+            <a href="/admin/courses/view/<?= $course['id'] ?>" class="btn btn-outline-primary">
                 <i class="bi bi-eye me-2"></i>
                 Ver Curso
             </a>
-            <a href="/admin/courses" class="btn btn-outline-secondary">
+            <a href="/admin/courses" class="btn btn-outline-light">
                 <i class="bi bi-arrow-left me-2"></i>
                 Voltar
             </a>
@@ -79,20 +79,22 @@
 
     <!-- Videos Management -->
     <div class="card glass">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold mb-0">
-                <i class="bi bi-play-circle me-2"></i>
-                Lista de Vídeos
-            </h5>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-primary btn-sm" onclick="reorderVideos()">
-                    <i class="bi bi-arrow-up-down me-1"></i>
-                    Reordenar
-                </button>
-                <button type="button" class="btn btn-outline-success btn-sm" onclick="bulkActivate()">
-                    <i class="bi bi-check-all me-1"></i>
-                    Ativar Selecionados
-                </button>
+        <div class="card-body pb-0">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h6 class="section-title mb-0 flex-grow-1">
+                    <i class="bi bi-play-circle me-2"></i>
+                    Lista de Vídeos
+                </h6>
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" class="btn btn-outline-light btn-sm" onclick="reorderVideos()">
+                        <i class="bi bi-arrow-up-down me-1"></i>
+                        Reordenar
+                    </button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="bulkActivate()">
+                        <i class="bi bi-check-all me-1"></i>
+                        Ativar Selecionados
+                    </button>
+                </div>
             </div>
         </div>
         <div class="card-body p-0">
@@ -286,15 +288,16 @@ function saveOrder() {
 </script>
 
 <style>
-.card {
-    border: none;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+.section-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary, #fff);
+    padding-bottom: var(--space-sm, 0.5rem);
+    border-bottom: 1px solid var(--glass-border, rgba(0, 255, 136, 0.2));
 }
 
-.table th {
-    border-top: none;
-    font-weight: 600;
-    color: var(--bs-gray-700);
+.section-title i {
+    color: #00ff88;
 }
 
 .btn-group .btn {

@@ -1,299 +1,374 @@
 <?php
-$title = htmlspecialchars($course['title']) . ' - 7 Trader';
-$description = htmlspecialchars(substr($course['description'], 0, 160));
+$title = h($course['title']) . ' - 7 Trader';
+$description = h(substr($course['description'], 0, 160));
+
+$difficultyColors = [
+    'Iniciante' => 'success',
+    'Intermediário' => 'warning',
+    'Avançado' => 'danger',
+];
+$difficultyColor = $difficultyColors[$course['difficulty']] ?? 'secondary';
+
+$totalMinutes = round($course['total_duration'] / 60);
+$hours = floor($totalMinutes / 60);
+$minutes = $totalMinutes % 60;
+$durationText = $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
 ?>
+<div class="courses-students view content fade-in-up">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/admin/courses/courses-students">
+                    <i class="bi bi-mortarboard-fill me-1"></i>Cursos
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page"><?= h($course['title']) ?></li>
+        </ol>
+    </nav>
 
-<div class="container-fluid py-4" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); min-height: 100vh;">
-    <div class="container">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4">
-            <ol class="breadcrumb bg-dark border-secondary">
-                <li class="breadcrumb-item">
-                    <a href="/admin/courses/courses-students" class="text-success text-decoration-none">
-                        <i class="fas fa-graduation-cap me-1"></i>Cursos
-                    </a>
-                </li>
-                <li class="breadcrumb-item active text-white" aria-current="page">
-                    <?= htmlspecialchars($course['title']) ?>
-                </li>
-            </ol>
-        </nav>
+    <!-- Header -->
+    <div class="mb-4">
+        <h1 class="h3 fw-bold mb-2">
+            <i class="bi bi-play-circle-fill me-2 icon-accent"></i>
+            <?= h($course['title']) ?>
+        </h1>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="badge bg-<?= $difficultyColor ?>"><?= h($course['difficulty']) ?></span>
+            <?php if ($course['is_free']): ?>
+                <span class="badge bg-primary">Gratuito</span>
+            <?php else: ?>
+                <span class="badge bg-warning text-dark">R$ <?= number_format($course['price'], 2, ',', '.') ?></span>
+            <?php endif; ?>
+            <?php if ($isEnrolled): ?>
+                <?php if ($enrollment && $enrollment['completed_at']): ?>
+                    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Concluído</span>
+                <?php else: ?>
+                    <span class="badge bg-info"><i class="bi bi-play-fill me-1"></i>Em andamento</span>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+    </div>
 
-        <div class="row">
-            <!-- Informações do Curso -->
-            <div class="col-lg-8 mb-4">
-                <div class="card bg-dark border-secondary">
-                    <div class="card-body">
-                        <!-- Header do Curso -->
-                        <div class="row mb-4">
-                            <div class="col-md-8">
-                                <h1 class="text-white mb-3"><?= htmlspecialchars($course['title']) ?></h1>
-                                
-                                <div class="d-flex flex-wrap gap-2 mb-3">
-                                    <?php
-                                    $difficultyColors = [
-                                        'Iniciante' => 'success',
-                                        'Intermediário' => 'warning', 
-                                        'Avançado' => 'danger'
-                                    ];
-                                    $difficultyColor = $difficultyColors[$course['difficulty']] ?? 'secondary';
-                                    ?>
-                                    <span class="badge bg-<?= $difficultyColor ?> fs-6">
-                                        <?= htmlspecialchars($course['difficulty']) ?>
-                                    </span>
-                                    
-                                    <?php if ($course['is_free']): ?>
-                                        <span class="badge bg-success fs-6">GRATUITO</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-primary fs-6">R$ <?= number_format($course['price'], 2, ',', '.') ?></span>
-                                    <?php endif; ?>
-                                    
-                                    <?php if ($isEnrolled): ?>
-                                        <?php if ($enrollment && $enrollment['completed_at']): ?>
-                                            <span class="badge bg-success fs-6">
-                                                <i class="fas fa-check-circle me-1"></i>CONCLUÍDO
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge bg-info fs-6">
-                                                <i class="fas fa-play me-1"></i>EM ANDAMENTO
-                                            </span>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <div class="row text-center mb-3">
-                                    <div class="col-3">
-                                        <small class="text-muted d-block">Vídeos</small>
-                                        <strong class="text-success"><?= $course['video_count'] ?></strong>
-                                    </div>
-                                    <div class="col-3">
-                                        <small class="text-muted d-block">Duração</small>
-                                        <strong class="text-success">
-                                            <?php
-                                            $totalMinutes = round($course['total_duration'] / 60);
-                                            $hours = floor($totalMinutes / 60);
-                                            $minutes = $totalMinutes % 60;
-                                            echo $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
-                                            ?>
-                                        </strong>
-                                    </div>
-                                    <div class="col-3">
-                                        <small class="text-muted d-block">Categoria</small>
-                                        <strong class="text-success"><?= htmlspecialchars($course['category']) ?></strong>
-                                    </div>
-                                    <div class="col-3">
-                                        <small class="text-muted d-block">Posição</small>
-                                        <strong class="text-success">#<?= $course['order_position'] ?></strong>
-                                    </div>
-                                </div>
+    <div class="row g-3">
+        <!-- Informações do Curso -->
+        <div class="col-lg-8">
+            <div class="card glass mb-3">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <?php if ($course['thumbnail']): ?>
+                            <div class="col-md-4">
+                                <img src="<?= h($course['thumbnail']) ?>" alt="<?= h($course['title']) ?>"
+                                     class="img-fluid rounded" style="width: 100%; height: 160px; object-fit: cover;">
                             </div>
-                            
-                            <div class="col-md-4 text-center">
-                                <?php if ($course['thumbnail']): ?>
-                                    <img src="<?= htmlspecialchars($course['thumbnail']) ?>" 
-                                         class="img-fluid rounded border border-secondary" 
-                                         alt="<?= htmlspecialchars($course['title']) ?>"
-                                         style="max-height: 200px;">
-                                <?php else: ?>
-                                    <div class="bg-gradient rounded d-flex align-items-center justify-content-center border border-secondary" 
-                                         style="height: 200px; background: linear-gradient(45deg, #28a745, #20c997) !important;">
-                                        <i class="fas fa-play-circle fa-4x text-white opacity-75"></i>
+                        <?php endif; ?>
+
+                        <div class="col-md-<?= $course['thumbnail'] ? '8' : '12' ?>">
+                            <h6 class="section-title">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Informações do Curso
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-sm-6 meta-row">
+                                    <span><i class="bi bi-play-fill me-1"></i> Vídeos</span>
+                                    <strong><?= (int)$course['video_count'] ?></strong>
+                                </div>
+                                <div class="col-sm-6 meta-row">
+                                    <span><i class="bi bi-clock me-1"></i> Duração</span>
+                                    <strong><?= $durationText ?></strong>
+                                </div>
+                                <div class="col-sm-6 meta-row">
+                                    <span><i class="bi bi-tag me-1"></i> Categoria</span>
+                                    <strong><?= h($course['category']) ?: 'Não informado' ?></strong>
+                                </div>
+                                <?php if ($course['instructor']): ?>
+                                    <div class="col-sm-6 meta-row">
+                                        <span><i class="bi bi-person me-1"></i> Instrutor</span>
+                                        <strong><?= h($course['instructor']) ?></strong>
                                     </div>
                                 <?php endif; ?>
                             </div>
                         </div>
-                        
-                        <!-- Instrutor -->
-                        <?php if ($course['instructor']): ?>
-                            <div class="mb-4">
-                                <h6 class="text-success mb-2">
-                                    <i class="fas fa-user-tie me-2"></i>Instrutor
+
+                        <?php if ($course['description']): ?>
+                            <div class="col-12">
+                                <h6 class="section-title">
+                                    <i class="bi bi-text-paragraph me-2"></i>
+                                    Sobre o Curso
                                 </h6>
-                                <p class="text-white mb-0"><?= htmlspecialchars($course['instructor']) ?></p>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <!-- Descrição -->
-                        <div class="mb-4">
-                            <h6 class="text-success mb-3">
-                                <i class="fas fa-info-circle me-2"></i>Sobre o Curso
-                            </h6>
-                            <div class="text-light">
-                                <?= nl2br(htmlspecialchars($course['description'])) ?>
-                            </div>
-                        </div>
-                        
-                        <!-- Ações -->
-                        <?php if (!$isEnrolled): ?>
-                            <div class="d-grid gap-2 d-md-flex">
-                                <?php if ($course['is_free']): ?>
-                                    <a href="/admin/courses/enroll/<?= $course['id'] ?>" 
-                                       class="btn btn-success btn-lg">
-                                        <i class="fas fa-graduation-cap me-2"></i>Inscrever-se Gratuitamente
-                                    </a>
-                                <?php else: ?>
-                                    <a href="/admin/courses/purchase_students/<?= $course['id'] ?>" class="btn btn-primary btn-lg">
-                                        <i class="fas fa-credit-card me-2"></i>Comprar Curso - R$ <?= number_format($course['price'], 2, ',', '.') ?>
-                                    </a>
-                                    <div class="mt-2">
-                                        <small class="text-muted">
-                                            <i class="fas fa-shield-alt me-1"></i>Pagamento seguro • 
-                                            <i class="fas fa-clock me-1"></i>Acesso vitalício • 
-                                            <i class="fas fa-certificate me-1"></i>Certificado incluído
-                                        </small>
-                                    </div>
-                                <?php endif; ?>
+                                <p class="text-muted mb-0"><?= nl2br(h($course['description'])) ?></p>
                             </div>
                         <?php endif; ?>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Lista de Vídeos -->
-            <div class="col-lg-3">
-                <div class="card bg-dark border-secondary">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">
-                            <i class="fas fa-list me-2"></i>Conteúdo do Curso
-                        </h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <?php if (empty($videos)): ?>
-                            <div class="p-4 text-center">
-                                <i class="fas fa-video-slash fa-2x text-muted mb-3"></i>
-                                <p class="text-muted mb-0">Nenhum vídeo disponível</p>
-                            </div>
-                        <?php else: ?>
-                            <div class="list-group list-group-flush">
-                                <?php foreach ($videos as $index => $video): ?>
-                                    <?php
-                                    $canWatch = $isEnrolled || $course['is_free'] || $video['is_preview'];
-                                    $isWatched = isset($progress[$video['id']]) && $progress[$video['id']]['completed_at'];
-                                    $isInProgress = isset($progress[$video['id']]) && !$progress[$video['id']]['completed_at'];
-                                    
-                                    // Duração formatada
-                                    $minutes = floor($video['duration_seconds'] / 60);
-                                    $seconds = $video['duration_seconds'] % 60;
-                                    $durationText = sprintf('%d:%02d', $minutes, $seconds);
-                                    ?>
-                                    
-                                    <div class="list-group-item bg-dark border-secondary text-white d-flex align-items-center">
-                                        <div class="me-3">
-                                            <?php if ($isWatched): ?>
-                                                <i class="fas fa-check-circle text-success"></i>
-                                            <?php elseif ($isInProgress): ?>
-                                                <i class="fas fa-play-circle text-info"></i>
-                                            <?php elseif ($canWatch): ?>
-                                                <i class="fas fa-play text-muted"></i>
-                                            <?php else: ?>
-                                                <i class="fas fa-lock text-warning"></i>
-                                            <?php endif; ?>
-                                        </div>
-                                        
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <h6 class="mb-1 text-white">
-                                                        <?= ($index + 1) ?>. <?= htmlspecialchars($video['title']) ?>
-                                                    </h6>
-                                                    <?php if ($video['is_preview']): ?>
-                                                        <small class="badge bg-info">PREVIEW</small>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <small class="text-muted"><?= $durationText ?></small>
-                                            </div>
-                                            
-                                            <?php if ($canWatch): ?>
-                                                <div class="mt-2">
-                                                    <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $video['id'] ?>" 
-                                                       class="btn btn-sm btn-outline-success">
-                                                        <i class="fas fa-play me-1"></i>Assistir
-                                                    </a>
-                                                </div>
-                                            <?php else: ?>
-                                                <div class="mt-2">
-                                                    <small class="text-warning">
-                                                        <i class="fas fa-lock me-1"></i>Inscreva-se para assistir
-                                                    </small>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                
-                <!-- Progresso (se inscrito) -->
-                <?php if ($isEnrolled && !empty($videos)): ?>
-                    <div class="card bg-dark border-secondary mt-3">
-                        <div class="card-header bg-info text-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-chart-line me-2"></i>Seu Progresso
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <?php
-                            $totalVideos = count($videos);
-                            $watchedVideos = 0;
-                            foreach ($videos as $video) {
-                                if (isset($progress[$video['id']]) && $progress[$video['id']]['completed_at']) {
-                                    $watchedVideos++;
-                                }
-                            }
-                            $progressPercent = $totalVideos > 0 ? round(($watchedVideos / $totalVideos) * 100) : 0;
-                            ?>
-                            
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <small class="text-white">Progresso do Curso</small>
-                                    <small class="text-white"><?= $progressPercent ?>%</small>
+
+                    <?php if (!$isEnrolled): ?>
+                        <div class="mt-4 pt-3 border-top border-secondary-subtle">
+                            <?php if ($course['is_free']): ?>
+                                <a href="/admin/courses/enroll/<?= $course['id'] ?>" class="btn btn-primary">
+                                    <i class="bi bi-mortarboard me-2"></i>Inscrever-se Gratuitamente
+                                </a>
+                            <?php else: ?>
+                                <a href="/checkout/curso/<?= $course['id'] ?>" class="btn btn-primary">
+                                    <i class="bi bi-credit-card me-2"></i>Comprar Curso - R$ <?= number_format($course['price'], 2, ',', '.') ?>
+                                </a>
+                                <div class="mt-2 small text-muted">
+                                    <i class="bi bi-shield-check me-1"></i>Pagamento seguro ·
+                                    <i class="bi bi-infinity me-1"></i>Acesso vitalício
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-success" role="progressbar" 
-                                         style="width: <?= $progressPercent ?>%"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="row text-center">
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Assistidos</small>
-                                    <strong class="text-success"><?= $watchedVideos ?>/<?= $totalVideos ?></strong>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Restantes</small>
-                                    <strong class="text-warning"><?= $totalVideos - $watchedVideos ?></strong>
-                                </div>
-                            </div>
-                            
-                            <?php if ($enrollment): ?>
-                                <hr class="border-secondary">
-                                <small class="text-muted">
-                                    Inscrito em: <?= date('d/m/Y H:i', strtotime($enrollment['enrolled_at'])) ?>
-                                </small>
-                                <?php if ($enrollment['completed_at']): ?>
-                                    <br>
-                                    <small class="text-success">
-                                        <i class="fas fa-trophy me-1"></i>
-                                        Concluído em: <?= date('d/m/Y H:i', strtotime($enrollment['completed_at'])) ?>
-                                    </small>
-                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
-                    </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
             </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card glass mb-3">
+                <div class="card-body">
+                    <h6 class="section-title">
+                        <i class="bi bi-collection-play me-2"></i>
+                        Conteúdo do Curso
+                    </h6>
+
+                    <?php if (empty($videos)): ?>
+                        <div class="empty-block">
+                            <i class="bi bi-camera-video-off"></i>
+                            <p class="mb-0">Nenhum vídeo disponível</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="row-list">
+                            <?php foreach ($videos as $index => $video): ?>
+                                <?php
+                                $canWatch = $isEnrolled || $video['is_preview'];
+                                $isWatched = isset($progress[$video['id']]) && $progress[$video['id']]['completed_at'];
+                                $isInProgress = isset($progress[$video['id']]) && !$progress[$video['id']]['completed_at'];
+
+                                $vMinutes = floor($video['duration_seconds'] / 60);
+                                $vSeconds = $video['duration_seconds'] % 60;
+                                ?>
+                                <div class="row-item align-items-start">
+                                    <div class="row-item-main">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <?php if ($isWatched): ?>
+                                                <i class="bi bi-check-circle-fill text-success"></i>
+                                            <?php elseif ($isInProgress): ?>
+                                                <i class="bi bi-play-circle-fill text-info"></i>
+                                            <?php elseif ($canWatch): ?>
+                                                <i class="bi bi-play-fill text-muted"></i>
+                                            <?php else: ?>
+                                                <i class="bi bi-lock-fill text-warning"></i>
+                                            <?php endif; ?>
+                                            <span class="fw-semibold"><?= $index + 1 ?>. <?= h($video['title']) ?></span>
+                                            <?php if ($video['is_preview']): ?>
+                                                <span class="badge bg-info">Preview</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="small text-muted mb-2">
+                                            <?= sprintf('%d:%02d', $vMinutes, $vSeconds) ?>
+                                        </div>
+                                        <?php if ($canWatch): ?>
+                                            <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $video['id'] ?>"
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-play me-1"></i>Assistir
+                                            </a>
+                                        <?php else: ?>
+                                            <small class="text-warning">
+                                                <i class="bi bi-lock me-1"></i>Inscreva-se para assistir
+                                            </small>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <?php if ($isEnrolled && !empty($videos)): ?>
+                <?php
+                $totalVideos = count($videos);
+                $watchedVideos = 0;
+                foreach ($videos as $video) {
+                    if (isset($progress[$video['id']]) && $progress[$video['id']]['completed_at']) {
+                        $watchedVideos++;
+                    }
+                }
+                $progressPercent = $totalVideos > 0 ? round(($watchedVideos / $totalVideos) * 100) : 0;
+                ?>
+                <div class="card glass">
+                    <div class="card-body">
+                        <h6 class="section-title">
+                            <i class="bi bi-graph-up me-2"></i>
+                            Seu Progresso
+                        </h6>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1 small">
+                                <span>Progresso do Curso</span>
+                                <span><?= $progressPercent ?>%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: <?= $progressPercent ?>%"></div>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 text-center">
+                            <div class="col-6">
+                                <div class="stat-box">
+                                    <div class="stat-value"><?= $watchedVideos ?>/<?= $totalVideos ?></div>
+                                    <div class="stat-label">Assistidos</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-box">
+                                    <div class="stat-value stat-value-warning"><?= $totalVideos - $watchedVideos ?></div>
+                                    <div class="stat-label">Restantes</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <?php if ($enrollment): ?>
+                            <ul class="meta-list mt-3">
+                                <li>
+                                    <span>Inscrito em</span>
+                                    <strong><?= date('d/m/Y H:i', strtotime($enrollment['enrolled_at'])) ?></strong>
+                                </li>
+                                <?php if ($enrollment['completed_at']): ?>
+                                    <li>
+                                        <span>Concluído em</span>
+                                        <strong><?= date('d/m/Y H:i', strtotime($enrollment['completed_at'])) ?></strong>
+                                    </li>
+                                <?php endif; ?>
+                            </ul>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
 
 <style>
-.bg-gradient {
-    background: linear-gradient(45deg, #28a745, #20c997) !important;
-}
+    .icon-accent {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
 
-.list-group-item:hover {
-    background-color: #2d2d2d !important;
-}
+    .section-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--text-primary, #fff);
+        margin-bottom: var(--space-md, 1rem);
+        padding-bottom: var(--space-sm, 0.5rem);
+        border-bottom: 1px solid var(--glass-border, rgba(0, 255, 136, 0.2));
+    }
+
+    .section-title i {
+        color: #00ff88;
+    }
+
+    .meta-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .meta-row span {
+        font-size: 0.8rem;
+        color: var(--text-muted, #b0b0b0);
+    }
+
+    .meta-row strong {
+        color: var(--text-primary, #fff);
+        font-weight: 600;
+    }
+
+    .row-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .row-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+        border-radius: var(--radius-sm, 8px);
+        padding: 0.75rem 1rem;
+        transition: background 0.2s ease;
+    }
+
+    .row-item:hover {
+        background: rgba(0, 255, 136, 0.05);
+    }
+
+    .row-item-main {
+        min-width: 0;
+        flex-grow: 1;
+    }
+
+    .empty-block {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--text-muted, #b0b0b0);
+    }
+
+    .empty-block i {
+        font-size: 2.5rem;
+        opacity: 0.4;
+        display: block;
+        margin-bottom: 0.75rem;
+    }
+
+    .stat-box {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: var(--radius-sm, 8px);
+        padding: 0.75rem 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #00ff88;
+    }
+
+    .stat-value-warning {
+        color: #ffc107;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted, #b0b0b0);
+    }
+
+    .meta-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .meta-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.85rem;
+    }
+
+    .meta-list li span {
+        color: var(--text-muted, #b0b0b0);
+    }
+
+    .meta-list li strong {
+        color: var(--text-primary, #fff);
+        font-weight: 600;
+    }
 </style>

@@ -103,9 +103,38 @@ foreach ($students as $student) {
                                 <?php endif; ?>
                             </div>
 
-                            <div class="text-muted small mb-3">
+                            <div class="text-muted small mb-2">
                                 <i class="bi bi-calendar-plus me-1"></i>
                                 Cadastrado em <?= date('d/m/Y', strtotime($student->created)) ?>
+                            </div>
+
+                            <div class="student-info-list small mb-3">
+                                <div class="student-info-row">
+                                    <i class="bi bi-mortarboard"></i>
+                                    <span class="text-truncate" title="<?= !empty($student->course_titles) ? h(implode(', ', $student->course_titles)) : '' ?>">
+                                        <?= !empty($student->course_titles) ? h(implode(', ', $student->course_titles)) : 'Nenhum curso' ?>
+                                    </span>
+                                </div>
+                                <div class="student-info-row">
+                                    <i class="bi bi-people"></i>
+                                    <span class="text-truncate" title="<?= !empty($student->mentorship_names) ? h(implode(', ', $student->mentorship_names)) : '' ?>">
+                                        <?= !empty($student->mentorship_names) ? h(implode(', ', $student->mentorship_names)) : 'Nenhuma mentoria' ?>
+                                    </span>
+                                </div>
+                                <div class="student-info-row">
+                                    <i class="bi bi-journal-text"></i>
+                                    <span><?= (int)($student->study_count ?? 0) ?> estudo<?= (int)($student->study_count ?? 0) !== 1 ? 's' : '' ?></span>
+                                </div>
+                                <div class="student-info-row">
+                                    <i class="bi bi-clock-history"></i>
+                                    <span>
+                                        <?php if (!empty($user->last_login)): ?>
+                                            Último acesso: <?= $user->last_login->format('d/m/Y H:i') ?>
+                                        <?php else: ?>
+                                            Nunca acessou
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="mt-auto course-actions">
@@ -119,7 +148,7 @@ foreach ($students as $student) {
                                     <a href="/admin/students/edit/<?= $student->id ?>" class="btn btn-outline-warning btn-sm" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form method="post" action="/admin/students/delete/<?= $student->id ?>" class="d-inline"
+                                    <form method="post" action="/admin/students/delete/<?= $student->id ?>" class="d-flex"
                                         onsubmit="return confirm('Tem certeza que deseja excluir este estudante?');">
                                         <input type="hidden" name="_csrfToken" value="<?= h($csrfToken) ?>">
                                         <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
@@ -241,7 +270,40 @@ document.addEventListener('DOMContentLoaded', function () {
 
     .course-actions {
         display: flex;
+        align-items: stretch;
         gap: 0.35rem;
+    }
+
+    .course-actions form button {
+        height: 100%;
+    }
+
+    .student-info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        color: var(--text-muted, #b0b0b0);
+    }
+
+    .student-info-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+    }
+
+    .student-info-row i {
+        color: #00ff88;
+        flex-shrink: 0;
+        width: 1rem;
+        text-align: center;
+    }
+
+    .student-info-row span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .empty-block {

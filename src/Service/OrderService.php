@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Model\Entity\Order;
+use App\Service\Exception\AccountRequiresLoginException;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Mailer\Mailer;
 use Cake\ORM\Table;
@@ -97,24 +98,114 @@ class OrderService
             throw new Exception(__('Telefone inválido.'));
         }
 
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+        $connection = $this->_ordersTable->getConnection();
+
+        return $connection->transactional(function () use (
+            $itemType,
+            $itemId,
+            $name,
+            $email,
+            $phone,
+            $passwordHash,
+            $item,
+            $clientIp
+        ) {
+            [$studentId, $userId] = $this->resolveOrCreateAccount($name, $email, $passwordHash);
+
+            $order = $this->_ordersTable->newEmptyEntity();
+            $order = $this->_ordersTable->patchEntity($order, [
+                'item_type' => $itemType,
+                'item_id' => $itemId,
+                'buyer_name' => $name,
+                'buyer_email' => $email,
+                'buyer_phone' => $phone !== '' ? $phone : null,
+                'buyer_password_hash' => $passwordHash,
+                'amount' => $item['price'],
+                'status' => 'pending',
+                'ip_address' => $clientIp,
+                'student_id' => $studentId,
+                'user_id' => $userId,
+            ]);
+
+            if ($order->hasErrors() || !$this->_ordersTable->save($order)) {
+                throw new Exception(__('Erro ao criar pedido. Verifique os dados informados.'));
+            }
+
+            return $order;
+        });
+    }
+
+    /**
+     * Cria o pedido para um comprador que já está logado — pula formulário
+     * de cadastro/senha por completo, usa a identidade da sessão.
+     */
+    public function createPendingOrderForLoggedUser(string $itemType, int $itemId, int $userId, string $clientIp): Order
+    {
+        $item = $this->getPricedItem($itemType, $itemId);
+        $user = $this->_usersTable->get($userId);
+
         $order = $this->_ordersTable->newEmptyEntity();
         $order = $this->_ordersTable->patchEntity($order, [
             'item_type' => $itemType,
             'item_id' => $itemId,
-            'buyer_name' => $name,
-            'buyer_email' => $email,
-            'buyer_phone' => $phone !== '' ? $phone : null,
-            'buyer_password_hash' => password_hash($password, PASSWORD_DEFAULT),
+            'buyer_name' => $user->name,
+            'buyer_email' => $user->email,
+            'buyer_phone' => null,
+            'buyer_password_hash' => $user->password,
             'amount' => $item['price'],
             'status' => 'pending',
             'ip_address' => $clientIp,
+            'student_id' => $user->student_id,
+            'user_id' => $user->id,
         ]);
 
         if ($order->hasErrors() || !$this->_ordersTable->save($order)) {
-            throw new Exception(__('Erro ao criar pedido. Verifique os dados informados.'));
+            throw new Exception(__('Erro ao criar pedido.'));
         }
 
         return $order;
+    }
+
+    /**
+     * Garante que o cadastro do comprador (Student + User) já existe no envio
+     * do formulário de checkout, antes de ir pro Mercado Pago — não espera a
+     * confirmação do pagamento. Conta nova nasce com `status = 'i'` (não
+     * consegue logar) até o webhook confirmar o pagamento; se o e-mail já tem
+     * conta, reaproveita e não mexe em senha nem status de conta já ativa.
+     */
+    private function resolveOrCreateAccount(string $name, string $email, string $passwordHash): array
+    {
+        $existingUser = $this->_usersTable->find()
+            ->where(['email' => $email])
+            ->first();
+
+        if ($existingUser) {
+            if ($existingUser->status !== 'i') {
+                throw new AccountRequiresLoginException(
+                    __('Este e-mail já possui uma conta. Faça login antes de continuar a compra.')
+                );
+            }
+
+            $existingUser = $this->_usersTable->patchEntity($existingUser, ['password' => $passwordHash]);
+            $this->_usersTable->save($existingUser);
+
+            return [$existingUser->student_id, $existingUser->id];
+        }
+
+        $result = $this->_studentService->create([
+            'name' => $name,
+            'email' => $email,
+            'password_hash' => $passwordHash,
+        ]);
+
+        // active=0 além de status='i': mantém a conta pendente fora das
+        // listagens/contadores de alunos do admin até o pagamento confirmar.
+        $newUser = $this->_usersTable->patchEntity($result['user'], ['status' => 'i', 'active' => 0]);
+        $this->_usersTable->save($newUser);
+
+        return [$result['student']->id, $newUser->id];
     }
 
     public function attachPreference(Order $order, string $preferenceId): void
@@ -195,21 +286,34 @@ class OrderService
 
     private function fulfillOrder(Order $order): void
     {
-        $existingUser = $this->_usersTable->find()
-            ->where(['email' => $order->buyer_email])
-            ->first();
+        $userId = $order->user_id;
+        $studentId = $order->student_id;
 
-        if ($existingUser) {
-            $studentId = $existingUser->student_id;
-            $userId = $existingUser->id;
-        } else {
-            $result = $this->_studentService->create([
-                'name' => $order->buyer_name,
-                'email' => $order->buyer_email,
-                'password_hash' => $order->buyer_password_hash,
-            ]);
-            $studentId = $result['student']->id;
-            $userId = $result['user']->id;
+        // Pedidos criados antes do cadastro passar a ser feito no checkout
+        // (student_id/user_id ainda nulos) caem aqui como rede de segurança.
+        if (!$userId) {
+            $existingUser = $this->_usersTable->find()
+                ->where(['email' => $order->buyer_email])
+                ->first();
+
+            if ($existingUser) {
+                $studentId = $existingUser->student_id;
+                $userId = $existingUser->id;
+            } else {
+                $result = $this->_studentService->create([
+                    'name' => $order->buyer_name,
+                    'email' => $order->buyer_email,
+                    'password_hash' => $order->buyer_password_hash,
+                ]);
+                $studentId = $result['student']->id;
+                $userId = $result['user']->id;
+            }
+        }
+
+        $user = $this->_usersTable->get($userId);
+        if ($user->status === 'i') {
+            $user = $this->_usersTable->patchEntity($user, ['status' => 'a', 'active' => 1]);
+            $this->_usersTable->save($user);
         }
 
         $order = $this->_ordersTable->patchEntity($order, [

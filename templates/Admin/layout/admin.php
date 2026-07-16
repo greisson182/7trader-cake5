@@ -25,7 +25,8 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <!-- Custom Styles (precisa vir antes do primeiro paint pra evitar flash do tema claro do Bootstrap) -->
-    <link href="<?= HOME ?>adm/css/style.css" rel="stylesheet">
+    <?php $styleCssPath = WWW_ROOT . 'adm' . DS . 'css' . DS . 'style.css'; ?>
+    <link href="<?= HOME ?>adm/css/style.css?v=<?= file_exists($styleCssPath) ? filemtime($styleCssPath) : time() ?>" rel="stylesheet">
 
     <script>
         const csrfToken = '<?= $csrfToken ?>';
@@ -191,6 +192,15 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                     <a class="dropdown-item" href="/admin/students/add">
                                         <i class="bi bi-person-plus me-1"></i>
                                         Adicionar Aluno
+                                    </a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/admin/settings/edit/1">
+                                        <i class="bi bi-credit-card-2-back me-2"></i>
+                                        Mercado Pago
                                     </a>
                                 </li>
                             </ul>

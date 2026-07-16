@@ -157,10 +157,21 @@ class StudiesController extends AppController
                 ->orderByDesc('name')
                 ->toArray();
 
+            // Buscar alunos para o filtro (só faz sentido pro admin, que vê estudos de todos)
+            $students = [];
+            if (!$this->isStudent()) {
+                $studentsTable = $this->fetchTable('Students');
+                $students = $studentsTable->find()
+                    ->select(['id', 'name'])
+                    ->orderBy(['name' => 'ASC'])
+                    ->toArray();
+            }
+
             $this->set('studiesByMonth', $studiesByMonth);
             $this->set('studies', $studies); // Manter compatibilidade
             $this->set('markets', $markets); // Para o filtro
             $this->set('accounts', $accounts); // Para o filtro de conta
+            $this->set('students', $students); // Para o filtro de aluno
 
 
         } catch (Exception $e) {

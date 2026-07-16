@@ -187,7 +187,7 @@
                             <tr>
                                 <td><?= date('d/m/Y', strtotime($study['study_date'])) ?></td>
                                 <td>
-                                    <a href="/admin/students/view/<?= $study['student_id'] ?>" class="text-decoration-none">
+                                    <a href="/admin/students/view/<?= $study['student_id'] ?>" class="student-link">
                                         <?= h($study['student_name'] ?? 'N/A') ?>
                                     </a>
                                 </td>

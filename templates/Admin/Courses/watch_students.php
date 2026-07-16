@@ -1,261 +1,229 @@
 <?php
-$title = htmlspecialchars($video['title']) . ' - ' . htmlspecialchars($course['title']) . ' - 7 Trader';
-$description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
+$title = h($video['title']) . ' - ' . h($course['title']) . ' - 7 Trader';
+$description = h(substr($video['description'] ?? '', 0, 160));
+$csrfToken = $this->request->getAttribute('csrfToken');
 ?>
-<div class="container-fluid py-3" style="background: #000; min-height: 100vh;">
-    <div class="container-fluid">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-3">
-            <ol class="breadcrumb bg-dark border-secondary">
-                <li class="breadcrumb-item">
-                    <a href="/admin/courses/courses-students" class="text-success text-decoration-none">
-                        <i class="fas fa-graduation-cap me-1"></i>Cursos
-                    </a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="/admin/courses/view-students/<?= $course['id'] ?>" class="text-success text-decoration-none">
-                        <?= htmlspecialchars($course['title']) ?>
-                    </a>
-                </li>
-                <li class="breadcrumb-item active text-white" aria-current="page">
-                    <?= htmlspecialchars($video['title']) ?>
-                </li>
-            </ol>
-        </nav>
-        <div class="row">
-            <!-- Player de Vídeo -->
-            <div class="col-lg-9 mb-4">
-                <div class="card bg-dark border-secondary">
-                    <!-- Video Player -->
-                    <div class="video-container position-relative">
-                        <?php
-                        $embedUrl = '';
-                        if ($video['video_type'] === 'youtube') {
-                            // Extrair ID do YouTube
-                            preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $video['video_url'], $matches);
-                            $youtubeId = $matches[1] ?? '';
-                            if ($youtubeId) {
-                                $embedUrl = "https://www.youtube.com/embed/{$youtubeId}?enablejsapi=1&origin=" . urlencode($_SERVER['HTTP_HOST']);
-                            }
-                        } elseif ($video['video_type'] === 'vimeo') {
-                            // Extrair ID do Vimeo
-                            preg_match('/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|)(\d+)(?:$|\/|\?)/', $video['video_url'], $matches);
-                            $vimeoId = $matches[3] ?? '';
-                            if ($vimeoId) {
-                                $embedUrl = "https://player.vimeo.com/video/{$vimeoId}";
-                            }
-                        } else {
-                            $embedUrl = $video['video_url'];
+<div class="courses-students watch content fade-in-up">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/admin/courses/courses-students">
+                    <i class="bi bi-mortarboard-fill me-1"></i>Cursos
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/admin/courses/view-students/<?= $course['id'] ?>"><?= h($course['title']) ?></a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page"><?= h($video['title']) ?></li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="mb-3">
+        <h1 class="h4 fw-bold mb-1">
+            <i class="bi bi-play-circle-fill me-2 icon-accent"></i>
+            <?= h($video['title']) ?>
+        </h1>
+        <p class="text-muted mb-0">
+            <i class="bi bi-mortarboard me-1"></i><?= h($course['title']) ?>
+        </p>
+    </div>
+
+    <div class="row g-3">
+        <!-- Player de Vídeo -->
+        <div class="col-lg-9">
+            <div class="card glass mb-3">
+                <div class="video-container position-relative">
+                    <?php
+                    $embedUrl = '';
+                    if ($video['video_type'] === 'youtube') {
+                        preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $video['video_url'], $matches);
+                        $youtubeId = $matches[1] ?? '';
+                        if ($youtubeId) {
+                            $embedUrl = "https://www.youtube.com/embed/{$youtubeId}?enablejsapi=1&origin=" . urlencode($_SERVER['HTTP_HOST']);
                         }
-                        ?>
-                        <?php if ($embedUrl): ?>
-                            <div class="ratio ratio-16x9">
-                                <iframe id="videoPlayer"
-                                    src="<?= htmlspecialchars($embedUrl) ?>"
-                                    frameborder="0"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowfullscreen
-                                    class="rounded">
-                                </iframe>
+                    } elseif ($video['video_type'] === 'vimeo') {
+                        preg_match('/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|)(\d+)(?:$|\/|\?)/', $video['video_url'], $matches);
+                        $vimeoId = $matches[3] ?? '';
+                        if ($vimeoId) {
+                            $embedUrl = "https://player.vimeo.com/video/{$vimeoId}";
+                        }
+                    } else {
+                        $embedUrl = $video['video_url'];
+                    }
+                    ?>
+                    <?php if ($embedUrl): ?>
+                        <div class="ratio ratio-16x9">
+                            <iframe id="videoPlayer"
+                                src="<?= h($embedUrl) ?>"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen
+                                class="rounded">
+                            </iframe>
+                        </div>
+                    <?php else: ?>
+                        <div class="ratio ratio-16x9 d-flex align-items-center justify-content-center">
+                            <div class="text-center">
+                                <i class="bi bi-exclamation-triangle-fill fa-3x mb-3 text-warning"></i>
+                                <h5>Erro ao carregar vídeo</h5>
+                                <p class="text-muted">URL do vídeo inválida ou não suportada</p>
                             </div>
-                        <?php else: ?>
-                            <div class="ratio ratio-16x9 bg-dark d-flex align-items-center justify-content-center">
-                                <div class="text-center text-white">
-                                    <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
-                                    <h5>Erro ao carregar vídeo</h5>
-                                    <p class="text-muted">URL do vídeo inválida ou não suportada</p>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    <!-- Informações do Vídeo -->
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h3 class="text-white mb-2"><?= htmlspecialchars($video['title']) ?></h3>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
-                                <div class="d-flex flex-wrap gap-2 mb-3">
-                                    <span class="badge bg-primary">
-                                        <?= htmlspecialchars($video['video_type']) ?>
-                                    </span>
-
-                                    <?php if ($video['is_preview']): ?>
-                                        <span class="badge bg-info">PREVIEW</span>
-                                    <?php endif; ?>
-
-                                    <span class="badge bg-secondary">
-                                        <?php
-                                        $minutes = floor($video['duration_seconds'] / 60);
-                                        $seconds = $video['duration_seconds'] % 60;
-                                        echo sprintf('%d:%02d', $minutes, $seconds);
-                                        ?>
-                                    </span>
-
-                                    <span class="badge bg-success">
-                                        Posição: #<?= $video['order_position'] ?>
-                                    </span>
-                                </div>
-
-                                <?php if ($video['description']): ?>
-                                    <div class="mb-3">
-                                        <h6 class="text-success mb-2">
-                                            <i class="fas fa-info-circle me-2"></i>Descrição
-                                        </h6>
-                                        <div class="text-light">
-                                            <?= nl2br(htmlspecialchars($video['description'])) ?>
-                                        </div>
-                                    </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <span class="badge bg-primary"><?= h($video['video_type']) ?></span>
+                                <?php if ($video['is_preview']): ?>
+                                    <span class="badge bg-info">Preview</span>
                                 <?php endif; ?>
+                                <span class="badge bg-secondary">
+                                    <?php
+                                    $minutes = floor($video['duration_seconds'] / 60);
+                                    $seconds = $video['duration_seconds'] % 60;
+                                    echo sprintf('%d:%02d', $minutes, $seconds);
+                                    ?>
+                                </span>
+                                <span class="badge bg-success">Posição #<?= $video['order_position'] ?></span>
                             </div>
-                            <div class="col-md-4">
-                                <!-- Controles de Progresso -->
-                                <div class="card bg-secondary">
-                                    <div class="card-body text-center">
-                                        <h6 class="text-white mb-3">Progresso do Vídeo</h6>
 
-                                        <div class="mb-3">
-                                            <div class="progress mb-2" style="height: 8px;">
-                                                <div id="videoProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
-                                            </div>
-                                            <small class="text-white">
-                                                <span id="watchTime"><?= $currentProgress ? $currentProgress->watch_time : '0:00' ?></span> /
-                                                <span id="totalTime">
-                                                    <?php
-                                                    $minutes = floor($video['duration_seconds'] / 60);
-                                                    $seconds = $video['duration_seconds'] % 60;
-                                                    echo sprintf('%d:%02d', $minutes, $seconds);
-                                                    ?>
-                                                </span>
-                                            </small>
-                                        </div>
+                            <?php if ($video['description']): ?>
+                                <h6 class="section-title">
+                                    <i class="bi bi-info-circle me-2"></i>Descrição
+                                </h6>
+                                <p class="text-muted mb-0"><?= nl2br(h($video['description'])) ?></p>
+                            <?php endif; ?>
+                        </div>
 
-                                        <?php 
+                        <div class="col-md-4">
+                            <div class="progress-card">
+                                <h6 class="section-title mb-2">Progresso do Vídeo</h6>
 
-                                        if ($currentProgress && $currentProgress->completed): ?>
-                                            <div class="alert alert-success py-2">
-                                                <i class="fas fa-check-circle me-1"></i>
-                                                <small>Vídeo Concluído!</small>
-                                            </div>
-                                        <?php else: ?>
-                                            <button id="markCompleted" class="btn btn-success btn-sm">
-                                                <i class="fas fa-check me-1"></i>Marcar como Concluído
-                                            </button>
-                                        <?php endif; ?>
+                                <div class="mb-3">
+                                    <div class="progress mb-2" style="height: 8px;">
+                                        <div id="videoProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
                                     </div>
+                                    <small class="text-muted">
+                                        <span id="watchTime"><?= $currentProgress ? $currentProgress->watch_time : '0:00' ?></span> /
+                                        <span id="totalTime">
+                                            <?php
+                                            $minutes = floor($video['duration_seconds'] / 60);
+                                            $seconds = $video['duration_seconds'] % 60;
+                                            echo sprintf('%d:%02d', $minutes, $seconds);
+                                            ?>
+                                        </span>
+                                    </small>
                                 </div>
+
+                                <?php if ($currentProgress && $currentProgress->completed): ?>
+                                    <div class="alert alert-success py-2 mb-0">
+                                        <i class="bi bi-check-circle-fill me-1"></i>
+                                        <small>Vídeo Concluído!</small>
+                                    </div>
+                                <?php else: ?>
+                                    <button id="markCompleted" class="btn btn-success btn-sm w-100">
+                                        <i class="bi bi-check-lg me-1"></i>Marcar como Concluído
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Lista de Vídeos -->
-            <div class="col-lg-3">
-                <div class="card bg-dark border-secondary">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="mb-0">
-                            <i class="fas fa-list me-2"></i>Vídeos do Curso
-                        </h6>
-                    </div>
-                    <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
-                        <div class="list-group list-group-flush">
-                            <?php foreach ($allVideos as $index => $courseVideo): ?>
-                                <?php
-                                $canWatch = true; // Já verificado no controller
-                                $isCurrentVideo = $courseVideo['id'] == $video['id'];
-                                
-                                $isWatched = isset($progress[$courseVideo['id']]) && $progress[$courseVideo['id']]->completed_at;
-                                $isInProgress = isset($progress[$courseVideo['id']]) && !$progress[$courseVideo['id']]->completed_at;
+        </div>
 
-                                // Duração formatada
-                                $minutes = floor($courseVideo['duration_seconds'] / 60);
-                                $seconds = $courseVideo['duration_seconds'] % 60;
-                                $durationText = sprintf('%d:%02d', $minutes, $seconds);
-                                ?>
-
-                                <div class="list-group-item bg-dark border-secondary text-white <?= $isCurrentVideo ? 'border-success' : '' ?>">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-2">
-                                            <?php if ($isCurrentVideo): ?>
-                                                <i class="fas fa-play-circle text-success"></i>
-                                            <?php elseif ($isWatched): ?>
-                                                <i class="fas fa-check-circle text-success"></i>
-                                            <?php elseif ($isInProgress): ?>
-                                                <i class="fas fa-play-circle text-info"></i>
-                                            <?php else: ?>
-                                                <i class="fas fa-play text-muted"></i>
-                                            <?php endif; ?>
-                                        </div>
-
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div class="flex-grow-1">
-                                                    <h6 class="mb-1 text-white small">
-                                                        <?= ($index + 1) ?>. <?= htmlspecialchars($courseVideo['title']) ?>
-                                                    </h6>
-                                                    <div class="d-flex gap-1 mb-1">
-                                                        <?php if ($courseVideo['is_preview']): ?>
-                                                            <small class="badge bg-info">PREVIEW</small>
-                                                        <?php endif; ?>
-                                                        <?php if ($isCurrentVideo): ?>
-                                                            <small class="badge bg-success">ATUAL</small>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                                <small class="text-muted ms-2"><?= $durationText ?></small>
-                                            </div>
-
-                                            <?php if (!$isCurrentVideo): ?>
-                                                <div class="mt-1">
-                                                    <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $courseVideo['id'] ?>"
-                                                        class="btn btn-sm btn-outline-success btn-sm">
-                                                        <i class="fas fa-play me-1"></i>Assistir
-                                                    </a>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Navegação -->
-                <div class="card bg-dark border-secondary mt-3">
-                    <div class="card-body">
-                        <h6 class="text-success mb-3">
-                            <i class="fas fa-arrows-alt-h me-2"></i>Navegação
-                        </h6>
-
-                        <div class="d-grid gap-2">
-
+        <!-- Lista de Vídeos -->
+        <div class="col-lg-3">
+            <div class="card glass mb-3">
+                <div class="card-body">
+                    <h6 class="section-title">
+                        <i class="bi bi-collection-play me-2"></i>Vídeos do Curso
+                    </h6>
+                    <div class="row-list" style="max-height: 500px; overflow-y: auto;">
+                        <?php foreach ($allVideos as $index => $courseVideo): ?>
                             <?php
-                            // Encontrar vídeo anterior e próximo
-                            $currentIndex = array_search($video['id'], array_column($allVideos, 'id'));
-                            $prevVideo = $currentIndex > 0 ? $allVideos[$currentIndex - 1] : null;
-                            $nextVideo = $currentIndex < count($allVideos) - 1 ? $allVideos[$currentIndex + 1] : null;
+                            $isCurrentVideo = $courseVideo['id'] == $video['id'];
+                            $isWatched = isset($progress[$courseVideo['id']]) && $progress[$courseVideo['id']]->completed_at;
+                            $isInProgress = isset($progress[$courseVideo['id']]) && !$progress[$courseVideo['id']]->completed_at;
+
+                            $minutes = floor($courseVideo['duration_seconds'] / 60);
+                            $seconds = $courseVideo['duration_seconds'] % 60;
+                            $durationText = sprintf('%d:%02d', $minutes, $seconds);
                             ?>
 
+                            <div class="row-item align-items-start <?= $isCurrentVideo ? 'row-item-current' : '' ?>">
+                                <div class="row-item-main">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <?php if ($isCurrentVideo): ?>
+                                            <i class="bi bi-play-circle-fill text-success"></i>
+                                        <?php elseif ($isWatched): ?>
+                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                        <?php elseif ($isInProgress): ?>
+                                            <i class="bi bi-play-circle-fill text-info"></i>
+                                        <?php else: ?>
+                                            <i class="bi bi-play-fill text-muted"></i>
+                                        <?php endif; ?>
+                                        <span class="fw-semibold small"><?= $index + 1 ?>. <?= h($courseVideo['title']) ?></span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <?php if ($courseVideo['is_preview']): ?>
+                                            <span class="badge bg-info">Preview</span>
+                                        <?php endif; ?>
+                                        <?php if ($isCurrentVideo): ?>
+                                            <span class="badge bg-success">Atual</span>
+                                        <?php endif; ?>
+                                        <small class="text-muted"><?= $durationText ?></small>
+                                    </div>
 
-                            <?php if ($prevVideo): ?>
-                                <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $prevVideo['id'] ?>"
-                                    class="btn btn-outline-secondary">
-                                    <i class="fas fa-chevron-left me-2"></i>Anterior
-                                </a>
-                            <?php endif; ?>
+                                    <?php if (!$isCurrentVideo): ?>
+                                        <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $courseVideo['id'] ?>"
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-play me-1"></i>Assistir
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
 
-                            <a href="/admin/courses/view-students/<?= $course['id'] ?>"
-                                class="btn btn-outline-success">
-                                <i class="fas fa-list me-2"></i>Ver Curso
+            <!-- Navegação -->
+            <div class="card glass">
+                <div class="card-body">
+                    <h6 class="section-title">
+                        <i class="bi bi-arrow-left-right me-2"></i>Navegação
+                    </h6>
+
+                    <?php
+                    $currentIndex = array_search($video['id'], array_column($allVideos, 'id'));
+                    $prevVideo = $currentIndex > 0 ? $allVideos[$currentIndex - 1] : null;
+                    $nextVideo = $currentIndex < count($allVideos) - 1 ? $allVideos[$currentIndex + 1] : null;
+                    ?>
+
+                    <div class="d-grid gap-2">
+                        <?php if ($prevVideo): ?>
+                            <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $prevVideo['id'] ?>"
+                                class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-chevron-left me-2"></i>Anterior
                             </a>
+                        <?php endif; ?>
 
-                            <?php if ($nextVideo): ?>
-                                <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $nextVideo['id'] ?>"
-                                    class="btn btn-outline-secondary">
-                                    Próximo<i class="fas fa-chevron-right ms-2"></i>
-                                </a>
-                            <?php endif; ?>
-                        </div>
+                        <a href="/admin/courses/view-students/<?= $course['id'] ?>" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-list-ul me-2"></i>Ver Curso
+                        </a>
+
+                        <?php if ($nextVideo): ?>
+                            <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $nextVideo['id'] ?>"
+                                class="btn btn-outline-secondary btn-sm">
+                                Próximo<i class="bi bi-chevron-right ms-2"></i>
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -265,6 +233,7 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const csrfToken = <?= json_encode($csrfToken) ?>;
         let watchStartTime = Date.now();
         let totalWatchTime = <?= $currentProgress->watched_seconds ?? 0 ?>;
         let isCompleted = <?= $currentProgress && $currentProgress->completed ? 'true' : 'false' ?>;
@@ -274,35 +243,29 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
         const videoProgressBar = document.getElementById('videoProgress');
         const watchTimeSpan = document.getElementById('watchTime');
 
-        // Função para formatar tempo
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // Função para atualizar progresso
         function updateProgress() {
             const currentWatchTime = totalWatchTime + Math.floor((Date.now() - watchStartTime) / 1000);
             const videoDuration = <?= $video['duration_seconds'] ?>;
             const progressPercent = Math.min((currentWatchTime / videoDuration) * 100, 100);
 
-            // Atualizar UI
             videoProgressBar.style.width = progressPercent + '%';
             watchTimeSpan.textContent = formatTime(currentWatchTime);
 
-            // Habilitar botão de conclusão se assistiu pelo menos 80%
-            if (progressPercent >= 80 && !isCompleted) {
+            if (progressPercent >= 80 && !isCompleted && markCompletedBtn) {
                 markCompletedBtn.disabled = false;
             }
 
-            // Enviar progresso para o servidor a cada 30 segundos
             if (currentWatchTime % 20 === 0) {
                 saveProgress(currentWatchTime, progressPercent >= 95);
             }
         }
 
-        // Função para salvar progresso
         function saveProgress(watchTime, completed = false) {
             fetch('/admin/courses/updateProgress', {
                 method: 'POST',
@@ -321,34 +284,30 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
             });
         }
 
-        // Iniciar tracking de tempo
         updateInterval = setInterval(updateProgress, 1000);
 
-        // Marcar como concluído
         if (markCompletedBtn) {
             markCompletedBtn.addEventListener('click', function() {
                 const currentWatchTime = totalWatchTime + Math.floor((Date.now() - watchStartTime) / 1000);
                 saveProgress(currentWatchTime, true);
 
-                this.innerHTML = '<i class="fas fa-check me-1"></i>Concluído!';
+                this.innerHTML = '<i class="bi bi-check-lg me-1"></i>Concluído!';
                 this.disabled = true;
                 this.classList.remove('btn-success');
                 this.classList.add('btn-outline-success');
 
                 isCompleted = true;
 
-                // Mostrar mensagem de sucesso
                 const alert = document.createElement('div');
                 alert.className = 'alert alert-success alert-dismissible fade show mt-2';
                 alert.innerHTML = `
-                <i class="fas fa-trophy me-2"></i>Parabéns! Você concluiu este vídeo.
+                <i class="bi bi-trophy-fill me-2"></i>Parabéns! Você concluiu este vídeo.
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
                 this.parentNode.appendChild(alert);
             });
         }
 
-        // Salvar progresso ao sair da página
         window.addEventListener('beforeunload', function() {
             if (updateInterval) {
                 clearInterval(updateInterval);
@@ -357,7 +316,6 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
             saveProgress(currentWatchTime, false);
         });
 
-        // Pausar tracking quando a aba não está ativa
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 if (updateInterval) {
@@ -374,16 +332,65 @@ $description = htmlspecialchars(substr($video['description'] ?? '', 0, 160));
 </script>
 
 <style>
+    .icon-accent {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
     .video-container {
         background: #000;
     }
 
-    .list-group-item:hover {
-        background-color: #2d2d2d !important;
+    .section-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--text-primary, #fff);
+        margin-bottom: var(--space-md, 1rem);
+        padding-bottom: var(--space-sm, 0.5rem);
+        border-bottom: 1px solid var(--glass-border, rgba(0, 255, 136, 0.2));
     }
 
-    .border-success {
-        border-color: #28a745 !important;
-        border-width: 2px !important;
+    .section-title i {
+        color: #00ff88;
+    }
+
+    .progress-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+        border-radius: var(--radius-sm, 8px);
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .row-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .row-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+        border-radius: var(--radius-sm, 8px);
+        padding: 0.6rem 0.75rem;
+        transition: background 0.2s ease;
+    }
+
+    .row-item:hover {
+        background: rgba(0, 255, 136, 0.05);
+    }
+
+    .row-item-current {
+        border-color: #00ff88;
+    }
+
+    .row-item-main {
+        min-width: 0;
+        flex-grow: 1;
     }
 </style>

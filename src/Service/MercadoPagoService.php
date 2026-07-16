@@ -54,10 +54,17 @@ class MercadoPagoService
                 'pending' => $pendingUrl,
                 'failure' => $failureUrl,
             ],
-            'auto_return' => 'approved',
             'notification_url' => $notificationUrl,
             'statement_descriptor' => '7TRADER',
         ];
+
+        // O Mercado Pago exige HTTPS em back_urls.success para aceitar auto_return
+        // (em dev local, sobre HTTP, isso derrubaria a criação da preferência com
+        // "auto_return invalid"). Sem HTTPS, o comprador só não é redirecionado
+        // automaticamente — ainda vê o botão "Voltar ao site" na página do Mercado Pago.
+        if (str_starts_with($successUrl, 'https://')) {
+            $payload['auto_return'] = 'approved';
+        }
 
         $response = $this->_client->post(
             self::API_BASE_URL . '/checkout/preferences',

@@ -65,7 +65,7 @@ $statusBadges = [
                     <h5 class="fw-bold mb-3">Conta vinculada</h5>
                     <?php if ($order->student): ?>
                         <p class="mb-0">
-                            <a href="/admin/students/view/<?= $order->student->id ?>">
+                            <a href="/admin/students/view/<?= $order->student->id ?>" class="student-link">
                                 <?= h($order->student->name) ?>
                             </a>
                         </p>

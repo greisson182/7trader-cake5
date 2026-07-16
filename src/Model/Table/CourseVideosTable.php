@@ -34,9 +34,9 @@ class CourseVideosTable extends Table
 
         $validator
             ->scalar('title')
-            ->maxLength('title', 255)
-            ->requirePresence('title', 'create')
-            ->notEmptyString('title');
+            ->maxLength('title', 255, 'O título deve ter no máximo 255 caracteres.')
+            ->requirePresence('title', 'create', 'O título é obrigatório.')
+            ->notEmptyString('title', 'O título é obrigatório.');
 
         $validator
             ->scalar('description')
@@ -44,9 +44,9 @@ class CourseVideosTable extends Table
 
         $validator
             ->scalar('video_url')
-            ->maxLength('video_url', 500)
-            ->requirePresence('video_url', 'create')
-            ->notEmptyString('video_url');
+            ->maxLength('video_url', 500, 'A URL deve ter no máximo 500 caracteres.')
+            ->requirePresence('video_url', 'create', 'A URL do vídeo é obrigatória.')
+            ->notEmptyString('video_url', 'A URL do vídeo é obrigatória.');
 
         $validator
             ->scalar('video_type')

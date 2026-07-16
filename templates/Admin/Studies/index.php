@@ -19,7 +19,20 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     <!-- Filtros -->
     <div class="card mb-4">
         <div class="card-body">
-            <div class="row align-items-center">
+            <div class="row align-items-center g-3">
+                <?php if (!empty($students)): ?>
+                    <div class="col-md-3">
+                        <label for="studentFilter" class="form-label mb-2">
+                            <i class="fas fa-user me-2"></i>Aluno
+                        </label>
+                        <select id="studentFilter" class="form-select">
+                            <option value="">Todos os alunos</option>
+                            <?php foreach ($students as $student): ?>
+                                <option value="<?= h($student['id']) ?>"><?= h($student['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                <?php endif; ?>
                 <div class="col-md-3">
                     <label for="marketFilter" class="form-label mb-2">
                         <i class="fas fa-filter me-2"></i>Mercado
@@ -33,7 +46,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         <?php endif; ?>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="accountFilter" class="form-label mb-2">
                         <i class="fas fa-user-circle me-2"></i>Conta
                     </label>
@@ -159,9 +172,10 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                         data-study-id="<?= h($study['id']) ?>"
                                         data-market-id="<?= h($study['market_id'] ?? '') ?>"
                                         data-account-id="<?= h($study['account_id'] ?? '') ?>"
+                                        data-student-id="<?= h($study['student_id'] ?? '') ?>"
                                         style="cursor: pointer;">
                                         <td><?= h($study['id']) ?></td>
-                                        <td><?= isset($study['student_name']) && $study['student_name'] ? '<a href="/admin/students/view/' . h($study['student_id']) . '">' . h($study['student_name']) . '</a>' : 'N/A' ?></td>
+                                        <td><?= isset($study['student_name']) && $study['student_name'] ? '<a href="/admin/students/view/' . h($study['student_id']) . '" class="student-link">' . h($study['student_name']) . '</a>' : 'N/A' ?></td>
                                         <td>
                                             <?php if (isset($study['market_name']) && $study['market_name']): ?>
                                                 <span class="badge bg-info"><?= h($study['market_name']) ?></span>
@@ -171,7 +185,10 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                         </td>
                                         <td>
                                             <?php if (isset($study['account_name']) && $study['account_name']): ?>
-                                                <span class="badge bg-secondary"><?= h($study['account_name']) ?></span>
+                                                <?php $isRealAccount = stripos($study['account_name'], 'real') !== false; ?>
+                                                <span class="badge <?= $isRealAccount ? 'badge-account-real' : 'badge-account-simulator' ?>">
+                                                    <?= h($study['account_name']) ?>
+                                                </span>
                                             <?php else: ?>
                                                 <span class="text-muted">N/A</span>
                                             <?php endif; ?>
@@ -184,12 +201,14 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                             $total_trades = ($study['wins'] ?? 0) + ($study['losses'] ?? 0);
                                             $win_rate = $total_trades > 0 ? round(($study['wins'] ?? 0) / $total_trades * 100, 2) : 0;
                                             ?>
-                                            <span class="badge <?= $win_rate >= 50 ? 'bg-success' : 'bg-warning' ?>">
+                                            <span class="badge <?= $win_rate >= 50 ? 'bg-success' : 'bg-warning text-dark' ?>">
                                                 <?= $win_rate ?>%
                                             </span>
                                         </td>
-                                        <td class="<?= $study['profit_loss'] >= 0 ? 'text-success' : 'text-danger' ?>">
-                                            <?= $this->Currency::formatForUser($study['profit_loss'] ?? 0, $study['user']['currency'] ?? 'BRL') ?>
+                                        <td>
+                                            <span class="pl-badge <?= $study['profit_loss'] >= 0 ? 'pl-badge-gain' : 'pl-badge-loss' ?>">
+                                                <?= $this->Currency::formatForUser($study['profit_loss'] ?? 0, $study['user']['currency'] ?? 'BRL') ?>
+                                            </span>
                                         </td>
                                         <td class="actions" onclick="event.stopPropagation();">
                                             <a href="/admin/studies/view/<?= h($study['id']) ?>" class="btn btn-sm btn-outline-primary me-1" title="Visualizar">
@@ -259,6 +278,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             }
         });
 
+        const studentFilter = document.getElementById('studentFilter');
         const marketFilter = document.getElementById('marketFilter');
         const accountFilter = document.getElementById('accountFilter');
         const yearFilter = document.getElementById('yearFilter');
@@ -334,6 +354,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         }
 
         function filterStudies() {
+            const selectedStudentId = studentFilter ? studentFilter.value : '';
             const selectedMarketId = marketFilter.value;
             const selectedAccountId = accountFilter.value;
             const selectedYear = yearFilter.value;
@@ -346,12 +367,19 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 // Verificar filtro de ano
                 const yearMatch = !selectedYear || cardYear === selectedYear;
 
-                // Verificar filtro de mercado e conta
+                // Verificar filtro de aluno, mercado e conta
+                let studentMatch = true;
                 let marketMatch = true;
                 let accountMatch = true;
 
-                if (selectedMarketId || selectedAccountId) {
+                if (selectedStudentId || selectedMarketId || selectedAccountId) {
                     const studyRows = card.querySelectorAll('.study-row');
+
+                    if (selectedStudentId) {
+                        studentMatch = Array.from(studyRows).some(row =>
+                            row.dataset.studentId === selectedStudentId
+                        );
+                    }
 
                     if (selectedMarketId) {
                         marketMatch = Array.from(studyRows).some(row =>
@@ -366,13 +394,17 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                     }
                 }
 
-                if (yearMatch && marketMatch && accountMatch) {
+                if (yearMatch && studentMatch && marketMatch && accountMatch) {
                     card.style.display = '';
 
                     // Filtrar estudos dentro do card
                     const studyRows = card.querySelectorAll('.study-row');
                     studyRows.forEach(row => {
                         let showRow = true;
+
+                        if (selectedStudentId && row.dataset.studentId !== selectedStudentId) {
+                            showRow = false;
+                        }
 
                         if (selectedMarketId && row.dataset.marketId !== selectedMarketId) {
                             showRow = false;
@@ -396,7 +428,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             const hasVisibleCards = Array.from(monthCards).some(card => card.style.display !== 'none');
             let noResultsMessage = document.getElementById('noResultsMessage');
 
-            if (!hasVisibleCards && (selectedMarketId || selectedAccountId || selectedYear)) {
+            if (!hasVisibleCards && (selectedStudentId || selectedMarketId || selectedAccountId || selectedYear)) {
                 if (!noResultsMessage) {
                     noResultsMessage = document.createElement('div');
                     noResultsMessage.id = 'noResultsMessage';
@@ -451,7 +483,13 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         // Função para atualizar a URL com os filtros selecionados
         function updateURL() {
             const url = new URL(window.location);
-            
+
+            if (studentFilter && studentFilter.value) {
+                url.searchParams.set('student', studentFilter.value);
+            } else {
+                url.searchParams.delete('student');
+            }
+
             // Atualizar parâmetros baseados nos filtros
             if (marketFilter && marketFilter.value) {
                 url.searchParams.set('market', marketFilter.value);
@@ -476,6 +514,12 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         }
 
         // Event listeners
+        if (studentFilter) {
+            studentFilter.addEventListener('change', function() {
+                filterStudies();
+                updateURL();
+            });
+        }
         if (marketFilter) {
             marketFilter.addEventListener('change', function() {
                 filterStudies();
@@ -512,6 +556,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
         if (clearFilters) {
             clearFilters.addEventListener('click', function() {
+                if (studentFilter) studentFilter.value = '';
                 if (marketFilter) marketFilter.value = '';
                 if (accountFilter) accountFilter.value = '';
                 if (yearFilter) yearFilter.value = '';
@@ -519,9 +564,10 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 // Restaurar valores originais antes de aplicar filtros
                 restoreOriginalValues();
                 filterStudies();
-                
+
                 // Limpar parâmetros da URL
                 const url = new URL(window.location);
+                url.searchParams.delete('student');
                 url.searchParams.delete('market');
                 url.searchParams.delete('account');
                 url.searchParams.delete('year');
@@ -546,10 +592,14 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
         // Aplicar filtros baseados nos parâmetros da URL ao carregar
         const urlParams = new URLSearchParams(window.location.search);
+        const studentParam = urlParams.get('student');
         const marketParam = urlParams.get('market');
         const accountParam = urlParams.get('account');
         const yearParam = urlParams.get('year');
 
+        if (studentParam && studentFilter) {
+            studentFilter.value = studentParam;
+        }
         if (marketParam && marketFilter) {
             marketFilter.value = marketParam;
         }

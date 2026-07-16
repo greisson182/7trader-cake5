@@ -29,6 +29,9 @@ class StudentsTable extends Table
         $this->hasMany('Studies', [
             'foreignKey' => 'student_id',
         ]);
+        $this->hasMany('Orders', [
+            'foreignKey' => 'student_id',
+        ]);
         $this->hasOne('Users', [
             'foreignKey' => 'student_id',
         ]);

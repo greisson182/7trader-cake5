@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Middleware\RateLimitMiddleware;
+use App\Service\Exception\AccountRequiresLoginException;
 use App\Service\MercadoPagoService;
 use App\Service\OrderService;
 use App\Service\SettingsService;
@@ -45,23 +46,22 @@ class CheckoutController extends AppController
             return $this->redirect('/');
         }
 
+        $loggedUser = $this->getLoggedUser();
+
         if ($this->request->is('post')) {
             $clientIp = $this->getClientIp();
             $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit');
 
             if ($rateLimiter->getRemainingAttempts($clientIp) <= 0) {
                 $this->Flash->error(__('Muitas tentativas. Tente novamente em alguns minutos.'));
-                $this->set(compact('item', 'itemType', 'itemId'));
+                $this->set(compact('item', 'itemType', 'itemId', 'loggedUser'));
                 return $this->render('start');
             }
 
             try {
-                $order = $this->_orderService->createPendingOrder(
-                    $itemType,
-                    $itemId,
-                    $this->request->getData(),
-                    $clientIp
-                );
+                $order = $loggedUser
+                    ? $this->_orderService->createPendingOrderForLoggedUser($itemType, $itemId, $loggedUser->id, $clientIp)
+                    : $this->_orderService->createPendingOrder($itemType, $itemId, $this->request->getData(), $clientIp);
 
                 $preference = $this->_mercadoPagoService->createPreference(
                     $order->id,
@@ -83,14 +83,25 @@ class CheckoutController extends AppController
                     : $preference->init_point;
 
                 return $this->redirect($redirectUrl);
+            } catch (AccountRequiresLoginException $e) {
+                $this->Flash->error($e->getMessage());
+                $this->set(['requiresLogin' => true]);
             } catch (Exception $e) {
                 $this->recordFailedAttempt($clientIp);
                 $this->Flash->error(__('Erro ao iniciar pagamento: ') . $e->getMessage());
             }
         }
 
-        $this->set(compact('item', 'itemType', 'itemId'));
+        $formData = $this->request->getData();
+        $this->set(compact('item', 'itemType', 'itemId', 'formData', 'loggedUser'));
         return $this->render('start');
+    }
+
+    private function getLoggedUser(): ?object
+    {
+        $session = $this->request->getSession();
+
+        return $session->check('logado') ? $session->read('logado') : null;
     }
 
     public function returnSuccess()

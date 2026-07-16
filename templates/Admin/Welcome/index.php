@@ -358,13 +358,4 @@
     .section-title i {
         color: #00ff88;
     }
-
-    .student-link {
-        color: var(--text-primary, #fff);
-        font-weight: 600;
-    }
-
-    .student-link:hover {
-        color: #00ff88;
-    }
 </style>

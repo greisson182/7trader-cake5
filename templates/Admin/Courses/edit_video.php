@@ -4,7 +4,8 @@
  * @var \App\Model\Entity\CourseVideo $video
  */
 $csrfToken = $this->request->getAttribute('csrfToken');
-$durationMinutes = !empty($video['duration_seconds']) ? round($video['duration_seconds'] / 60) : '';
+$durationMinutes = !empty($video['duration_seconds']) ? intdiv((int)$video['duration_seconds'], 60) : '';
+$durationSecondsRemainder = !empty($video['duration_seconds']) ? (int)$video['duration_seconds'] % 60 : '';
 ?>
 <div class="add-video content fade-in-up">
     <!-- Header Section -->
@@ -47,9 +48,15 @@ $durationMinutes = !empty($video['duration_seconds']) ? round($video['duration_s
                                        value="<?= h($video['title']) ?>">
                             </div>
                             <div class="col-md-4">
-                                <label for="duration_minutes" class="form-label fw-semibold">Duração (min)</label>
-                                <input type="number" class="form-control" id="duration_minutes" name="duration_minutes"
-                                       min="1" value="<?= h($durationMinutes) ?>">
+                                <label class="form-label fw-semibold">Duração</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="duration_minutes" name="duration_minutes"
+                                           min="0" placeholder="Min" value="<?= h($durationMinutes) ?>">
+                                    <span class="input-group-text">min</span>
+                                    <input type="number" class="form-control" id="duration_seconds" name="duration_seconds"
+                                           min="0" max="59" placeholder="Seg" value="<?= h($durationSecondsRemainder) ?>">
+                                    <span class="input-group-text">seg</span>
+                                </div>
                             </div>
                             <div class="col-12">
                                 <label for="description" class="form-label fw-semibold">Descrição</label>
@@ -68,7 +75,8 @@ $durationMinutes = !empty($video['duration_seconds']) ? round($video['duration_s
                                 <select class="form-select" id="video_type" name="video_type">
                                     <option value="youtube" <?= $video['video_type'] === 'youtube' ? 'selected' : '' ?>>YouTube</option>
                                     <option value="vimeo" <?= $video['video_type'] === 'vimeo' ? 'selected' : '' ?>>Vimeo</option>
-                                    <option value="other" <?= $video['video_type'] === 'other' ? 'selected' : '' ?>>Outro</option>
+                                    <option value="embed" <?= $video['video_type'] === 'embed' ? 'selected' : '' ?>>Embed (iframe)</option>
+                                    <option value="direct" <?= $video['video_type'] === 'direct' ? 'selected' : '' ?>>Link Direto</option>
                                 </select>
                             </div>
                             <div class="col-md-8">
@@ -207,6 +215,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (vimeoId) {
                 embedHtml = `<iframe src="https://player.vimeo.com/video/${vimeoId}" frameborder="0" allowfullscreen></iframe>`;
             }
+        } else if (type === 'embed') {
+            embedHtml = `<iframe src="${url}" frameborder="0" allowfullscreen></iframe>`;
         } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
             embedHtml = `<video controls style="width: 100%; height: 100%;"><source src="${url}" type="video/mp4"></video>`;
         }

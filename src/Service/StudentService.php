@@ -15,6 +15,7 @@ class StudentService
     private Table $_usersTable;
     private Table $_studiesTable;
     private Table $_marketsTable;
+    private Table $_mentorshipsTable;
 
     public function __construct()
     {
@@ -22,16 +23,76 @@ class StudentService
         $this->_usersTable = TableRegistry::getTableLocator()->get('Users');
         $this->_studiesTable = TableRegistry::getTableLocator()->get('Studies');
         $this->_marketsTable = TableRegistry::getTableLocator()->get('Markets');
+        $this->_mentorshipsTable = TableRegistry::getTableLocator()->get('Mentorships');
     }
 
+    /**
+     * Lista de estudantes com dados agregados pra tela de cards do admin:
+     * curso(s) em que está inscrito, mentoria comprada, total de estudos
+     * registrados e último acesso (via Users.last_login).
+     */
     public function getAllWithUsers(): array
     {
-        return $this->_studentsTable->find()
-            ->contain(['Users' => function ($q) {
-                return $q->where(['Users.active' => 1]);
-            }])
+        $students = $this->_studentsTable->find()
+            ->contain([
+                'Users' => function ($q) {
+                    return $q->where(['Users.active' => 1]);
+                },
+                'CourseEnrollments' => function ($q) {
+                    return $q->contain(['Courses' => function ($q2) {
+                        return $q2->select(['id', 'title']);
+                    }]);
+                },
+                'Orders' => function ($q) {
+                    return $q->select(['id', 'student_id', 'item_type', 'item_id'])
+                        ->where([
+                            'Orders.item_type' => 'mentorship',
+                            'Orders.status' => 'approved',
+                        ]);
+                },
+            ])
             ->orderBy(['Students.name' => 'ASC'])
             ->toArray();
+
+        if (empty($students)) {
+            return $students;
+        }
+
+        $studentIds = array_map(fn($student) => $student->id, $students);
+
+        $studyCounts = [];
+        $studyCountRows = $this->_studiesTable->find()
+            ->select([
+                'student_id',
+                'total' => $this->_studiesTable->find()->func()->count('*'),
+            ])
+            ->where(['student_id IN' => $studentIds])
+            ->groupBy(['student_id'])
+            ->toArray();
+        foreach ($studyCountRows as $row) {
+            $studyCounts[$row->student_id] = (int)$row->total;
+        }
+
+        $mentorshipNames = [];
+        foreach ($this->_mentorshipsTable->find()->select(['id', 'name'])->toArray() as $mentorship) {
+            $mentorshipNames[$mentorship->id] = $mentorship->name;
+        }
+
+        foreach ($students as $student) {
+            $student->study_count = $studyCounts[$student->id] ?? 0;
+
+            $student->course_titles = array_map(
+                fn($enrollment) => $enrollment->course->title ?? null,
+                array_filter($student->course_enrollments ?? [], fn($enrollment) => $enrollment->course !== null)
+            );
+
+            $student->mentorship_names = array_values(array_filter(array_map(
+                fn($order) => $mentorshipNames[$order->item_id] ?? null,
+                $student->orders ?? []
+            )));
+        }
+
+        return $students;
     }
 
     public function findDuplicateUser(string $email, string $username, ?int $excludeUserId = null): ?string
@@ -95,11 +156,14 @@ class StudentService
                 'email' => $data['email'],
                 'password' => $passwordHash,
                 'role' => 'student',
-                'active' => 1
+                'active' => 1,
+                'name' => $data['name'],
+                'profile_id' => 2,
+                'groupp_id' => 2,
             ];
 
             $user = $this->_usersTable->patchEntity($user, $userData, [
-                'fieldList' => ['username', 'email', 'password', 'role', 'active']
+                'fieldList' => ['username', 'email', 'password', 'role', 'active', 'name', 'profile_id', 'groupp_id']
             ]);
 
             if ($user->hasErrors()) {

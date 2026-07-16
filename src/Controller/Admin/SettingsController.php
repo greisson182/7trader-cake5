@@ -51,7 +51,11 @@ class SettingsController extends AppController
     {
         $setting = $this->Settings->newEmptyEntity();
         if ($this->request->is('post')) {
-            $setting = $this->Settings->patchEntity($setting, $this->request->getData());
+            $data = $this->request->getData();
+            $data['redirect_website'] = isset($data['redirect_website']) ? 1 : 0;
+            $data['mp_sandbox'] = isset($data['mp_sandbox']) ? 1 : 0;
+
+            $setting = $this->Settings->patchEntity($setting, $data);
             if ($this->Settings->save($setting)) {
                 $this->_settingsService->clearCache();
                 $this->Flash->success(__('The setting has been saved.'));
@@ -75,6 +79,8 @@ class SettingsController extends AppController
         $setting = $this->Settings->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $data = $this->request->getData();
+            $data['redirect_website'] = isset($data['redirect_website']) ? 1 : 0;
+            $data['mp_sandbox'] = isset($data['mp_sandbox']) ? 1 : 0;
 
             // Não sobrescrever segredos quando o campo é deixado em branco no formulário
             foreach (['mp_access_token', 'mp_webhook_secret'] as $secretField) {

@@ -2,8 +2,10 @@
 /**
  * @var \App\View\AppView $this
  * @var array $course
+ * @var array $formData
  */
 $csrfToken = $this->request->getAttribute('csrfToken');
+$formData = $formData ?? [];
 ?>
 <div class="add-video content fade-in-up">
     <!-- Header Section -->
@@ -43,17 +45,18 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             <div class="col-md-8">
                                 <label for="title" class="form-label fw-semibold">Título do Vídeo *</label>
                                 <input type="text" class="form-control" id="title" name="title" required
-                                       placeholder="Ex: Introdução ao Trading">
+                                       placeholder="Ex: Introdução ao Trading"
+                                       value="<?= h($formData['title'] ?? '') ?>">
                             </div>
                             <div class="col-md-4">
                                 <label for="order_position" class="form-label fw-semibold">Posição</label>
                                 <input type="number" class="form-control" id="order_position" name="order_position"
-                                       min="1" placeholder="1">
+                                       min="1" placeholder="1" value="<?= h($formData['order_position'] ?? '') ?>">
                             </div>
                             <div class="col-12">
                                 <label for="description" class="form-label fw-semibold">Descrição</label>
                                 <textarea class="form-control" id="description" name="description" rows="2"
-                                          placeholder="Descreva o conteúdo do vídeo..."></textarea>
+                                          placeholder="Descreva o conteúdo do vídeo..."><?= h($formData['description'] ?? '') ?></textarea>
                             </div>
                         </div>
 
@@ -65,22 +68,33 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label for="video_type" class="form-label fw-semibold">Tipo de Vídeo</label>
+                                <?php $selectedType = $formData['video_type'] ?? ''; ?>
                                 <select class="form-select" id="video_type" name="video_type" required>
                                     <option value="">Selecione o tipo</option>
-                                    <option value="youtube">YouTube</option>
-                                    <option value="vimeo">Vimeo</option>
-                                    <option value="direct">Link Direto</option>
+                                    <option value="youtube" <?= $selectedType === 'youtube' ? 'selected' : '' ?>>YouTube</option>
+                                    <option value="vimeo" <?= $selectedType === 'vimeo' ? 'selected' : '' ?>>Vimeo</option>
+                                    <option value="embed" <?= $selectedType === 'embed' ? 'selected' : '' ?>>Embed (iframe)</option>
+                                    <option value="direct" <?= $selectedType === 'direct' ? 'selected' : '' ?>>Link Direto (arquivo de vídeo)</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="duration_seconds" class="form-label fw-semibold">Duração (segundos)</label>
-                                <input type="number" class="form-control" id="duration_seconds" name="duration_seconds"
-                                       min="0" placeholder="Ex: 300">
+                                <label class="form-label fw-semibold">Duração</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="duration_minutes" name="duration_minutes"
+                                           min="0" placeholder="Min" style="max-width: 90px;"
+                                           value="<?= h($formData['duration_minutes'] ?? '') ?>">
+                                    <span class="input-group-text">min</span>
+                                    <input type="number" class="form-control" id="duration_seconds" name="duration_seconds"
+                                           min="0" max="59" placeholder="Seg" style="max-width: 90px;"
+                                           value="<?= h($formData['duration_seconds'] ?? '') ?>">
+                                    <span class="input-group-text">seg</span>
+                                </div>
                             </div>
                             <div class="col-12">
                                 <label for="video_url" class="form-label fw-semibold">URL do Vídeo *</label>
                                 <input type="url" class="form-control" id="video_url" name="video_url" required
-                                       placeholder="https://www.youtube.com/watch?v=...">
+                                       placeholder="https://www.youtube.com/watch?v=..."
+                                       value="<?= h($formData['video_url'] ?? '') ?>">
                             </div>
                         </div>
 
@@ -89,17 +103,20 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             Configurações
                         </h6>
 
+                        <?php $isPostback = !empty($formData); ?>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="is_preview" name="is_preview">
+                                    <input class="form-check-input" type="checkbox" id="is_preview" name="is_preview"
+                                           <?= isset($formData['is_preview']) ? 'checked' : '' ?>>
                                     <label class="form-check-label fw-semibold" for="is_preview">Vídeo de Preview</label>
                                     <div class="form-text">Acesso gratuito mesmo em cursos pagos</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                           <?= (!$isPostback || isset($formData['is_active'])) ? 'checked' : '' ?>>
                                     <label class="form-check-label fw-semibold" for="is_active">Vídeo Ativo</label>
                                     <div class="form-text">Visível para os estudantes</div>
                                 </div>
@@ -156,6 +173,13 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 <div>
                                     <strong>Vimeo</strong>
                                     <span>vimeo.com/VIDEO_ID</span>
+                                </div>
+                            </li>
+                            <li>
+                                <i class="bi bi-code-slash"></i>
+                                <div>
+                                    <strong>Embed</strong>
+                                    <span>URL de player embutido (Panda Video, Loom, etc.)</span>
                                 </div>
                             </li>
                             <li>
@@ -223,6 +247,9 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'direct':
                 embedHtml = `<video controls style="width: 100%; height: 100%;"><source src="${url}" type="video/mp4"></video>`;
                 break;
+            case 'embed':
+                embedHtml = `<iframe src="${url}" frameborder="0" allowfullscreen></iframe>`;
+                break;
         }
 
         if (embedHtml) {
@@ -244,25 +271,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const match = url.match(regExp);
         return match ? match[1] : null;
     }
-
-    const durationInput = document.getElementById('duration_seconds');
-    durationInput.addEventListener('input', function() {
-        const seconds = parseInt(this.value);
-        let helpText = this.parentNode.querySelector('.duration-help');
-        if (seconds > 0) {
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = seconds % 60;
-            const formattedTime = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-            if (!helpText) {
-                helpText = document.createElement('div');
-                helpText.className = 'form-text duration-help';
-                this.parentNode.appendChild(helpText);
-            }
-            helpText.textContent = `Duração formatada: ${formattedTime}`;
-        } else if (helpText) {
-            helpText.remove();
-        }
-    });
 });
 </script>
 

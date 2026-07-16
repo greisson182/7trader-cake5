@@ -513,6 +513,20 @@ span.text-danger {
   transform: translateY(-2px);
 }
 
+.btn-outline-light {
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #ffffff;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
 .btn-outline-warning {
   border: 2px solid #ffc107;
   color: #ffc107;
@@ -531,6 +545,19 @@ span.text-danger {
   color: #dc3545;
   background: rgba(220, 53, 69, 0.05);
   backdrop-filter: blur(10px);
+}
+
+.btn-outline-info {
+  border: 2px solid #0dcaf0;
+  color: #0dcaf0;
+  background: rgba(13, 202, 240, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline-info:hover {
+  background: linear-gradient(135deg, #0dcaf0 0%, #0aa8c7 100%);
+  color: #000;
+  transform: translateY(-2px);
 }
 
 /* Small Button Sizes */
@@ -968,6 +995,48 @@ span.text-danger {
   opacity: 1;
 }
 
+/* Breadcrumb Navigation */
+.breadcrumb {
+  --bs-breadcrumb-divider: "\203A";
+  --bs-breadcrumb-divider-color: rgba(255, 255, 255, 0.25);
+  display: inline-flex;
+  align-items: center;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-item + .breadcrumb-item {
+  padding-left: 0.6rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  padding-right: 0.6rem;
+  font-weight: 700;
+}
+
+.breadcrumb-item a {
+  color: var(--text-muted, #b0b0b0);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.breadcrumb-item a:hover {
+  color: #00ff88;
+}
+
+.breadcrumb-item.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
 .stat-card {
   animation: pulse 4s ease-in-out infinite;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
@@ -1047,11 +1116,16 @@ span.text-danger {
 }
 
 .card-header {
-  background: var(--primary-gradient);
-  color: white;
+  background: transparent;
+  color: var(--text-primary, #fff);
   border: none;
+  border-bottom: 1px solid var(--glass-border, rgba(0, 255, 136, 0.2));
   padding: var(--space-lg);
   font-weight: 600;
+}
+
+.card-header i {
+  color: #00ff88;
 }
 
 .card-body {
@@ -1376,7 +1450,7 @@ span.text-danger {
 
 .table .badge.bg-warning {
   background: var(--warning-gradient) !important;
-  color: white;
+  color: #000;
   border: none;
 }
 
@@ -1485,6 +1559,18 @@ span.text-danger {
   color: #000 !important;
 }
 
+/* Links de nome de aluno (tabelas, cards, dashboard): substitui o azul
+   padrão do link por branco, com verde no hover, consistente com o tema. */
+.student-link {
+  color: var(--text-primary, #fff);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.student-link:hover {
+  color: #00ff88;
+}
+
 [data-theme="dark"] .table tbody tr {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -1495,6 +1581,16 @@ span.text-danger {
 
 [data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
   background: rgba(0, 255, 136, 0.04);
+}
+
+/* Reforço: algumas tabelas herdam --bs-table-bg claro de combinações de
+   classe (ex: thead.table-light) que conseguem vazar por especificidade
+   em certas telas. Força o corpo da tabela a ficar transparente/escuro
+   independente de qual regra "ganhou" a variável. */
+[data-theme="dark"] .table > tbody > tr > td,
+[data-theme="dark"] .table > tbody > tr > th {
+  background-color: transparent !important;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .sub-menu {

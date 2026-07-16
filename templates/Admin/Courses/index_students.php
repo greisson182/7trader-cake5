@@ -1,253 +1,205 @@
+<div class="courses-students index content fade-in-up">
+    <!-- Header -->
+    <div class="mb-4">
+        <h1 class="h3 fw-bold mb-1">
+            <i class="bi bi-mortarboard-fill me-2 icon-accent"></i>
+            Cursos de Trading
+        </h1>
+        <p class="text-muted mb-0">Aprenda a ler o movimento do mercado e identificar padrões de trading.</p>
+    </div>
 
-<div class="container-fluid py-4" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); min-height: 100vh;">
-    <div class="container">
-        <!-- Header -->
-        <div class="row mb-4">
-            <div class="col-12 text-center">
-                <h1 class="display-4 fw-bold text-white mb-3">
-                    <i class="fas fa-graduation-cap text-success me-3"></i>
-                    Cursos de Trading
-                </h1>
-                <p class="lead text-light opacity-75">
-                    Aprenda a ler o movimento do mercado e identificar padrões de trading.
-                </p>
-            </div>
+    <!-- Lista de Cursos -->
+    <div class="card mb-4">
+        <div class="card-body">
+    <?php if (empty($courses)): ?>
+        <div class="empty-block">
+            <i class="bi bi-journal-x"></i>
+            <h5 class="text-muted mb-2">Nenhum curso disponível</h5>
+            <p class="text-muted mb-0">Em breve teremos novos cursos para você!</p>
         </div>
-        <!-- Lista de Cursos -->
-        <div class="row" id="coursesContainer">
-            <?php if (empty($courses)): ?>
-                <div class="col-12">
-                    <div class="card bg-dark border-secondary text-center py-4">
-                        <div class="card-body">
-                            <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
-                            <h4 class="text-white">Nenhum curso disponível</h4>
-                            <p class="text-muted">Em breve teremos novos cursos para você!</p>
-                        </div>
-                    </div>
-                </div>
-            <?php else: ?>
-                <?php foreach ($courses as $course): ?>
-                    <?php
-                    $isEnrolled = isset($enrollments[$course['id']]);
-                    $enrollment = $enrollments[$course['id']] ?? null;
-                    $isCompleted = $enrollment && $enrollment['completed_at'];
-                    
-                    // Calcular duração formatada
-                    $totalMinutes = round($course['total_duration'] / 60);
-                    $hours = floor($totalMinutes / 60);
-                    $minutes = $totalMinutes % 60;
-                    $durationText = $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
-                    
-                    // Badge de dificuldade
-                    $difficultyColors = [
-                        'Iniciante' => 'success',
-                        'Intermediário' => 'warning',
-                        'Avançado' => 'danger'
-                    ];
-                    $difficultyColor = $difficultyColors[$course['difficulty']] ?? 'secondary';
-                    ?>
-                    
-                    <div class="col-lg-3 col-md-6 mb-4 course-card" 
-                         data-category="<?= htmlspecialchars($course['category']) ?>"
-                         data-difficulty="<?= htmlspecialchars($course['difficulty']) ?>"
-                         data-price="<?= $course['is_free'] ? 'free' : 'paid' ?>"
-                         data-title="<?= htmlspecialchars(strtolower($course['title'])) ?>">
-                        
-                        <div class="card bg-dark border-secondary h-100 course-hover-effect">
-                            <!-- Thumbnail -->
-                            <div class="position-relative">
-                                <?php if ($course['thumbnail']): ?>
-                                    <img src="<?= htmlspecialchars($course['thumbnail']) ?>" 
-                                         class="card-img-top" style="height: 200px; object-fit: cover;" 
-                                         alt="<?= htmlspecialchars($course['title']) ?>">
+    <?php else: ?>
+        <div class="row g-3">
+            <?php foreach ($courses as $course): ?>
+                <?php
+                $isEnrolled = isset($enrollments[$course['id']]);
+                $enrollment = $enrollments[$course['id']] ?? null;
+                $isCompleted = $enrollment && $enrollment['completed_at'];
+
+                $totalMinutes = round($course['total_duration'] / 60);
+                $hours = floor($totalMinutes / 60);
+                $minutes = $totalMinutes % 60;
+                $durationText = $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
+                ?>
+
+                <div class="col-lg-3 col-md-6">
+                    <div class="card glass h-100 course-card">
+                        <div class="course-thumbnail">
+                            <?php if ($course['thumbnail']): ?>
+                                <img src="<?= h($course['thumbnail']) ?>" class="card-img-top" alt="<?= h($course['title']) ?>">
+                            <?php else: ?>
+                                <div class="placeholder-thumbnail">
+                                    <i class="bi bi-play-circle-fill"></i>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="course-price">
+                                <?php if ($course['is_free']): ?>
+                                    <span class="badge bg-primary">Gratuito</span>
                                 <?php else: ?>
-                                    <div class="card-img-top bg-gradient d-flex align-items-center justify-content-center" 
-                                         style="height: 200px; background: linear-gradient(45deg, #28a745, #20c997);">
-                                        <i class="fas fa-play-circle fa-3x text-white opacity-75"></i>
-                                    </div>
+                                    <span class="badge bg-warning text-dark">R$ <?= number_format($course['price'], 2, ',', '.') ?></span>
                                 <?php endif; ?>
-                                
-                                <!-- Status Badges -->
-                                <div class="position-absolute top-0 start-0 p-2">
-                                    <?php if ($course['is_free']): ?>
-                                        <span class="badge bg-success">GRATUITO</span>
+                            </div>
+
+                            <?php if ($isEnrolled): ?>
+                                <div class="course-status">
+                                    <?php if ($isCompleted): ?>
+                                        <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Concluído</span>
                                     <?php else: ?>
-                                        <span class="badge bg-primary">R$ <?= number_format($course['price'], 2, ',', '.') ?></span>
+                                        <span class="badge bg-info"><i class="bi bi-play-fill me-1"></i>Em andamento</span>
                                     <?php endif; ?>
                                 </div>
-                                
-                                <div class="position-absolute top-0 end-0 p-2">
-                                    <span class="badge bg-<?= $difficultyColor ?>"><?= htmlspecialchars($course['difficulty']) ?></span>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title fw-bold mb-1"><?= h($course['title']) ?></h6>
+
+                            <p class="card-text text-muted small mb-2 clamp-2">
+                                <?= h(substr($course['description'], 0, 100)) ?><?= strlen($course['description']) > 100 ? '...' : '' ?>
+                            </p>
+
+                            <div class="course-meta mb-2">
+                                <span><i class="bi bi-mortarboard"></i><?= h($course['difficulty']) ?></span>
+                                <span><i class="bi bi-play-fill"></i><?= (int)$course['video_count'] ?> vídeo<?= (int)$course['video_count'] !== 1 ? 's' : '' ?></span>
+                                <span><i class="bi bi-clock"></i><?= $durationText ?></span>
+                                <?php if ($course['instructor']): ?>
+                                    <span><i class="bi bi-person"></i><?= h($course['instructor']) ?></span>
+                                <?php endif; ?>
+                            </div>
+
+                            <?php if ($course['category']): ?>
+                                <div class="mb-3">
+                                    <span class="badge bg-light text-dark">
+                                        <i class="bi bi-tag me-1"></i><?= h($course['category']) ?>
+                                    </span>
                                 </div>
-                                
+                            <?php endif; ?>
+
+                            <div class="mt-auto">
                                 <?php if ($isEnrolled): ?>
-                                    <div class="position-absolute bottom-0 start-0 p-2">
-                                        <?php if ($isCompleted): ?>
-                                            <span class="badge bg-success">
-                                                <i class="fas fa-check-circle me-1"></i>CONCLUÍDO
-                                            </span>
+                                    <a href="/admin/courses/view-students/<?= $course['id'] ?>" class="btn btn-success btn-sm w-100">
+                                        <i class="bi bi-play-fill me-1"></i>Continuar Curso
+                                    </a>
+                                <?php else: ?>
+                                    <div class="d-grid gap-2">
+                                        <a href="/admin/courses/view-students/<?= $course['id'] ?>" class="btn btn-outline-light btn-sm">
+                                            <i class="bi bi-eye me-1"></i>Ver Detalhes
+                                        </a>
+                                        <?php if ($course['is_free']): ?>
+                                            <a href="/admin/courses/enroll/<?= $course['id'] ?>" class="btn btn-primary btn-sm">
+                                                <i class="bi bi-mortarboard me-1"></i>Inscrever-se Grátis
+                                            </a>
                                         <?php else: ?>
-                                            <span class="badge bg-info">
-                                                <i class="fas fa-play me-1"></i>EM ANDAMENTO
-                                            </span>
+                                            <a href="/checkout/curso/<?= $course['id'] ?>" class="btn btn-primary btn-sm">
+                                                <i class="bi bi-credit-card me-1"></i>Comprar por R$ <?= number_format($course['price'], 2, ',', '.') ?>
+                                            </a>
                                         <?php endif; ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
-                            
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="card-title text-white mb-2"><?= htmlspecialchars($course['title']) ?></h5>
-                                
-                                <p class="card-text text-muted small mb-3 flex-grow-1">
-                                    <?= htmlspecialchars(substr($course['description'], 0, 120)) ?>
-                                    <?= strlen($course['description']) > 120 ? '...' : '' ?>
-                                </p>
-                                
-                                <!-- Informações do Curso -->
-                                <div class="course-info mb-3">
-                                    <div class="row text-center">
-                                        <div class="col-4">
-                                            <small class="text-muted d-block">Vídeos</small>
-                                            <strong class="text-success"><?= $course['video_count'] ?></strong>
-                                        </div>
-                                        <div class="col-4">
-                                            <small class="text-muted d-block">Duração</small>
-                                            <strong class="text-success"><?= $durationText ?></strong>
-                                        </div>
-                                        <div class="col-4">
-                                            <small class="text-muted d-block">Categoria</small>
-                                            <strong class="text-success"><?= htmlspecialchars($course['category']) ?></strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <?php if ($course['instructor']): ?>
-                                    <div class="mb-3">
-                                        <small class="text-muted">Instrutor:</small>
-                                        <div class="text-white">
-                                            <i class="fas fa-user-tie me-1"></i>
-                                            <?= htmlspecialchars($course['instructor']) ?>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <!-- Ações -->
-                                <div class="mt-auto">
-                                    <?php if ($isEnrolled): ?>
-                                        <a href="/admin/courses/view-students/<?= $course['id'] ?>" 
-                                           class="btn btn-success w-100">
-                                            <i class="fas fa-play me-2"></i>Continuar Curso
-                                        </a>
-                                    <?php else: ?>
-                                        <div class="d-grid gap-2">
-                                            <a href="/admin/courses/view-students/<?= $course['id'] ?>" 
-                                               class="btn btn-outline-success">
-                                                <i class="fas fa-eye me-2"></i>Ver Detalhes
-                                            </a>
-                                            <?php if ($course['is_free']): ?>
-                                                <a href="/admin/courses/enroll/<?= $course['id'] ?>" 
-                                                   class="btn btn-success">
-                                                    <i class="fas fa-graduation-cap me-2"></i>Inscrever-se Grátis
-                                                </a>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
         </div>
     </div>
 </div>
 
 <style>
-.course-hover-effect {
-    transition: all 0.3s ease;
-    border: 1px solid #444;
-}
-
-.course-hover-effect:hover {
-    transform: translateY(-5px);
-    border-color: #28a745;
-    box-shadow: 0 10px 25px rgba(40, 167, 69, 0.2);
-}
-
-.course-info {
-    border-top: 1px solid #444;
-    border-bottom: 1px solid #444;
-    padding: 15px 0;
-}
-
-.bg-gradient {
-    background: linear-gradient(45deg, #28a745, #20c997) !important;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const filterCategory = document.getElementById('filterCategory');
-    const filterDifficulty = document.getElementById('filterDifficulty');
-    const filterPrice = document.getElementById('filterPrice');
-    const searchInput = document.getElementById('searchInput');
-    const coursesContainer = document.getElementById('coursesContainer');
-    
-    function filterCourses() {
-        const categoryFilter = filterCategory.value.toLowerCase();
-        const difficultyFilter = filterDifficulty.value.toLowerCase();
-        const priceFilter = filterPrice.value;
-        const searchFilter = searchInput.value.toLowerCase();
-        
-        const courseCards = document.querySelectorAll('.course-card');
-        let visibleCount = 0;
-        
-        courseCards.forEach(card => {
-            const category = card.dataset.category.toLowerCase();
-            const difficulty = card.dataset.difficulty.toLowerCase();
-            const price = card.dataset.price;
-            const title = card.dataset.title;
-            
-            const matchesCategory = !categoryFilter || category.includes(categoryFilter);
-            const matchesDifficulty = !difficultyFilter || difficulty.includes(difficultyFilter);
-            const matchesPrice = !priceFilter || price === priceFilter;
-            const matchesSearch = !searchFilter || title.includes(searchFilter);
-            
-            if (matchesCategory && matchesDifficulty && matchesPrice && matchesSearch) {
-                card.style.display = 'block';
-                visibleCount++;
-            } else {
-                card.style.display = 'none';
-            }
-        });
-        
-        // Mostrar mensagem se nenhum curso for encontrado
-        let noResultsMsg = document.getElementById('noResultsMessage');
-        if (visibleCount === 0 && courseCards.length > 0) {
-            if (!noResultsMsg) {
-                noResultsMsg = document.createElement('div');
-                noResultsMsg.id = 'noResultsMessage';
-                noResultsMsg.className = 'col-12';
-                noResultsMsg.innerHTML = `
-                    <div class="card bg-dark border-secondary text-center py-4">
-                        <div class="card-body">
-                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                            <h4 class="text-white">Nenhum curso encontrado</h4>
-                            <p class="text-muted">Tente ajustar os filtros para encontrar o que procura.</p>
-                        </div>
-                    </div>
-                `;
-                coursesContainer.appendChild(noResultsMsg);
-            }
-        } else if (noResultsMsg) {
-            noResultsMsg.remove();
-        }
+    .icon-accent {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
-    
-    // Event listeners
-    filterCategory.addEventListener('change', filterCourses);
-    filterDifficulty.addEventListener('change', filterCourses);
-    filterPrice.addEventListener('change', filterCourses);
-    searchInput.addEventListener('input', filterCourses);
-});
-</script>
+
+    .course-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
+    }
+
+    .course-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 255, 136, 0.15);
+    }
+
+    .course-thumbnail {
+        position: relative;
+        height: 150px;
+        overflow: hidden;
+    }
+
+    .course-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .placeholder-thumbnail {
+        width: 100%;
+        height: 100%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2.5rem;
+    }
+
+    .course-status {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+    }
+
+    .course-price {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+    }
+
+    .clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.5em;
+    }
+
+    .course-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.75rem;
+        font-size: 0.78rem;
+        color: var(--text-muted, #b0b0b0);
+    }
+
+    .course-meta i {
+        color: #00ff88;
+        margin-right: 0.2rem;
+    }
+
+    .empty-block {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-muted, #b0b0b0);
+    }
+
+    .empty-block i {
+        font-size: 3rem;
+        opacity: 0.4;
+        display: block;
+        margin-bottom: 1rem;
+    }
+</style>
