@@ -38,6 +38,61 @@ class OrdersController extends AppController
         $this->set(compact('orders', 'status', 'itemType'));
     }
 
+    /**
+     * Histórico de compras do próprio aluno logado (cursos + mentorias).
+     */
+    public function myOrders()
+    {
+        $studentId = $this->getCurrentStudentId();
+
+        $orders = $this->fetchTable('Orders')->find()
+            ->where(['student_id' => $studentId])
+            ->orderBy(['created' => 'DESC'])
+            ->toArray();
+
+        $courseIds = [];
+        $mentorshipIds = [];
+        foreach ($orders as $order) {
+            if ($order->item_type === 'course') {
+                $courseIds[] = $order->item_id;
+            } else {
+                $mentorshipIds[] = $order->item_id;
+            }
+        }
+
+        $courseTitles = [];
+        if ($courseIds) {
+            $courseTitles = array_column(
+                $this->fetchTable('Courses')->find()
+                    ->select(['id', 'title'])
+                    ->where(['id IN' => $courseIds])
+                    ->toArray(),
+                'title',
+                'id'
+            );
+        }
+
+        $mentorshipTitles = [];
+        if ($mentorshipIds) {
+            $mentorshipTitles = array_column(
+                $this->fetchTable('Mentorships')->find()
+                    ->select(['id', 'name'])
+                    ->where(['id IN' => $mentorshipIds])
+                    ->toArray(),
+                'name',
+                'id'
+            );
+        }
+
+        foreach ($orders as $order) {
+            $order->item_title = $order->item_type === 'course'
+                ? ($courseTitles[$order->item_id] ?? 'Curso removido')
+                : ($mentorshipTitles[$order->item_id] ?? 'Mentoria removida');
+        }
+
+        $this->set('orders', $orders);
+    }
+
     public function view($id = null)
     {
         try {

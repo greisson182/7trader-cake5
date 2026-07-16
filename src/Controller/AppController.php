@@ -143,7 +143,7 @@ class AppController extends Controller
 			$this->viewBuilder()->setLayout('documentation');
 		} else {
 
-			if (stristr($this->request->getParam('action'), "register")) {
+			if (stristr($this->request->getParam('action'), "register") || $this->request->getParam('controller') === 'PasswordRecovery') {
 				$this->viewBuilder()->setLayout('login');
 
 				if (stristr($this->request->getParam('action'), "maintenance")) {
@@ -496,11 +496,11 @@ class AppController extends Controller
 		return $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
 	}
 
-	public function recordFailedAttempt(string $clientIp): void
+	public function recordFailedAttempt(string $clientIp, string $purpose = 'default'): void
 	{
-		$rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit');
-		// Force record an attempt by simulating middleware processing
-		$key = 'rate_limit_' . md5($clientIp);
+		// Só grava a tentativa (leitura de limite fica a cargo de quem chama,
+		// via RateLimitMiddleware::getRemainingAttempts com o mesmo $purpose).
+		$key = RateLimitMiddleware::buildCacheKey($clientIp, $purpose);
 		$attempts = \Cake\Cache\Cache::read($key, 'rate_limit') ?: [];
 		$attempts[] = time();
 		\Cake\Cache\Cache::write($key, $attempts, 'rate_limit');
@@ -511,7 +511,7 @@ class AppController extends Controller
 		$this->request->allowMethod(['post']);
 
 		$clientIp = $this->getClientIp();
-		$rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit');
+		$rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit', 'student_registration');
 
 		$remainingAttempts = $rateLimiter->getRemainingAttempts($clientIp);
 		$timeUntilReset = $rateLimiter->getTimeUntilReset($clientIp);

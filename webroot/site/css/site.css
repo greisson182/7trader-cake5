@@ -2673,6 +2673,34 @@ footer h5 {
     padding-top: 80px;
 }
 
+/* Flash messages (erro/sucesso) — o alerta padrão do Bootstrap é claro
+   demais para o tema escuro do site; segue o mesmo estilo "glass" já usado
+   no admin. */
+.site-main .alert {
+    border: none;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-weight: 500;
+    padding: 1rem 3rem 1rem 1.25rem;
+}
+
+.site-main .alert-danger {
+    background: linear-gradient(135deg, rgba(255, 99, 132, 0.18) 0%, rgba(255, 159, 64, 0.18) 100%);
+    color: #ff9b9b;
+    border-left: 4px solid #ff6b6b;
+}
+
+.site-main .alert-success {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.18) 0%, rgba(0, 230, 118, 0.18) 100%);
+    color: #00ff88;
+    border-left: 4px solid #00ff88;
+}
+
+.site-main .alert strong {
+    color: inherit;
+}
+
 .pricing-card {
     border: 1px solid rgba(0, 255, 136, 0.25);
 }

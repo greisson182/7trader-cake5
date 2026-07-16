@@ -1,4 +1,4 @@
-<div class="alert alert-danger fields-error">
-	<button class="close" data-dismiss="alert"><i class="pci-cross pci-circle"></i></button>
+<div class="alert alert-danger alert-dismissible fade show fields-error" role="alert">
 	<strong>Ooops!</strong> <?= h($message) ?>
+	<button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Fechar"></button>
 </div>

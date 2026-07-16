@@ -105,22 +105,22 @@
             </div>
         </div>
     </div>
-</div>
 
-<div class="row mt-3">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-info-circle"></i> Como Funciona</h5>
-            </div>
-            <div class="card-body">
-                <p><strong>Configuração de Custos por Contrato:</strong></p>
-                <ul>
-                    <li>Configure custos específicos por mercado e estudante</li>
-                    <li>Defina períodos de vigência com data de início e fim</li>
-                    <li>Os custos serão automaticamente aplicados no cálculo do P&L dos estudos</li>
-                    <li>Cada operação terá seu custo deduzido do resultado final</li>
-                </ul>
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Como Funciona</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Configuração de Custos por Contrato:</strong></p>
+                    <ul>
+                        <li>Configure custos específicos por mercado e estudante</li>
+                        <li>Defina períodos de vigência com data de início e fim</li>
+                        <li>Os custos serão automaticamente aplicados no cálculo do P&L dos estudos</li>
+                        <li>Cada operação terá seu custo deduzido do resultado final</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

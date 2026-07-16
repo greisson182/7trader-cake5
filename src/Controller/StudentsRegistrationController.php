@@ -63,7 +63,7 @@ class StudentsRegistrationController extends AppController
     public function register()
     {
         // Apply rate limiting
-        $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit'); // 5 attempts per 5 minutes
+        $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit', 'student_registration'); // 5 attempts per 5 minutes
         $clientIp = $this->getClientIp();
         
         // Check rate limit before processing
@@ -153,7 +153,7 @@ class StudentsRegistrationController extends AppController
 
             if (!empty($errors)) {
                 // Record failed attempt for rate limiting
-                $this->recordFailedAttempt($clientIp);
+                $this->recordFailedAttempt($clientIp, 'student_registration');
                 
                 foreach ($errors as $field => $message) {
                     $this->Flash->error($message);
@@ -211,7 +211,7 @@ class StudentsRegistrationController extends AppController
                 } catch (\Exception $e) {
                     
                     // Record failed attempt for rate limiting
-                    $this->recordFailedAttempt($clientIp);
+                    $this->recordFailedAttempt($clientIp, 'student_registration');
 
                     $this->Flash->error(__('Erro ao criar conta: ' . $e->getMessage()));
                 }

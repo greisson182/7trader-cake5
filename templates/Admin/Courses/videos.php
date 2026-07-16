@@ -73,9 +73,13 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         </div>
                         <div class="text-center">
                             <h4 class="text-success fw-bold mb-0">
-                                <?php 
+                                <?php
                                 $totalDuration = array_sum(array_column($videos, 'duration_seconds'));
-                                echo floor($totalDuration / 60) . 'min';
+                                $totalDurationMinutes = floor($totalDuration / 60);
+                                $totalDurationHours = floor($totalDurationMinutes / 60);
+                                echo $totalDurationHours > 0
+                                    ? $totalDurationHours . 'h ' . ($totalDurationMinutes % 60) . 'min'
+                                    : $totalDurationMinutes . 'min';
                                 ?>
                             </h4>
                             <small class="text-muted">Duração Total</small>
@@ -135,8 +139,13 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             </div>
                         </td>
                         <td>
+                            <?php
+                            $vHours = floor($video['duration_seconds'] / 3600);
+                            $vMinutes = floor(($video['duration_seconds'] % 3600) / 60);
+                            $vSeconds = $video['duration_seconds'] % 60;
+                            ?>
                             <span class="text-muted">
-                                <?= floor($video['duration_seconds'] / 60) ?>:<?= str_pad($video['duration_seconds'] % 60, 2, '0', STR_PAD_LEFT) ?>
+                                <?= $vHours > 0 ? sprintf('%d:%02d:%02d', $vHours, $vMinutes, $vSeconds) : sprintf('%d:%02d', $vMinutes, $vSeconds) ?>
                             </span>
                         </td>
                         <td>

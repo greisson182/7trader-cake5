@@ -30,9 +30,14 @@ $renderVideoRow = function ($video) {
                 <p class="text-muted small mb-1"><?= h($video['description']) ?></p>
             <?php endif; ?>
             <div class="d-flex align-items-center gap-3 small text-muted">
+                <?php
+                $vHours = floor($video['duration_seconds'] / 3600);
+                $vMinutes = floor(($video['duration_seconds'] % 3600) / 60);
+                $vSeconds = $video['duration_seconds'] % 60;
+                ?>
                 <span>
                     <i class="bi bi-clock me-1"></i>
-                    <?= floor($video['duration_seconds'] / 60) ?>:<?= str_pad($video['duration_seconds'] % 60, 2, '0', STR_PAD_LEFT) ?>
+                    <?= $vHours > 0 ? sprintf('%d:%02d:%02d', $vHours, $vMinutes, $vSeconds) : sprintf('%d:%02d', $vMinutes, $vSeconds) ?>
                 </span>
                 <span>
                     <i class="bi bi-play-circle me-1"></i>
@@ -133,8 +138,15 @@ $renderVideoRow = function ($video) {
                                 <div class="col-sm-6 meta-row">
                                     <span><i class="bi bi-clock me-1"></i> Duração</span>
                                     <strong>
-                                        <?php if ($course['duration_minutes']): ?>
-                                            <?= floor($course['duration_minutes'] / 60) ?>h <?= $course['duration_minutes'] % 60 ?>min
+                                        <?php
+                                        $totalDurationSeconds = array_sum(array_column($videos, 'duration_seconds'));
+                                        $totalDurationMinutes = floor($totalDurationSeconds / 60);
+                                        ?>
+                                        <?php $durationHours = floor($totalDurationMinutes / 60); ?>
+                                        <?php if ($durationHours > 0): ?>
+                                            <?= $durationHours ?>h <?= $totalDurationMinutes % 60 ?>min
+                                        <?php elseif ($totalDurationMinutes > 0): ?>
+                                            <?= $totalDurationMinutes ?>min
                                         <?php else: ?>
                                             Não informado
                                         <?php endif; ?>

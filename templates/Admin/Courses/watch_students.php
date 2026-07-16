@@ -2,6 +2,16 @@
 $title = h($video['title']) . ' - ' . h($course['title']) . ' - 7 Trader';
 $description = h(substr($video['description'] ?? '', 0, 160));
 $csrfToken = $this->request->getAttribute('csrfToken');
+
+$formatDuration = function (int $totalSeconds): string {
+    $hours = floor($totalSeconds / 3600);
+    $minutes = floor(($totalSeconds % 3600) / 60);
+    $seconds = $totalSeconds % 60;
+
+    return $hours > 0
+        ? sprintf('%d:%02d:%02d', $hours, $minutes, $seconds)
+        : sprintf('%d:%02d', $minutes, $seconds);
+};
 ?>
 <div class="courses-students watch content fade-in-up">
     <!-- Breadcrumb -->
@@ -113,14 +123,8 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                         <div id="videoProgress" class="progress-bar bg-success" role="progressbar" style="width: <?= $initialPercent ?>%"></div>
                                     </div>
                                     <small class="text-muted">
-                                        <span id="watchTime"><?= sprintf('%d:%02d', floor($watchedSeconds / 60), $watchedSeconds % 60) ?></span> /
-                                        <span id="totalTime">
-                                            <?php
-                                            $minutes = floor($video['duration_seconds'] / 60);
-                                            $seconds = $video['duration_seconds'] % 60;
-                                            echo sprintf('%d:%02d', $minutes, $seconds);
-                                            ?>
-                                        </span>
+                                        <span id="watchTime"><?= $formatDuration($watchedSeconds) ?></span> /
+                                        <span id="totalTime"><?= $formatDuration($video['duration_seconds']) ?></span>
                                     </small>
                                 </div>
 
@@ -155,9 +159,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             $isWatched = isset($progress[$courseVideo['id']]) && $progress[$courseVideo['id']]->completed;
                             $isInProgress = isset($progress[$courseVideo['id']]) && !$progress[$courseVideo['id']]->completed;
 
-                            $minutes = floor($courseVideo['duration_seconds'] / 60);
-                            $seconds = $courseVideo['duration_seconds'] % 60;
-                            $durationText = sprintf('%d:%02d', $minutes, $seconds);
+                            $durationText = $formatDuration($courseVideo['duration_seconds']);
                             ?>
 
                             <div class="row-item align-items-start <?= $isCurrentVideo ? 'row-item-current' : '' ?>">
@@ -249,8 +251,12 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         const videoDuration = <?= $video['duration_seconds'] ?>;
 
         function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
             const secs = seconds % 60;
+            if (hours > 0) {
+                return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 

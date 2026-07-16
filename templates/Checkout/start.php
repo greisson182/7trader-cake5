@@ -7,12 +7,14 @@
  * @var array $formData
  * @var object|null $loggedUser
  * @var bool|null $requiresLogin
+ * @var bool|null $showForgotPasswordForm
  */
 $csrfToken = $this->request->getAttribute('csrfToken');
 $itemLabel = $itemType === 'mentorship' ? 'Mentoria' : 'Curso';
 $formData = $formData ?? [];
 $loggedUser = $loggedUser ?? null;
 $requiresLogin = $requiresLogin ?? false;
+$showForgotPasswordForm = $showForgotPasswordForm ?? false;
 $currentUrl = $this->request->getUri()->getPath();
 ?>
 <div class="container py-5" style="margin-top: 70px;">
@@ -28,20 +30,84 @@ $currentUrl = $this->request->getUri()->getPath();
                 </div>
             </div>
 
-            <?php if ($requiresLogin): ?>
+            <?php if ($showForgotPasswordForm): ?>
                 <div class="card shadow-sm border-0">
-                    <div class="card-body text-center">
-                        <h5 class="fw-bold mb-3">Você já tem uma conta</h5>
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3">Recuperar acesso</h5>
+                        <?= $this->Flash->render() ?>
                         <p class="text-muted mb-4">
-                            Já existe um cadastro com esse e-mail. Faça login para continuar a compra.
+                            Informe seu e-mail. Se ele tiver uma conta, enviaremos um link para você criar uma nova senha.
                         </p>
-                        <a href="/login" class="btn btn-success btn-lg">Fazer login</a>
+
+                        <?= $this->Form->create(null, [
+                            'url' => $currentUrl,
+                        ]) ?>
+                        <input type="hidden" name="_csrfToken" value="<?= h($csrfToken) ?>">
+                        <input type="hidden" name="action_type" value="forgot_password">
+
+                        <div class="mb-3">
+                            <label for="login_email" class="form-label">E-mail</label>
+                            <input type="email" class="form-control" id="login_email" name="login_email" required
+                                   value="<?= h($formData['login_email'] ?? '') ?>">
+                        </div>
+
+                        <div class="d-grid mt-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                Recuperar
+                            </button>
+                        </div>
+
+                        <?= $this->Form->end() ?>
+
+                        <p class="text-muted small text-center mt-3 mb-0">
+                            <a href="<?= h($currentUrl) ?>?login=1" style="color: #00ff88; text-decoration: none;">Voltar ao login</a>
+                        </p>
+                    </div>
+                </div>
+            <?php elseif ($requiresLogin): ?>
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3">Você já tem uma conta</h5>
+                        <?= $this->Flash->render() ?>
+                        <p class="text-muted mb-4">
+                            Já existe um cadastro com esse e-mail. Entre com sua senha para continuar a compra.
+                        </p>
+
+                        <?= $this->Form->create(null, [
+                            'url' => $currentUrl,
+                        ]) ?>
+                        <input type="hidden" name="_csrfToken" value="<?= h($csrfToken) ?>">
+                        <input type="hidden" name="action_type" value="login">
+
+                        <div class="mb-3">
+                            <label for="login_email" class="form-label">E-mail</label>
+                            <input type="email" class="form-control" id="login_email" name="login_email" required
+                                   value="<?= h($formData['login_email'] ?? ($formData['email'] ?? '')) ?>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="login_password" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="login_password" name="login_password" required>
+                        </div>
+
+                        <div class="d-grid mt-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                Entrar e continuar compra
+                            </button>
+                        </div>
+
+                        <?= $this->Form->end() ?>
+
+                        <p class="text-muted small text-center mt-3 mb-0">
+                            Esqueceu a senha? <a href="<?= h($currentUrl) ?>?forgot=1" style="color: #00ff88; text-decoration: none;">Recuperar acesso</a>.
+                        </p>
                     </div>
                 </div>
             <?php elseif ($loggedUser): ?>
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
                         <h5 class="fw-bold mb-3">Confirmar compra</h5>
+                        <?= $this->Flash->render() ?>
                         <p class="text-muted mb-4">
                             Comprando como <strong><?= h($loggedUser->name) ?></strong>
                             (<?= h($loggedUser->email) ?>).
@@ -69,10 +135,11 @@ $currentUrl = $this->request->getUri()->getPath();
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
                         <h5 class="fw-bold mb-3">Seus dados</h5>
+                        <?= $this->Flash->render() ?>
                         <p class="text-muted small mb-4">
                             Depois de confirmar o pagamento, seu acesso é liberado automaticamente
                             com o e-mail e senha informados abaixo. Já tem conta?
-                            <a href="/login">Faça login</a>.
+                            <a href="<?= h($currentUrl) ?>?login=1">Faça login</a>.
                         </p>
 
                         <?= $this->Form->create(null, [

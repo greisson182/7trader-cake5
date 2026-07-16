@@ -152,8 +152,18 @@ if ($isHome) {
         </div>
     </nav>
 
-    <?= $this->Flash->render() ?>
+    <?php
+    // Checkout renderiza a flash message dentro do próprio card (ao lado do
+    // formulário relevante), não aqui no topo da página.
+    $isCheckoutPage = $this->getRequest()->getParam('controller') === 'Checkout';
+    $flashMessages = $isCheckoutPage ? null : $this->Flash->render();
+    ?>
     <main class="site-main">
+        <?php if ($flashMessages): ?>
+            <div class="container pt-4">
+                <?= $flashMessages ?>
+            </div>
+        <?php endif; ?>
         <?= $this->fetch('content') ?>
     </main>
 

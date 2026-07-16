@@ -15,6 +15,45 @@ class MentorshipsController extends AppController
         $this->checkSession();
     }
 
+    /**
+     * Listagem de mentorias para o aluno (compra/status), separada da
+     * listagem administrativa (index).
+     */
+    public function indexStudents()
+    {
+        try {
+            $mentorships = $this->fetchTable('Mentorships')->find()
+                ->where(['is_active' => 1])
+                ->orderBy(['order_position' => 'ASC', 'created' => 'ASC'])
+                ->toArray();
+
+            // Não há tabela de matrícula de mentoria — a posse é derivada do
+            // pedido aprovado (mesma lógica de CoursesController::indexStudents
+            // para inscrições de curso).
+            $mentorshipOrders = [];
+            if ($this->isStudent()) {
+                $studentId = $this->getCurrentStudentId();
+                $approvedOrders = $this->fetchTable('Orders')->find()
+                    ->where([
+                        'student_id' => $studentId,
+                        'item_type' => 'mentorship',
+                        'status' => 'approved',
+                    ])
+                    ->toArray();
+
+                foreach ($approvedOrders as $order) {
+                    $mentorshipOrders[$order->item_id] = $order;
+                }
+            }
+
+            $this->set('mentorships', $mentorships);
+            $this->set('mentorshipOrders', $mentorshipOrders);
+        } catch (\Exception $e) {
+            $this->Flash->error('Erro ao carregar mentorias: ' . $e->getMessage());
+            return $this->redirect(['controller' => 'Welcome', 'action' => 'index']);
+        }
+    }
+
     public function index()
     {
         try {

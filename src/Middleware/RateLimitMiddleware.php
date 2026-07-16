@@ -17,19 +17,32 @@ class RateLimitMiddleware implements MiddlewareInterface
     private int $maxAttempts;
     private int $timeWindow;
     private string $cacheConfig;
+    private string $purpose;
 
-    public function __construct(int $maxAttempts = 5, int $timeWindow = 300, string $cacheConfig = 'default')
+    /**
+     * @param string $purpose Identifica o fluxo (ex.: 'checkout', 'admin_login').
+     *   Sem isso, todos os rate limiters do site compartilhariam o mesmo
+     *   contador por IP — testar login e "esqueci a senha" no checkout, por
+     *   exemplo, consumiria o mesmo limite do login do admin.
+     */
+    public function __construct(int $maxAttempts = 5, int $timeWindow = 300, string $cacheConfig = 'default', string $purpose = 'default')
     {
         $this->maxAttempts = $maxAttempts;
         $this->timeWindow = $timeWindow; // 5 minutes by default
         $this->cacheConfig = $cacheConfig;
+        $this->purpose = $purpose;
+    }
+
+    public static function buildCacheKey(string $clientIp, string $purpose = 'default'): string
+    {
+        return 'rate_limit_' . $purpose . '_' . md5($clientIp);
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $clientIp = $this->getClientIp($request);
-        $key = 'rate_limit_' . md5($clientIp);
-        
+        $key = self::buildCacheKey($clientIp, $this->purpose);
+
         // Get current attempts from cache
         $attempts = Cache::read($key, $this->cacheConfig) ?: [];
         $now = time();
@@ -107,7 +120,7 @@ class RateLimitMiddleware implements MiddlewareInterface
 
     public function getRemainingAttempts(string $clientIp): int
     {
-        $key = 'rate_limit_' . md5($clientIp);
+        $key = self::buildCacheKey($clientIp, $this->purpose);
         $attempts = Cache::read($key, $this->cacheConfig) ?: [];
         $now = time();
         
@@ -121,7 +134,7 @@ class RateLimitMiddleware implements MiddlewareInterface
 
     public function getTimeUntilReset(string $clientIp): int
     {
-        $key = 'rate_limit_' . md5($clientIp);
+        $key = self::buildCacheKey($clientIp, $this->purpose);
         $attempts = Cache::read($key, $this->cacheConfig) ?: [];
         
         if (empty($attempts)) {

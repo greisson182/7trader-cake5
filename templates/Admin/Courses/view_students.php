@@ -22,7 +22,8 @@ $renderVideoItem = function ($video, $number) use ($isEnrolled, $progress, $cour
     $isWatched = isset($progress[$video['id']]) && $progress[$video['id']]['completed'];
     $isInProgress = isset($progress[$video['id']]) && !$progress[$video['id']]['completed'];
 
-    $vMinutes = floor($video['duration_seconds'] / 60);
+    $vHours = floor($video['duration_seconds'] / 3600);
+    $vMinutes = floor(($video['duration_seconds'] % 3600) / 60);
     $vSeconds = $video['duration_seconds'] % 60;
     ?>
     <div class="row-item align-items-start">
@@ -43,7 +44,7 @@ $renderVideoItem = function ($video, $number) use ($isEnrolled, $progress, $cour
                 <?php endif; ?>
             </div>
             <div class="small text-muted mb-2">
-                <?= sprintf('%d:%02d', $vMinutes, $vSeconds) ?>
+                <?= $vHours > 0 ? sprintf('%d:%02d:%02d', $vHours, $vMinutes, $vSeconds) : sprintf('%d:%02d', $vMinutes, $vSeconds) ?>
             </div>
             <?php if ($canWatch): ?>
                 <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $video['id'] ?>"

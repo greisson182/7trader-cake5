@@ -1143,6 +1143,36 @@ span.text-danger {
   height: 85px;
 }
 
+/* Menu mobile (abaixo do breakpoint do navbar-expand-lg): a altura fixa acima
+   corta o menu expandido, deixando os itens sem fundo por renderizarem fora
+   da caixa. Também garante marca e botão hamburguer alinhados na mesma linha. */
+@media (max-width: 991.98px) {
+  .navbar {
+    height: auto;
+  }
+
+  .navbar > .container {
+    align-items: center;
+  }
+
+  .navbar-toggler {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navbar-collapse {
+    background: var(--navbar-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--navbar-border);
+    border-radius: var(--radius-sm, 8px);
+    margin-top: 0.75rem;
+    padding: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+}
+
 /* Calendar Navigation Styles */
 .calendar-navigation {
   display: flex;

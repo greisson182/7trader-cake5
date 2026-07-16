@@ -128,6 +128,18 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 Cursos
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="/admin/mentorships/index-students" class="nav-link">
+                                <i class="bi bi-people me-1"></i>
+                                Mentorias
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/orders/my-orders" class="nav-link">
+                                <i class="bi bi-receipt-cutoff me-1"></i>
+                                Pedidos
+                            </a>
+                        </li>
                     <?php } ?>
 
                 </ul>
@@ -149,7 +161,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 </li>
                                 <?php if ($logado->role !== 'admin') { ?>
                                     <li>
-                                        <a class="dropdown-item" href="/admin/operations_costs">
+                                        <a class="dropdown-item" href="/admin/operations-costs">
                                             <i class="bi bi-gear-fill me-2"></i>
                                             Configurações
                                         </a>

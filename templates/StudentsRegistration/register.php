@@ -38,7 +38,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 </div>
 
 <div class="row">
-    <div class="col-md-6 mb-3">
+    <div class="col-md-12 mb-3">
         <label for="phone" class="form-label">Telefone</label>
         <?= $this->Form->control('phone', [
             'type' => 'text',
@@ -47,7 +47,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             'label' => false
         ]) ?>
     </div>
-    <div class="col-md-6 mb-3">
+    <div class="col-md-12 mb-3">
         <label for="username" class="form-label">Nome de Usuário</label>
         <?= $this->Form->control('username', [
             'type' => 'text',
@@ -60,7 +60,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 </div>
 
 <div class="row">
-    <div class="col-md-6 mb-3">
+    <div class="col-md-12 mb-3">
         <label for="password" class="form-label">Senha</label>
         <?= $this->Form->control('password', [
             'type' => 'password',
@@ -70,7 +70,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             'label' => false
         ]) ?>
     </div>
-    <div class="col-md-6 mb-3">
+    <div class="col-md-12 mb-3">
         <label for="confirm_password" class="form-label">Confirmar Senha</label>
         <?= $this->Form->control('confirm_password', [
             'type' => 'password',

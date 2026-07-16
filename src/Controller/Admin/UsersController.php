@@ -210,7 +210,7 @@ class UsersController extends AppController
     public function login()
     {
         // Apply rate limiting
-        $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit'); // 5 attempts per 5 minutes
+        $rateLimiter = new RateLimitMiddleware(5, 300, 'rate_limit', 'admin_login'); // 5 attempts per 5 minutes
         $clientIp = $this->getClientIp();
         
         // Check rate limit before processing
@@ -232,7 +232,7 @@ class UsersController extends AppController
 
         if ($this->request->is('post')) {
             // Record the login attempt for rate limiting
-            $this->recordFailedAttempt($clientIp);
+            $this->recordFailedAttempt($clientIp, 'admin_login');
 
             $registro = $this->request->getData();
 
@@ -253,7 +253,7 @@ class UsersController extends AppController
 
                     if (!empty($User->password) && password_verify(trim($registro['pass']), $User->password)) {
                         // Successful login - clear rate limit for this IP
-                        $key = 'rate_limit_' . md5($clientIp);
+                        $key = RateLimitMiddleware::buildCacheKey($clientIp, 'admin_login');
                         \Cake\Cache\Cache::delete($key, 'rate_limit');
 
                         $Usuario = $this->Users->get($User->id);

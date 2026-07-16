@@ -7,12 +7,10 @@ namespace App\Service;
 use App\Model\Entity\Order;
 use App\Service\Exception\AccountRequiresLoginException;
 use Cake\Datasource\Exception\RecordNotFoundException;
-use Cake\Mailer\Mailer;
 use Cake\ORM\Table;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 use Exception;
-use Throwable;
 
 class OrderService
 {
@@ -22,8 +20,9 @@ class OrderService
     private Table $_usersTable;
     private Table $_courseEnrollmentsTable;
     private StudentService $_studentService;
+    private AwsEmailService $_awsEmailService;
 
-    public function __construct(?StudentService $studentService = null)
+    public function __construct(?StudentService $studentService = null, ?AwsEmailService $awsEmailService = null)
     {
         $this->_ordersTable = TableRegistry::getTableLocator()->get('Orders');
         $this->_coursesTable = TableRegistry::getTableLocator()->get('Courses');
@@ -31,6 +30,7 @@ class OrderService
         $this->_usersTable = TableRegistry::getTableLocator()->get('Users');
         $this->_courseEnrollmentsTable = TableRegistry::getTableLocator()->get('CourseEnrollments');
         $this->_studentService = $studentService ?? new StudentService();
+        $this->_awsEmailService = $awsEmailService ?? new AwsEmailService();
     }
 
     /**
@@ -346,25 +346,31 @@ class OrderService
     }
 
     /**
-     * Envio melhor-esforço: o EmailTransport do projeto ainda não tem SMTP
-     * real configurado, então uma falha aqui nunca deve desfazer o pedido.
+     * Envio melhor-esforço via Settings.aws_api: uma falha aqui nunca deve
+     * desfazer o pedido, que já foi confirmado.
      */
     private function sendAccessEmail(Order $order): void
     {
-        try {
-            $loginUrl = Router::url(['prefix' => 'Admin', 'controller' => 'Users', 'action' => 'login'], true);
+        $loginUrl = Router::url(['prefix' => 'Admin', 'controller' => 'Users', 'action' => 'login'], true);
 
-            (new Mailer('default'))
-                ->setTo($order->buyer_email)
-                ->setSubject('Seu acesso foi liberado - 7Trader')
-                ->deliver(
-                    "Olá, {$order->buyer_name}!\n\n" .
-                    "Seu pagamento foi confirmado e seu acesso já está liberado.\n" .
-                    "Faça login em {$loginUrl} com o e-mail {$order->buyer_email}.\n\n" .
-                    "Equipe 7Trader"
-                );
-        } catch (Throwable $e) {
-            // Best-effort: não bloqueia nem desfaz a confirmação do pedido.
-        }
+        $safeName = h($order->buyer_name);
+        $safeEmail = h($order->buyer_email);
+        $safeLoginUrl = h($loginUrl);
+
+        $html = <<<HTML
+            <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #222;">
+                <h2>Olá, {$safeName}!</h2>
+                <p>Seu pagamento foi confirmado e seu acesso já está liberado.</p>
+                <p>
+                    <a href="{$safeLoginUrl}" style="background:#00ff88;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">
+                        Fazer login
+                    </a>
+                </p>
+                <p>Use o e-mail <strong>{$safeEmail}</strong> com a senha que você cadastrou na compra.</p>
+                <p>Equipe 7Trader</p>
+            </div>
+            HTML;
+
+        $this->_awsEmailService->send($order->buyer_email, 'Seu acesso foi liberado - 7Trader', $html);
     }
 }
