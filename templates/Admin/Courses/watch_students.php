@@ -37,20 +37,33 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 <div class="video-container position-relative">
                     <?php
                     $embedUrl = '';
+                    // Retoma do ponto assistido (deixa 1s de folga do fim pra não reiniciar um vídeo já concluído).
+                    $resumeSeconds = $currentProgress ? (int)$currentProgress->watched_seconds : 0;
+                    $resumeSeconds = max(0, min($resumeSeconds, max(0, (int)$video['duration_seconds'] - 1)));
+
                     if ($video['video_type'] === 'youtube') {
                         preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $video['video_url'], $matches);
                         $youtubeId = $matches[1] ?? '';
                         if ($youtubeId) {
                             $embedUrl = "https://www.youtube.com/embed/{$youtubeId}?enablejsapi=1&origin=" . urlencode($_SERVER['HTTP_HOST']);
+                            if ($resumeSeconds > 0) {
+                                $embedUrl .= '&start=' . $resumeSeconds;
+                            }
                         }
                     } elseif ($video['video_type'] === 'vimeo') {
                         preg_match('/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|)(\d+)(?:$|\/|\?)/', $video['video_url'], $matches);
                         $vimeoId = $matches[3] ?? '';
                         if ($vimeoId) {
                             $embedUrl = "https://player.vimeo.com/video/{$vimeoId}";
+                            if ($resumeSeconds > 0) {
+                                $embedUrl .= '#t=' . $resumeSeconds . 's';
+                            }
                         }
                     } else {
                         $embedUrl = $video['video_url'];
+                        if ($resumeSeconds > 0) {
+                            $embedUrl .= '#t=' . $resumeSeconds;
+                        }
                     }
                     ?>
                     <?php if ($embedUrl): ?>
@@ -76,40 +89,31 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-8">
-                            <div class="d-flex flex-wrap gap-2 mb-3">
-                                <span class="badge bg-primary"><?= h($video['video_type']) ?></span>
-                                <?php if ($video['is_preview']): ?>
-                                    <span class="badge bg-info">Preview</span>
-                                <?php endif; ?>
-                                <span class="badge bg-secondary">
-                                    <?php
-                                    $minutes = floor($video['duration_seconds'] / 60);
-                                    $seconds = $video['duration_seconds'] % 60;
-                                    echo sprintf('%d:%02d', $minutes, $seconds);
-                                    ?>
-                                </span>
-                                <span class="badge bg-success">Posição #<?= $video['order_position'] ?></span>
-                            </div>
-
-                            <?php if ($video['description']): ?>
+                        <?php if ($video['description']): ?>
+                            <div class="col-12">
                                 <h6 class="section-title">
                                     <i class="bi bi-info-circle me-2"></i>Descrição
                                 </h6>
                                 <p class="text-muted mb-0"><?= nl2br(h($video['description'])) ?></p>
-                            <?php endif; ?>
-                        </div>
+                            </div>
+                        <?php endif; ?>
 
-                        <div class="col-md-4">
+                        <div class="col-12">
                             <div class="progress-card">
                                 <h6 class="section-title mb-2">Progresso do Vídeo</h6>
 
+                                <?php
+                                $watchedSeconds = $currentProgress ? (int)$currentProgress->watched_seconds : 0;
+                                $initialPercent = $video['duration_seconds'] > 0
+                                    ? min(($watchedSeconds / $video['duration_seconds']) * 100, 100)
+                                    : 0;
+                                ?>
                                 <div class="mb-3">
                                     <div class="progress mb-2" style="height: 8px;">
-                                        <div id="videoProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                                        <div id="videoProgress" class="progress-bar bg-success" role="progressbar" style="width: <?= $initialPercent ?>%"></div>
                                     </div>
                                     <small class="text-muted">
-                                        <span id="watchTime"><?= $currentProgress ? $currentProgress->watch_time : '0:00' ?></span> /
+                                        <span id="watchTime"><?= sprintf('%d:%02d', floor($watchedSeconds / 60), $watchedSeconds % 60) ?></span> /
                                         <span id="totalTime">
                                             <?php
                                             $minutes = floor($video['duration_seconds'] / 60);
@@ -148,8 +152,8 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                         <?php foreach ($allVideos as $index => $courseVideo): ?>
                             <?php
                             $isCurrentVideo = $courseVideo['id'] == $video['id'];
-                            $isWatched = isset($progress[$courseVideo['id']]) && $progress[$courseVideo['id']]->completed_at;
-                            $isInProgress = isset($progress[$courseVideo['id']]) && !$progress[$courseVideo['id']]->completed_at;
+                            $isWatched = isset($progress[$courseVideo['id']]) && $progress[$courseVideo['id']]->completed;
+                            $isInProgress = isset($progress[$courseVideo['id']]) && !$progress[$courseVideo['id']]->completed;
 
                             $minutes = floor($courseVideo['duration_seconds'] / 60);
                             $seconds = $courseVideo['duration_seconds'] % 60;
@@ -242,6 +246,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         const markCompletedBtn = document.getElementById('markCompleted');
         const videoProgressBar = document.getElementById('videoProgress');
         const watchTimeSpan = document.getElementById('watchTime');
+        const videoDuration = <?= $video['duration_seconds'] ?>;
 
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
@@ -249,9 +254,13 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
+        function getCurrentWatchTime() {
+            const elapsed = totalWatchTime + Math.floor((Date.now() - watchStartTime) / 1000);
+            return Math.min(elapsed, videoDuration);
+        }
+
         function updateProgress() {
-            const currentWatchTime = totalWatchTime + Math.floor((Date.now() - watchStartTime) / 1000);
-            const videoDuration = <?= $video['duration_seconds'] ?>;
+            const currentWatchTime = getCurrentWatchTime();
             const progressPercent = Math.min((currentWatchTime / videoDuration) * 100, 100);
 
             videoProgressBar.style.width = progressPercent + '%';
@@ -288,7 +297,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
         if (markCompletedBtn) {
             markCompletedBtn.addEventListener('click', function() {
-                const currentWatchTime = totalWatchTime + Math.floor((Date.now() - watchStartTime) / 1000);
+                const currentWatchTime = getCurrentWatchTime();
                 saveProgress(currentWatchTime, true);
 
                 this.innerHTML = '<i class="bi bi-check-lg me-1"></i>Concluído!';
@@ -312,16 +321,14 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             if (updateInterval) {
                 clearInterval(updateInterval);
             }
-            const currentWatchTime = totalWatchTime + Math.floor((Date.now() - watchStartTime) / 1000);
-            saveProgress(currentWatchTime, false);
+            saveProgress(getCurrentWatchTime(), false);
         });
 
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 if (updateInterval) {
                     clearInterval(updateInterval);
-                    const currentWatchTime = totalWatchTime + Math.floor((Date.now() - watchStartTime) / 1000);
-                    saveProgress(currentWatchTime, false);
+                    saveProgress(getCurrentWatchTime(), false);
                 }
             } else {
                 watchStartTime = Date.now();

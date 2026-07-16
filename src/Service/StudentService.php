@@ -16,6 +16,8 @@ class StudentService
     private Table $_studiesTable;
     private Table $_marketsTable;
     private Table $_mentorshipsTable;
+    private Table $_courseEnrollmentsTable;
+    private Table $_ordersTable;
 
     public function __construct()
     {
@@ -24,6 +26,8 @@ class StudentService
         $this->_studiesTable = TableRegistry::getTableLocator()->get('Studies');
         $this->_marketsTable = TableRegistry::getTableLocator()->get('Markets');
         $this->_mentorshipsTable = TableRegistry::getTableLocator()->get('Mentorships');
+        $this->_courseEnrollmentsTable = TableRegistry::getTableLocator()->get('CourseEnrollments');
+        $this->_ordersTable = TableRegistry::getTableLocator()->get('Orders');
     }
 
     /**
@@ -36,7 +40,7 @@ class StudentService
         $students = $this->_studentsTable->find()
             ->contain([
                 'Users' => function ($q) {
-                    return $q->where(['Users.active' => 1]);
+                    return $q->where(['Users.active' => 1, 'Users.status !=' => 'd']);
                 },
                 'CourseEnrollments' => function ($q) {
                     return $q->contain(['Courses' => function ($q2) {
@@ -92,7 +96,9 @@ class StudentService
             )));
         }
 
-        return $students;
+        // Estudantes "excluídos" (status = 'd') ficam com user nulo pelo filtro
+        // acima e não aparecem na lista, embora o registro continue no banco.
+        return array_values(array_filter($students, fn($student) => $student->user !== null));
     }
 
     public function findDuplicateUser(string $email, string $username, ?int $excludeUserId = null): ?string
@@ -127,6 +133,76 @@ class StudentService
         }
 
         return $student;
+    }
+
+    /**
+     * Dados completos pra tela de detalhes do estudante: perfil, estudos
+     * recentes com estatísticas agregadas, cursos em que está inscrito,
+     * mentoria comprada e último acesso (via Users.last_login).
+     */
+    public function getDetail(int $id): array
+    {
+        $student = $this->getWithUser($id);
+
+        $studies = $this->_studiesTable->find()
+            ->contain(['Markets', 'Accounts'])
+            ->where(['student_id' => $id])
+            ->orderByDesc('study_date')
+            ->toArray();
+
+        $totalWins = (int)array_sum(array_column($studies, 'wins'));
+        $totalLosses = (int)array_sum(array_column($studies, 'losses'));
+        $totalTrades = $totalWins + $totalLosses;
+        $totalProfitLoss = (float)array_sum(array_column($studies, 'profit_loss'));
+
+        $overallStats = [
+            'total_studies' => count($studies),
+            'total_wins' => $totalWins,
+            'total_losses' => $totalLosses,
+            'total_trades' => $totalTrades,
+            'win_rate' => $totalTrades > 0 ? ($totalWins / $totalTrades) * 100 : 0.0,
+            'total_profit_loss' => $totalProfitLoss,
+        ];
+
+        $enrollments = $this->_courseEnrollmentsTable->find()
+            ->contain(['Courses' => function ($q) {
+                return $q->select(['id', 'title']);
+            }])
+            ->where(['student_id' => $id])
+            ->toArray();
+        $courseTitles = array_values(array_filter(array_map(
+            fn($enrollment) => $enrollment->course->title ?? null,
+            $enrollments
+        )));
+
+        $mentorshipOrders = $this->_ordersTable->find()
+            ->select(['id', 'item_id'])
+            ->where([
+                'student_id' => $id,
+                'item_type' => 'mentorship',
+                'status' => 'approved',
+            ])
+            ->toArray();
+
+        $mentorshipNames = [];
+        if (!empty($mentorshipOrders)) {
+            $mentorshipMap = [];
+            foreach ($this->_mentorshipsTable->find()->select(['id', 'name'])->toArray() as $mentorship) {
+                $mentorshipMap[$mentorship->id] = $mentorship->name;
+            }
+            $mentorshipNames = array_values(array_filter(array_map(
+                fn($order) => $mentorshipMap[$order->item_id] ?? null,
+                $mentorshipOrders
+            )));
+        }
+
+        return [
+            'student' => $student,
+            'studies' => $studies,
+            'overallStats' => $overallStats,
+            'courseTitles' => $courseTitles,
+            'mentorshipNames' => $mentorshipNames,
+        ];
     }
 
     /**
@@ -219,6 +295,10 @@ class StudentService
     {
         $student = $this->getWithUser($id);
 
+        if (!$student->user) {
+            throw new Exception(__('Este estudante não possui usuário associado.'));
+        }
+
         $connection = $this->_studentsTable->getConnection();
         $connection->transactional(function () use ($data, $student) {
             $studentData = ['name' => $data['name']];
@@ -244,28 +324,23 @@ class StudentService
         });
     }
 
+    /**
+     * "Exclusão" de estudante é lógica: o registro nunca é removido do banco.
+     * Marca o usuário associado com status = 'd' (deletado), preservando o
+     * histórico (estudos, matrículas, pedidos) intacto.
+     */
     public function delete(int $id): void
     {
         $student = $this->getWithUser($id);
 
-        $studiesCount = $this->_studiesTable->find()
-            ->where(['student_id' => $id])
-            ->count();
-
-        if ($studiesCount > 0) {
-            throw new Exception(__('Não é possível excluir este estudante pois ele possui estudos associados.'));
+        if (!$student->user) {
+            throw new Exception(__('Este estudante não possui usuário associado.'));
         }
 
-        $connection = $this->_studentsTable->getConnection();
-        $connection->transactional(function () use ($student) {
-            if ($student->user && !$this->_usersTable->delete($student->user)) {
-                throw new Exception(__('Erro ao deletar usuário associado.'));
-            }
-
-            if (!$this->_studentsTable->delete($student)) {
-                throw new Exception(__('Erro ao deletar estudante.'));
-            }
-        });
+        $student->user = $this->_usersTable->patchEntity($student->user, ['status' => 'd']);
+        if (!$this->_usersTable->save($student->user)) {
+            throw new Exception(__('Erro ao desativar estudante.'));
+        }
     }
 
     public function getOverviewMetrics(): array

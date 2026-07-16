@@ -3,7 +3,12 @@
  * @var \App\View\AppView $this
  * @var array $course
  * @var array $videos
+ * @var array $modules
+ * @var array $ungroupedVideos
  */
+$modules = $modules ?? [];
+$ungroupedVideos = $ungroupedVideos ?? $videos;
+$csrfToken = $this->request->getAttribute('csrfToken');
 ?>
 <div class="course-videos content fade-in-up">
     <!-- Header Section -->
@@ -15,7 +20,11 @@
             </h1>
             <p class="text-muted mb-0">Curso: <?= h($course['title']) ?></p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/admin/courses/add-module/<?= $course['id'] ?>" class="btn btn-outline-light">
+                <i class="bi bi-folder-plus me-2"></i>
+                Adicionar Módulo
+            </a>
             <a href="/admin/courses/add-video/<?= $course['id'] ?>" class="btn btn-primary">
                 <i class="bi bi-plus-circle me-2"></i>
                 Adicionar Vídeo
@@ -77,157 +86,185 @@
         </div>
     </div>
 
-    <!-- Videos Management -->
-    <div class="card glass">
-        <div class="card-body pb-0">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h6 class="section-title mb-0 flex-grow-1">
-                    <i class="bi bi-play-circle me-2"></i>
-                    Lista de Vídeos
-                </h6>
-                <div class="d-flex gap-2 mb-3">
-                    <button type="button" class="btn btn-outline-light btn-sm" onclick="reorderVideos()">
-                        <i class="bi bi-arrow-up-down me-1"></i>
-                        Reordenar
-                    </button>
-                    <button type="button" class="btn btn-success btn-sm" onclick="bulkActivate()">
-                        <i class="bi bi-check-all me-1"></i>
-                        Ativar Selecionados
-                    </button>
-                </div>
-            </div>
+    <?php
+    // Renderiza a tabela de vídeos de um módulo (ou dos vídeos sem módulo).
+    // $moduleIdAttr: id do módulo, ou '' para o grupo "Sem Módulo" — usado como
+    // data-module-id para o SortableJS identificar o destino do drag-and-drop.
+    $renderVideoTable = function (array $moduleVideos, $moduleIdAttr) {
+        ?>
+        <div class="table-responsive admin-table">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th width="30"></th>
+                        <th width="50">
+                            <input type="checkbox" class="form-check-input video-select-all">
+                        </th>
+                        <th width="80">Ordem</th>
+                        <th>Título</th>
+                        <th width="100">Duração</th>
+                        <th width="100">Tipo</th>
+                        <th width="120">Status</th>
+                        <th width="150">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="video-sortable" data-module-id="<?= h((string)$moduleIdAttr) ?>">
+                    <?php if (empty($moduleVideos)): ?>
+                    <tr class="video-drop-placeholder">
+                        <td colspan="8" class="text-center text-muted py-3">Arraste vídeos para cá</td>
+                    </tr>
+                    <?php endif; ?>
+                    <?php foreach ($moduleVideos as $video): ?>
+                    <tr data-video-id="<?= $video['id'] ?>">
+                        <td class="drag-handle text-muted" title="Arrastar">
+                            <i class="bi bi-grip-vertical"></i>
+                        </td>
+                        <td>
+                            <input type="checkbox" class="form-check-input video-checkbox"
+                                   value="<?= $video['id'] ?>">
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary fs-6 order-badge"><?= h($video['order_position']) ?></span>
+                        </td>
+                        <td>
+                            <div>
+                                <h6 class="fw-bold mb-1"><?= h($video['title']) ?></h6>
+                                <?php if (!empty($video['description'])): ?>
+                                    <small class="text-muted"><?= h(substr($video['description'], 0, 100)) ?><?= strlen($video['description']) > 100 ? '...' : '' ?></small>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-muted">
+                                <?= floor($video['duration_seconds'] / 60) ?>:<?= str_pad($video['duration_seconds'] % 60, 2, '0', STR_PAD_LEFT) ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-info"><?= ucfirst($video['video_type']) ?></span>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <span class="badge bg-<?= $video['is_active'] ? 'success' : 'secondary' ?> fs-7">
+                                    <?= $video['is_active'] ? 'Ativo' : 'Inativo' ?>
+                                </span>
+                                <?php if ($video['is_preview']): ?>
+                                    <span class="badge bg-warning fs-7">Preview</span>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="/admin/courses/watch-video/<?= h($video['id']) ?>"
+                                   class="btn btn-outline-primary btn-sm" title="Assistir">
+                                    <i class="bi bi-play"></i>
+                                </a>
+                                <a href="/admin/courses/edit-video/<?= $video['id'] ?>"
+                                   class="btn btn-outline-warning btn-sm" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                        onclick="deleteVideo(<?= $video['id'] ?>)" title="Excluir">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
-        <div class="card-body p-0">
-            <?php if (empty($videos)): ?>
+        <?php
+    };
+    ?>
+
+    <?php if (empty($videos)): ?>
+        <!-- Nenhum vídeo no curso -->
+        <div class="card glass">
+            <div class="card-body">
                 <div class="text-center py-4">
                     <i class="bi bi-collection-play display-1 text-muted mb-3"></i>
                     <h5 class="text-muted">Nenhum vídeo cadastrado</h5>
-                    <p class="text-muted mb-4">Adicione vídeos para começar a construir seu curso.</p>
-                    <a href="/admin/courses/add-video/<?= $course['id'] ?>" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>
-                        Adicionar Primeiro Vídeo
-                    </a>
+                    <p class="text-muted mb-4">Crie módulos para organizar o curso e adicione vídeos a eles.</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="/admin/courses/add-module/<?= $course['id'] ?>" class="btn btn-outline-light">
+                            <i class="bi bi-folder-plus me-2"></i>
+                            Adicionar Módulo
+                        </a>
+                        <a href="/admin/courses/add-video/<?= $course['id'] ?>" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Adicionar Primeiro Vídeo
+                        </a>
+                    </div>
                 </div>
-            <?php else: ?>
-                <div class="table-responsive admin-table">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th width="50">
-                                    <input type="checkbox" class="form-check-input" id="selectAll">
-                                </th>
-                                <th width="80">Ordem</th>
-                                <th>Título</th>
-                                <th width="100">Duração</th>
-                                <th width="100">Tipo</th>
-                                <th width="120">Status</th>
-                                <th width="150">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="videos-list">
-                            <?php foreach ($videos as $video): ?>
-                            <tr data-video-id="<?= $video['id'] ?>">
-                                <td>
-                                    <input type="checkbox" class="form-check-input video-checkbox" 
-                                           value="<?= $video['id'] ?>">
-                                </td>
-                                <td>
-                                    <span class="badge bg-secondary fs-6"><?= h($video['order_position']) ?></span>
-                                </td>
-                                <td>
-                                    <div>
-                                        <h6 class="fw-bold mb-1"><?= h($video['title']) ?></h6>
-                                        <?php if (!empty($video['description'])): ?>
-                                            <small class="text-muted"><?= h(substr($video['description'], 0, 100)) ?><?= strlen($video['description']) > 100 ? '...' : '' ?></small>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="text-muted">
-                                        <?= floor($video['duration_seconds'] / 60) ?>:<?= str_pad($video['duration_seconds'] % 60, 2, '0', STR_PAD_LEFT) ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info"><?= ucfirst($video['video_type']) ?></span>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-column gap-1">
-                                        <span class="badge bg-<?= $video['is_active'] ? 'success' : 'secondary' ?> fs-7">
-                                            <?= $video['is_active'] ? 'Ativo' : 'Inativo' ?>
-                                        </span>
-                                        <?php if ($video['is_preview']): ?>
-                                            <span class="badge bg-warning fs-7">Preview</span>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="/admin/courses/watch-video/<?= h($video['id']) ?>" 
-                                           class="btn btn-outline-primary btn-sm" title="Assistir">
-                                            <i class="bi bi-play"></i>
-                                        </a>
-                                        <a href="/admin/courses/edit-video/<?= $video['id'] ?>" 
-                                           class="btn btn-outline-warning btn-sm" title="Editar">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" 
-                                                onclick="deleteVideo(<?= $video['id'] ?>)" title="Excluir">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
-
-<!-- Reorder Modal -->
-<div class="modal fade" id="reorderModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-arrow-up-down me-2"></i>
-                    Reordenar Vídeos
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p class="text-muted mb-3">Arraste os vídeos para reordená-los:</p>
-                <div id="sortable-videos" class="list-group">
-                    <?php foreach ($videos as $video): ?>
-                    <div class="list-group-item d-flex align-items-center" data-video-id="<?= $video['id'] ?>">
-                        <i class="bi bi-grip-vertical text-muted me-3" style="cursor: move;"></i>
+        </div>
+    <?php else: ?>
+        <!-- Módulos -->
+        <?php foreach ($modules as $module): ?>
+            <div class="card glass mb-3">
+                <div class="card-body pb-0">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                         <div class="flex-grow-1">
-                            <h6 class="mb-1"><?= h($video['title']) ?></h6>
-                            <small class="text-muted">
-                                Posição atual: <?= $video['order_position'] ?> | 
-                                Duração: <?= floor($video['duration_seconds'] / 60) ?>:<?= str_pad($video['duration_seconds'] % 60, 2, '0', STR_PAD_LEFT) ?>
-                            </small>
+                            <h6 class="section-title mb-0">
+                                <i class="bi bi-folder2-open me-2"></i>
+                                <?= h($module->title) ?>
+                                <span class="badge bg-secondary ms-2 module-video-count" data-module-id="<?= $module->id ?>"><?= count($module->course_videos) ?> vídeo<?= count($module->course_videos) !== 1 ? 's' : '' ?></span>
+                                <?php if (empty($module->is_active)): ?>
+                                    <span class="badge bg-secondary ms-1">Inativo</span>
+                                <?php endif; ?>
+                            </h6>
+                            <?php if (!empty($module->description)): ?>
+                                <p class="text-muted small mb-3"><?= h($module->description) ?></p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="d-flex gap-2 mb-3">
+                            <a href="/admin/courses/add-video/<?= $course['id'] ?>" class="btn btn-outline-primary btn-sm" title="Adicionar vídeo">
+                                <i class="bi bi-plus-circle"></i>
+                            </a>
+                            <a href="/admin/courses/edit-module/<?= $module->id ?>" class="btn btn-outline-warning btn-sm" title="Editar módulo">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="post" action="/admin/courses/delete-module/<?= $module->id ?>" class="d-flex"
+                                  onsubmit="return confirm('Excluir este módulo? Os vídeos não serão apagados, apenas ficam sem módulo.');">
+                                <input type="hidden" name="_csrfToken" value="<?= h($csrfToken ?? '') ?>">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir módulo">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
-                    <?php endforeach; ?>
+                </div>
+                <div class="card-body p-0">
+                    <?= $renderVideoTable($module->course_videos, $module->id) ?>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="saveOrder()">Salvar Ordem</button>
+        <?php endforeach; ?>
+
+        <!-- Vídeos sem módulo -->
+        <div class="card glass">
+            <div class="card-body pb-0">
+                <h6 class="section-title mb-0">
+                    <i class="bi bi-collection-play me-2"></i>
+                    Sem Módulo
+                    <span class="badge bg-secondary ms-2 module-video-count" data-module-id=""><?= count($ungroupedVideos) ?> vídeo<?= count($ungroupedVideos) !== 1 ? 's' : '' ?></span>
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <?= $renderVideoTable($ungroupedVideos, '') ?>
             </div>
         </div>
-    </div>
+    <?php endif; ?>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-// Select All functionality
-document.getElementById('selectAll').addEventListener('change', function() {
-    const checkboxes = document.querySelectorAll('.video-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = this.checked;
+// Select-all por tabela (uma tabela por módulo + uma para "Sem Módulo")
+document.querySelectorAll('.video-select-all').forEach(function(selectAll) {
+    selectAll.addEventListener('change', function() {
+        const table = this.closest('table');
+        table.querySelectorAll('.video-checkbox').forEach(function(checkbox) {
+            checkbox.checked = selectAll.checked;
+        });
     });
 });
 
@@ -237,54 +274,99 @@ function deleteVideo(videoId) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/admin/courses/delete-video/' + videoId;
-        
+
         const csrfInput = document.createElement('input');
         csrfInput.type = 'hidden';
         csrfInput.name = '_method';
         csrfInput.value = 'DELETE';
         form.appendChild(csrfInput);
-        
+
         document.body.appendChild(form);
         form.submit();
     }
 }
 
-// Bulk activate function
-function bulkActivate() {
-    const selectedVideos = Array.from(document.querySelectorAll('.video-checkbox:checked')).map(cb => cb.value);
-    
-    if (selectedVideos.length === 0) {
-        alert('Selecione pelo menos um vídeo para ativar.');
-        return;
+// Drag-and-drop de vídeos entre módulos
+
+function updateModuleCount(moduleId, delta) {
+    const badge = document.querySelector('.module-video-count[data-module-id="' + moduleId + '"]');
+    if (!badge) return;
+    const current = parseInt(badge.textContent, 10) || 0;
+    const next = Math.max(0, current + delta);
+    badge.textContent = next + ' vídeo' + (next !== 1 ? 's' : '');
+}
+
+function refreshTbodyState(tbody) {
+    const rows = tbody.querySelectorAll('tr[data-video-id]');
+    const placeholder = tbody.querySelector('.video-drop-placeholder');
+    if (rows.length === 0 && !placeholder) {
+        const tr = document.createElement('tr');
+        tr.className = 'video-drop-placeholder';
+        tr.innerHTML = '<td colspan="8" class="text-center text-muted py-3">Arraste vídeos para cá</td>';
+        tbody.appendChild(tr);
+    } else if (rows.length > 0 && placeholder) {
+        placeholder.remove();
     }
-    
-    if (confirm(`Ativar ${selectedVideos.length} vídeo(s) selecionado(s)?`)) {
-        // Implementation for bulk activation
-        console.log('Activating videos:', selectedVideos);
-    }
+
+    rows.forEach(function(row, index) {
+        const orderBadge = row.querySelector('.order-badge');
+        if (orderBadge) {
+            orderBadge.textContent = index + 1;
+        }
+    });
 }
 
-// Reorder functionality
-function reorderVideos() {
-    const modal = new bootstrap.Modal(document.getElementById('reorderModal'));
-    modal.show();
-}
+document.querySelectorAll('.video-sortable').forEach(function(tbody) {
+    new Sortable(tbody, {
+        group: 'course-videos',
+        handle: '.drag-handle',
+        animation: 150,
+        forceFallback: true,
+        filter: '.video-drop-placeholder',
+        onEnd: function(evt) {
+            const fromTbody = evt.from;
+            const toTbody = evt.to;
+            const targetModuleId = toTbody.dataset.moduleId || '';
 
-function saveOrder() {
-    const videoOrder = Array.from(document.querySelectorAll('#sortable-videos .list-group-item')).map((item, index) => ({
-        id: item.dataset.videoId,
-        order: index + 1
-    }));
-    
-    console.log('New order:', videoOrder);
-    // Implementation for saving order
-    
-    const modal = bootstrap.Modal.getInstance(document.getElementById('reorderModal'));
-    modal.hide();
-}
+            const videoIds = Array.from(toTbody.querySelectorAll('tr[data-video-id]'))
+                .map(function(row) { return parseInt(row.dataset.videoId, 10); });
 
-// Make videos sortable (requires jQuery UI or similar library)
-// This is a placeholder - you would need to implement actual drag & drop functionality
+            refreshTbodyState(toTbody);
+            if (fromTbody !== toTbody) {
+                refreshTbodyState(fromTbody);
+                updateModuleCount(toTbody.dataset.moduleId || '', 1);
+                updateModuleCount(fromTbody.dataset.moduleId || '', -1);
+            }
+
+            if (videoIds.length === 0) {
+                return;
+            }
+
+            fetch('/admin/courses/reorder-videos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({
+                    module_id: targetModuleId,
+                    video_ids: videoIds
+                })
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (!data.success) {
+                    alert('Erro ao reordenar vídeos: ' + (data.message || 'Tente novamente.'));
+                    location.reload();
+                }
+            })
+            .catch(function() {
+                alert('Erro ao reordenar vídeos. A página será recarregada.');
+                location.reload();
+            });
+        }
+    });
+});
 </script>
 
 <style>
@@ -309,13 +391,21 @@ function saveOrder() {
     margin-right: 2px;
 }
 
-#sortable-videos .list-group-item {
-    cursor: move;
-    border: 1px solid rgba(0,0,0,0.125);
-    margin-bottom: 2px;
+.drag-handle {
+    cursor: grab;
+    text-align: center;
 }
 
-#sortable-videos .list-group-item:hover {
-    background-color: var(--bs-light);
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.video-sortable tr.sortable-ghost {
+    opacity: 0.4;
+    background: var(--glass-border, rgba(0, 255, 136, 0.2));
+}
+
+.video-drop-placeholder td {
+    border-style: dashed;
 }
 </style>

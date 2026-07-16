@@ -64,6 +64,25 @@ class CoursesController extends AppController
                 ->orderBy(['order_position' => 'ASC'])
                 ->toArray();
 
+            // Agrupar vídeos por módulo
+            $modules = $this->fetchTable('CourseModules')->find()
+                ->where(['course_id' => $id, 'is_active' => 1])
+                ->orderBy(['order_position' => 'ASC', 'created' => 'ASC'])
+                ->toArray();
+
+            $videosByModule = [];
+            $ungroupedVideos = [];
+            foreach ($videos as $video) {
+                if ($video->module_id) {
+                    $videosByModule[$video->module_id][] = $video;
+                } else {
+                    $ungroupedVideos[] = $video;
+                }
+            }
+            foreach ($modules as $module) {
+                $module->course_videos = $videosByModule[$module->id] ?? [];
+            }
+
             // Buscar estatísticas de inscrições usando ORM
             $enrollmentsTable = $this->fetchTable('CourseEnrollments');
             $totalEnrollments = $enrollmentsTable->find()
@@ -92,6 +111,8 @@ class CoursesController extends AppController
 
             $this->set('course', $course);
             $this->set('videos', $videos);
+            $this->set('modules', $modules);
+            $this->set('ungroupedVideos', $ungroupedVideos);
             $this->set('stats', $stats);
             $this->set('enrolledStudents', $enrolledStudents);
         } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
@@ -347,8 +368,29 @@ class CoursesController extends AppController
                 ->orderBy(['order_position' => 'ASC', 'created' => 'ASC'])
                 ->toArray();
 
+            // Buscar módulos do curso e agrupar os vídeos por módulo
+            $modules = $this->fetchTable('CourseModules')->find()
+                ->where(['course_id' => $courseId])
+                ->orderBy(['order_position' => 'ASC', 'created' => 'ASC'])
+                ->toArray();
+
+            $videosByModule = [];
+            $ungroupedVideos = [];
+            foreach ($videos as $video) {
+                if ($video->module_id) {
+                    $videosByModule[$video->module_id][] = $video;
+                } else {
+                    $ungroupedVideos[] = $video;
+                }
+            }
+            foreach ($modules as $module) {
+                $module->course_videos = $videosByModule[$module->id] ?? [];
+            }
+
             $this->set('course', $course);
             $this->set('videos', $videos);
+            $this->set('modules', $modules);
+            $this->set('ungroupedVideos', $ungroupedVideos);
         } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
             $this->Flash->error('Curso não encontrado.');
             return $this->redirect(['action' => 'index']);
@@ -358,11 +400,214 @@ class CoursesController extends AppController
         }
     }
 
+    public function addModule($courseId = null)
+    {
+        try {
+            $course = $this->fetchTable('Courses')->get($courseId);
+
+            if ($this->request->is('post')) {
+                $data = $this->request->getData();
+
+                if (empty($data['title'])) {
+                    $this->Flash->error('O título do módulo é obrigatório.');
+                    $this->set('course', $course);
+                    $this->set('formData', $data);
+                    return null;
+                }
+
+                $modulesTable = $this->fetchTable('CourseModules');
+
+                $maxPosition = $modulesTable->find()
+                    ->select(['max_pos' => $modulesTable->find()->func()->max('order_position')])
+                    ->where(['course_id' => $courseId])
+                    ->first();
+                $nextPosition = (int)($maxPosition->max_pos ?? 0) + 1;
+
+                $module = $modulesTable->newEmptyEntity();
+                $module = $modulesTable->patchEntity($module, [
+                    'course_id' => $courseId,
+                    'title' => $data['title'],
+                    'description' => $data['description'] ?? '',
+                    'order_position' => $nextPosition,
+                    'is_active' => isset($data['is_active']) ? 1 : 0,
+                ]);
+
+                if ($modulesTable->save($module)) {
+                    $this->Flash->success('Módulo adicionado com sucesso!');
+                    return $this->redirect(['action' => 'videos', $courseId]);
+                }
+
+                $this->Flash->error('Erro ao salvar módulo: ' . $this->flattenEntityErrors($module));
+                $this->set('formData', $data);
+            }
+
+            $this->set('course', $course);
+        } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
+            $this->Flash->error('Curso não encontrado.');
+            return $this->redirect(['action' => 'index']);
+        } catch (\Exception $e) {
+            $this->Flash->error('Erro ao adicionar módulo: ' . $e->getMessage());
+            return $this->redirect(['action' => 'videos', $courseId]);
+        }
+    }
+
+    public function editModule($moduleId = null)
+    {
+        if (!$moduleId) {
+            $this->Flash->error('ID do módulo é obrigatório.');
+            return $this->redirect(['action' => 'index']);
+        }
+
+        try {
+            $modulesTable = $this->fetchTable('CourseModules');
+            $module = $modulesTable->get($moduleId);
+
+            if ($this->request->is(['patch', 'post', 'put'])) {
+                $data = $this->request->getData();
+
+                if (empty($data['title'])) {
+                    $this->Flash->error('O título do módulo é obrigatório.');
+                    $this->set('module', $module);
+                    return null;
+                }
+
+                $module = $modulesTable->patchEntity($module, [
+                    'title' => $data['title'],
+                    'description' => $data['description'] ?? '',
+                    'is_active' => isset($data['is_active']) ? 1 : 0,
+                ]);
+
+                if ($modulesTable->save($module)) {
+                    $this->Flash->success('Módulo atualizado com sucesso!');
+                    return $this->redirect(['action' => 'videos', $module->course_id]);
+                }
+
+                $this->Flash->error('Erro ao atualizar módulo: ' . $this->flattenEntityErrors($module));
+            }
+
+            $this->set('module', $module);
+        } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
+            $this->Flash->error('Módulo não encontrado.');
+            return $this->redirect(['action' => 'index']);
+        } catch (\Exception $e) {
+            $this->Flash->error('Erro ao editar módulo: ' . $e->getMessage());
+            return $this->redirect(['action' => 'index']);
+        }
+    }
+
+    public function deleteModule($moduleId = null)
+    {
+        $this->request->allowMethod(['post', 'delete']);
+
+        try {
+            $modulesTable = $this->fetchTable('CourseModules');
+            $module = $modulesTable->get($moduleId);
+            $courseId = $module->course_id;
+
+            // Vídeos do módulo ficam "sem módulo" (FK ON DELETE SET NULL), não são apagados.
+            if ($modulesTable->delete($module)) {
+                $this->Flash->success('Módulo excluído. Os vídeos continuam no curso, sem módulo.');
+            } else {
+                $this->Flash->error('Erro ao excluir módulo.');
+            }
+
+            return $this->redirect(['action' => 'videos', $courseId]);
+        } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
+            $this->Flash->error('Módulo não encontrado.');
+            return $this->redirect(['action' => 'index']);
+        } catch (\Exception $e) {
+            $this->Flash->error('Erro ao excluir módulo: ' . $e->getMessage());
+            return $this->redirect(['action' => 'index']);
+        }
+    }
+
+    /**
+     * Atualiza o módulo e a ordem de uma lista de vídeos de uma vez (drag &
+     * drop entre módulos na tela de gerenciar vídeos). Recebe a lista
+     * completa e já ordenada de IDs que ficaram no destino do arrasto.
+     */
+    public function reorderVideos()
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        try {
+            $data = $this->request->getData();
+            $videoIds = $data['video_ids'] ?? [];
+            $moduleId = !empty($data['module_id']) ? (int)$data['module_id'] : null;
+
+            if (empty($videoIds)) {
+                return $this->response->withType('application/json')
+                    ->withStringBody(json_encode(['success' => false, 'message' => 'Nenhum vídeo informado.']));
+            }
+
+            $courseVideosTable = $this->fetchTable('CourseVideos');
+
+            $videos = $courseVideosTable->find()
+                ->where(['id IN' => $videoIds])
+                ->toArray();
+
+            if (empty($videos)) {
+                return $this->response->withType('application/json')
+                    ->withStringBody(json_encode(['success' => false, 'message' => 'Vídeos não encontrados.']));
+            }
+
+            $courseId = $videos[0]->course_id;
+
+            // Confirma que o módulo de destino (se houver) é do mesmo curso dos vídeos
+            if ($moduleId) {
+                $module = $this->fetchTable('CourseModules')->find()
+                    ->where(['id' => $moduleId, 'course_id' => $courseId])
+                    ->first();
+
+                if (!$module) {
+                    return $this->response->withStatus(400)->withType('application/json')
+                        ->withStringBody(json_encode(['success' => false, 'message' => 'Módulo inválido para este curso.']));
+                }
+            }
+
+            $videosById = [];
+            foreach ($videos as $video) {
+                $videosById[$video->id] = $video;
+            }
+
+            $connection = $courseVideosTable->getConnection();
+            $connection->transactional(function () use ($videoIds, $videosById, $moduleId, $courseId, $courseVideosTable) {
+                $position = 1;
+                foreach ($videoIds as $videoId) {
+                    $video = $videosById[$videoId] ?? null;
+                    // Ignora ids que não pertencem a este curso (defesa contra payload adulterado)
+                    if (!$video || $video->course_id !== $courseId) {
+                        continue;
+                    }
+
+                    $video = $courseVideosTable->patchEntity($video, [
+                        'module_id' => $moduleId,
+                        'order_position' => $position,
+                    ]);
+                    $courseVideosTable->save($video);
+                    $position++;
+                }
+            });
+
+            return $this->response->withType('application/json')
+                ->withStringBody(json_encode(['success' => true]));
+        } catch (\Exception $e) {
+            return $this->response->withType('application/json')
+                ->withStringBody(json_encode(['success' => false, 'message' => $e->getMessage()]));
+        }
+    }
+
     public function addVideo($courseId = null)
     {
         try {
             // Verificar se curso existe usando ORM
             $course = $this->fetchTable('Courses')->get($courseId);
+
+            $modules = $this->fetchTable('CourseModules')->find()
+                ->where(['course_id' => $courseId])
+                ->orderBy(['order_position' => 'ASC', 'created' => 'ASC'])
+                ->toArray();
 
             if ($this->request->is('post')) {
                 $data = $this->request->getData();
@@ -371,6 +616,7 @@ class CoursesController extends AppController
                 if (empty($data['title']) || empty($data['video_url'])) {
                     $this->Flash->error('Título e URL do vídeo são obrigatórios.');
                     $this->set('course', $course);
+                    $this->set('modules', $modules);
                     $this->set('formData', $data);
                     return null;
                 }
@@ -392,6 +638,7 @@ class CoursesController extends AppController
                 // Preparar dados para salvar
                 $videoData = [
                     'course_id' => $courseId,
+                    'module_id' => !empty($data['module_id']) ? (int)$data['module_id'] : null,
                     'title' => $data['title'],
                     'description' => $data['description'] ?? '',
                     'video_url' => $data['video_url'],
@@ -415,6 +662,7 @@ class CoursesController extends AppController
             }
 
             $this->set('course', $course);
+            $this->set('modules', $modules);
         } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
             $this->Flash->error('Curso não encontrado.');
             return $this->redirect(['action' => 'index']);
@@ -437,12 +685,18 @@ class CoursesController extends AppController
             // Buscar o vídeo usando ORM
             $video = $courseVideosTable->get($videoId);
 
+            $modules = $this->fetchTable('CourseModules')->find()
+                ->where(['course_id' => $video->course_id])
+                ->orderBy(['order_position' => 'ASC', 'created' => 'ASC'])
+                ->toArray();
+
             if ($this->request->is(['patch', 'post', 'put'])) {
                 $data = $this->request->getData();
 
                 if (empty($data['title']) || empty($data['video_url'])) {
                     $this->Flash->error('Título e URL do vídeo são obrigatórios.');
                     $this->set('video', $video);
+                    $this->set('modules', $modules);
                     return null;
                 }
 
@@ -451,6 +705,7 @@ class CoursesController extends AppController
 
                 // Preparar dados para atualização
                 $videoData = [
+                    'module_id' => !empty($data['module_id']) ? (int)$data['module_id'] : null,
                     'title' => $data['title'],
                     'description' => $data['description'] ?? '',
                     'video_url' => $data['video_url'],
@@ -470,6 +725,7 @@ class CoursesController extends AppController
             }
 
             $this->set('video', $video);
+            $this->set('modules', $modules);
         } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
             $this->Flash->error('Vídeo não encontrado.');
             return $this->redirect(['action' => 'index']);
@@ -656,8 +912,32 @@ class CoursesController extends AppController
             $videos = $videosQuery->orderBy(['order_position' => 'ASC', 'created' => 'ASC'])
                 ->toArray();
 
+            // Agrupar os vídeos visíveis por módulo
+            $modules = $this->fetchTable('CourseModules')->find()
+                ->where(['course_id' => $courseId, 'is_active' => 1])
+                ->orderBy(['order_position' => 'ASC', 'created' => 'ASC'])
+                ->toArray();
+
+            $videosByModule = [];
+            $ungroupedVideos = [];
+            foreach ($videos as $video) {
+                if ($video->module_id) {
+                    $videosByModule[$video->module_id][] = $video;
+                } else {
+                    $ungroupedVideos[] = $video;
+                }
+            }
+            $modules = array_values(array_filter($modules, function ($module) use ($videosByModule) {
+                return !empty($videosByModule[$module->id]);
+            }));
+            foreach ($modules as $module) {
+                $module->course_videos = $videosByModule[$module->id];
+            }
+
             $this->set('course', $course);
             $this->set('videos', $videos);
+            $this->set('modules', $modules);
+            $this->set('ungroupedVideos', $ungroupedVideos);
             $this->set('isEnrolled', $isEnrolled);
             $this->set('enrollment', $enrollment);
             $this->set('progress', $progress);
@@ -874,6 +1154,18 @@ class CoursesController extends AppController
                 return $this->response->withType('application/json')
                     ->withStringBody(json_encode(['success' => false, 'message' => 'Dados inválidos']));
             }
+
+            $video = $this->fetchTable('CourseVideos')->find()
+                ->select(['id', 'duration_seconds'])
+                ->where(['id' => $videoId])
+                ->first();
+
+            if (!$video) {
+                return $this->response->withType('application/json')
+                    ->withStringBody(json_encode(['success' => false, 'message' => 'Vídeo não encontrado']));
+            }
+
+            $watchTime = max(0, min((int)$watchTime, (int)$video->duration_seconds));
 
             // Buscar progresso existente usando ORM
             $studentProgressTable = $this->fetchTable('StudentProgress');

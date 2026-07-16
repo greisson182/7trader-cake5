@@ -118,6 +118,30 @@ INSERT INTO `course_videos` (`id`, `course_id`, `title`, `description`, `video_u
 	(6, 1, 'Plataformas de Trading', 'Como escolher e usar plataformas de trading', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'youtube', 1200, 3, 0, 1, '2025-09-23 16:25:06', '2025-09-23 16:25:06'),
 	(7, 4, 'O que são gatilhos?', '', 'https://www.youtube.com/watch?v=gHQCzGIjj7w', 'youtube', 1020, 1, 0, 1, '2025-09-23 19:56:10', '2025-09-23 19:56:10');
 
+-- Copiando estrutura para tabela 7trader.course_modules
+DROP TABLE IF EXISTS `course_modules`;
+CREATE TABLE IF NOT EXISTS `course_modules` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `course_id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `order_position` int(11) DEFAULT 0,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created` datetime DEFAULT current_timestamp(),
+  `modified` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_course` (`course_id`),
+  KEY `idx_order` (`order_position`),
+  CONSTRAINT `course_modules_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Vídeos passam a poder pertencer a um módulo (nullable: vídeos existentes
+-- ficam "sem módulo" até serem organizados pelo admin).
+ALTER TABLE `course_videos`
+  ADD COLUMN `module_id` int(11) DEFAULT NULL AFTER `course_id`,
+  ADD KEY `idx_module` (`module_id`),
+  ADD CONSTRAINT `course_videos_ibfk_module` FOREIGN KEY (`module_id`) REFERENCES `course_modules` (`id`) ON DELETE SET NULL;
+
 -- Copiando estrutura para tabela 7trader.files
 DROP TABLE IF EXISTS `files`;
 CREATE TABLE IF NOT EXISTS `files` (
@@ -336,7 +360,7 @@ CREATE TABLE IF NOT EXISTS `student_progress` (
   `completed` tinyint(1) DEFAULT 0,
   `last_watched` datetime DEFAULT current_timestamp(),
   `watched_at` datetime DEFAULT current_timestamp(),
-  `completed_at` datetime DEFAULT current_timestamp(),
+  `completed_at` datetime DEFAULT NULL,
   `created` datetime DEFAULT current_timestamp(),
   `modified` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),

@@ -1462,8 +1462,21 @@ span.text-danger {
 
 .table .badge.bg-info {
   background: linear-gradient(135deg, #17a2b8, #138496) !important;
-  color: white;
+  color: #000;
   border: none;
+}
+
+/* bg-info (ciano claro) + texto branco padrão do Bootstrap dá contraste
+   ruim; usa texto escuro em qualquer badge bg-info, dentro ou fora de tabela. */
+.badge.bg-info {
+  color: #000;
+}
+
+/* Mesmo problema: .bg-success/.bg-primary são sobrescritos pro gradiente
+   verde neon da marca (#00ff88), mas o badge continua com texto branco. */
+.badge.bg-success,
+.badge.bg-primary {
+  color: #000;
 }
 
 /* Botões nas tabelas */

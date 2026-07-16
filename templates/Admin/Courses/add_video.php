@@ -3,7 +3,9 @@
  * @var \App\View\AppView $this
  * @var array $course
  * @var array $formData
+ * @var array $modules
  */
+$modules = $modules ?? [];
 $csrfToken = $this->request->getAttribute('csrfToken');
 $formData = $formData ?? [];
 ?>
@@ -52,6 +54,22 @@ $formData = $formData ?? [];
                                 <label for="order_position" class="form-label fw-semibold">Posição</label>
                                 <input type="number" class="form-control" id="order_position" name="order_position"
                                        min="1" placeholder="1" value="<?= h($formData['order_position'] ?? '') ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="module_id" class="form-label fw-semibold">Módulo</label>
+                                <select class="form-select" id="module_id" name="module_id">
+                                    <option value="">Sem módulo</option>
+                                    <?php foreach ($modules as $module): ?>
+                                        <option value="<?= h($module->id) ?>" <?= (string)($formData['module_id'] ?? '') === (string)$module->id ? 'selected' : '' ?>>
+                                            <?= h($module->title) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <?php if (empty($modules)): ?>
+                                    <div class="form-text">
+                                        Este curso ainda não tem módulos. <a href="/admin/courses/add-module/<?= h($course['id']) ?>">Criar o primeiro módulo</a>.
+                                    </div>
+                                <?php endif; ?>
                             </div>
                             <div class="col-12">
                                 <label for="description" class="form-label fw-semibold">Descrição</label>

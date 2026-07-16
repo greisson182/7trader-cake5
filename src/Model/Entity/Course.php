@@ -25,6 +25,7 @@ use Cake\ORM\Entity;
  *
  * @property \App\Model\Entity\CourseEnrollment[] $course_enrollments
  * @property \App\Model\Entity\CourseVideo[] $course_videos
+ * @property \App\Model\Entity\CourseModule[] $course_modules
  * @property \App\Model\Entity\StudentProgres[] $student_progress
  */
 class Course extends Entity
@@ -54,6 +55,7 @@ class Course extends Entity
         'modified' => true,
         'course_enrollments' => true,
         'course_videos' => true,
+        'course_modules' => true,
         'student_progress' => true,
     ];
 }

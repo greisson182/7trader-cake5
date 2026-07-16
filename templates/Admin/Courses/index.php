@@ -111,7 +111,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 <a href="/admin/courses/edit/<?= $course['id'] ?>" class="btn btn-outline-warning btn-sm" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form method="post" action="/admin/courses/delete/<?= $course['id'] ?>" class="d-inline"
+                                <form method="post" action="/admin/courses/delete/<?= $course['id'] ?>" class="d-flex"
                                       onsubmit="return confirm('Tem certeza que deseja excluir este curso?');">
                                     <input type="hidden" name="_csrfToken" value="<?= h($csrfToken) ?>">
                                     <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
@@ -213,7 +213,12 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
     .course-actions {
         display: flex;
+        align-items: stretch;
         gap: 0.35rem;
+    }
+
+    .course-actions form button {
+        height: 100%;
     }
 
     .empty-block {

@@ -74,8 +74,8 @@ class StudentsController extends AppController
                 }
             }
 
-            $student = $this->_studentService->getWithUser($id);
-            $this->set(compact('student'));
+            $detail = $this->_studentService->getDetail($id);
+            $this->set($detail);
         } catch (RecordNotFoundException $e) {
             $this->Flash->error($e->getMessage());
             return $this->redirect(['action' => 'index']);
@@ -131,18 +131,19 @@ class StudentsController extends AppController
     {
         try {
             $student = $this->_studentService->getWithUser($id);
+            $user = $student->user ?? null;
 
             if ($this->request->is(['patch', 'post', 'put'])) {
                 $data = $this->request->getData();
 
-                $duplicateMessage = $this->_studentService->findDuplicateUser(
+                $duplicateMessage = $user ? $this->_studentService->findDuplicateUser(
                     $data['email'],
                     $data['username'],
-                    $student->user->id
-                );
+                    $user->id
+                ) : null;
                 if ($duplicateMessage) {
                     $this->Flash->error($duplicateMessage);
-                    $this->set(compact('student'));
+                    $this->set(compact('student', 'user'));
                     return null;
                 }
 
@@ -152,7 +153,7 @@ class StudentsController extends AppController
                 return $this->redirect(['action' => 'index']);
             }
 
-            $this->set(compact('student'));
+            $this->set(compact('student', 'user'));
         } catch (RecordNotFoundException $e) {
             $this->Flash->error($e->getMessage());
             return $this->redirect(['action' => 'index']);
@@ -168,13 +169,13 @@ class StudentsController extends AppController
         try {
             $this->_studentService->delete($id);
 
-            $this->Flash->success(__('Estudante deletado com sucesso.'));
+            $this->Flash->success(__('Estudante desativado com sucesso.'));
             return $this->redirect(['action' => 'index']);
         } catch (RecordNotFoundException $e) {
             $this->Flash->error($e->getMessage());
             return $this->redirect(['action' => 'index']);
         } catch (Exception $e) {
-            $this->Flash->error(__('Erro ao deletar estudante: ' . $e->getMessage()));
+            $this->Flash->error(__('Erro ao desativar estudante: ' . $e->getMessage()));
             return $this->redirect(['action' => 'index']);
         }
     }

@@ -26,6 +26,10 @@ class CoursesTable extends Table
         $this->hasMany('CourseVideos', [
             'foreignKey' => 'course_id',
         ]);
+        $this->hasMany('CourseModules', [
+            'foreignKey' => 'course_id',
+            'sort' => ['CourseModules.order_position' => 'ASC', 'CourseModules.created' => 'ASC'],
+        ]);
         $this->hasMany('StudentProgress', [
             'foreignKey' => 'course_id',
         ]);

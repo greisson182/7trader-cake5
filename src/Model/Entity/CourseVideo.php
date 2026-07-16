@@ -10,6 +10,7 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property int $course_id
+ * @property int|null $module_id
  * @property string $title
  * @property string|null $description
  * @property string $video_url
@@ -22,6 +23,7 @@ use Cake\ORM\Entity;
  * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Course $course
+ * @property \App\Model\Entity\CourseModule|null $course_module
  */
 class CourseVideo extends Entity
 {
@@ -36,6 +38,7 @@ class CourseVideo extends Entity
      */
     protected array $_accessible = [
         'course_id' => true,
+        'module_id' => true,
         'title' => true,
         'description' => true,
         'video_url' => true,
@@ -47,5 +50,6 @@ class CourseVideo extends Entity
         'created' => true,
         'modified' => true,
         'course' => true,
+        'course_module' => true,
     ];
 }

@@ -24,6 +24,10 @@ class CourseVideosTable extends Table
             'foreignKey' => 'course_id',
             'joinType' => 'INNER',
         ]);
+        $this->belongsTo('CourseModules', [
+            'foreignKey' => 'module_id',
+            'joinType' => 'LEFT',
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator
@@ -31,6 +35,10 @@ class CourseVideosTable extends Table
         $validator
             ->integer('course_id')
             ->notEmptyString('course_id');
+
+        $validator
+            ->integer('module_id')
+            ->allowEmptyString('module_id');
 
         $validator
             ->scalar('title')
@@ -74,6 +82,7 @@ class CourseVideosTable extends Table
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->existsIn(['course_id'], 'Courses'), ['errorField' => 'course_id']);
+        $rules->add($rules->existsIn(['module_id'], 'CourseModules'), ['errorField' => 'module_id', 'allowNullableNulls' => true]);
 
         return $rules;
     }

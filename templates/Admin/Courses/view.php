@@ -3,10 +3,60 @@
  * @var \App\View\AppView $this
  * @var array $course
  * @var array $videos
+ * @var array $modules
+ * @var array $ungroupedVideos
  * @var array $stats
  * @var array $enrolledStudents
  */
 $csrfToken = $this->request->getAttribute('csrfToken');
+$modules = $modules ?? [];
+$ungroupedVideos = $ungroupedVideos ?? $videos;
+
+$renderVideoRow = function ($video) {
+    ?>
+    <div class="row-item">
+        <div class="row-item-main">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-secondary"><?= h($video['order_position']) ?></span>
+                <span class="fw-semibold"><?= h($video['title']) ?></span>
+                <?php if ($video['is_preview']): ?>
+                    <span class="badge bg-info">Preview</span>
+                <?php endif; ?>
+                <?php if (!$video['is_active']): ?>
+                    <span class="badge bg-secondary">Inativo</span>
+                <?php endif; ?>
+            </div>
+            <?php if (!empty($video['description'])): ?>
+                <p class="text-muted small mb-1"><?= h($video['description']) ?></p>
+            <?php endif; ?>
+            <div class="d-flex align-items-center gap-3 small text-muted">
+                <span>
+                    <i class="bi bi-clock me-1"></i>
+                    <?= floor($video['duration_seconds'] / 60) ?>:<?= str_pad($video['duration_seconds'] % 60, 2, '0', STR_PAD_LEFT) ?>
+                </span>
+                <span>
+                    <i class="bi bi-play-circle me-1"></i>
+                    <?= ucfirst($video['video_type']) ?>
+                </span>
+            </div>
+        </div>
+        <div class="d-flex gap-1">
+            <a href="/admin/courses/watch-video/<?= h($video['id']) ?>" target="_blank"
+               class="btn btn-outline-primary btn-sm" title="Assistir">
+                <i class="bi bi-play"></i>
+            </a>
+            <a href="/admin/courses/edit-video/<?= $video['id'] ?>"
+               class="btn btn-outline-warning btn-sm" title="Editar">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button" class="btn btn-outline-danger btn-sm"
+                    onclick="deleteVideo(<?= $video['id'] ?>)" title="Excluir">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    </div>
+    <?php
+};
 ?>
 <div class="courses view content fade-in-up">
     <!-- Header Section -->
@@ -119,10 +169,16 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             <i class="bi bi-collection-play me-2"></i>
                             Vídeos do Curso (<?= count($videos) ?>)
                         </h6>
-                        <a href="/admin/courses/add-video/<?= $course['id'] ?>" class="btn btn-primary btn-sm">
-                            <i class="bi bi-plus-circle me-1"></i>
-                            Adicionar
-                        </a>
+                        <div class="d-flex gap-2">
+                            <a href="/admin/courses/add-module/<?= $course['id'] ?>" class="btn btn-outline-light btn-sm">
+                                <i class="bi bi-folder-plus me-1"></i>
+                                Módulo
+                            </a>
+                            <a href="/admin/courses/add-video/<?= $course['id'] ?>" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i>
+                                Adicionar
+                            </a>
+                        </div>
                     </div>
 
                     <?php if (empty($videos)): ?>
@@ -135,51 +191,33 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             </a>
                         </div>
                     <?php else: ?>
-                        <div class="row-list">
-                            <?php foreach ($videos as $video): ?>
-                            <div class="row-item">
-                                <div class="row-item-main">
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                        <span class="badge bg-secondary"><?= h($video['order_position']) ?></span>
-                                        <span class="fw-semibold"><?= h($video['title']) ?></span>
-                                        <?php if ($video['is_preview']): ?>
-                                            <span class="badge bg-info">Preview</span>
-                                        <?php endif; ?>
-                                        <?php if (!$video['is_active']): ?>
-                                            <span class="badge bg-secondary">Inativo</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <?php if (!empty($video['description'])): ?>
-                                        <p class="text-muted small mb-1"><?= h($video['description']) ?></p>
-                                    <?php endif; ?>
-                                    <div class="d-flex align-items-center gap-3 small text-muted">
-                                        <span>
-                                            <i class="bi bi-clock me-1"></i>
-                                            <?= floor($video['duration_seconds'] / 60) ?>:<?= str_pad($video['duration_seconds'] % 60, 2, '0', STR_PAD_LEFT) ?>
-                                        </span>
-                                        <span>
-                                            <i class="bi bi-play-circle me-1"></i>
-                                            <?= ucfirst($video['video_type']) ?>
-                                        </span>
-                                    </div>
+                        <?php foreach ($modules as $module): ?>
+                            <?php if (!empty($module->course_videos)): ?>
+                                <h6 class="module-subtitle">
+                                    <i class="bi bi-folder2-open me-2"></i>
+                                    <?= h($module->title) ?>
+                                </h6>
+                                <div class="row-list mb-3">
+                                    <?php foreach ($module->course_videos as $video): ?>
+                                        <?= $renderVideoRow($video) ?>
+                                    <?php endforeach; ?>
                                 </div>
-                                <div class="d-flex gap-1">
-                                    <a href="/admin/courses/watch-video/<?= h($video['id']) ?>" target="_blank"
-                                       class="btn btn-outline-primary btn-sm" title="Assistir">
-                                        <i class="bi bi-play"></i>
-                                    </a>
-                                    <a href="/admin/courses/edit-video/<?= $video['id'] ?>"
-                                       class="btn btn-outline-warning btn-sm" title="Editar">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-danger btn-sm"
-                                            onclick="deleteVideo(<?= $video['id'] ?>)" title="Excluir">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+
+                        <?php if (!empty($ungroupedVideos)): ?>
+                            <?php if (!empty($modules)): ?>
+                                <h6 class="module-subtitle">
+                                    <i class="bi bi-collection-play me-2"></i>
+                                    Sem Módulo
+                                </h6>
+                            <?php endif; ?>
+                            <div class="row-list">
+                                <?php foreach ($ungroupedVideos as $video): ?>
+                                    <?= $renderVideoRow($video) ?>
+                                <?php endforeach; ?>
                             </div>
-                            <?php endforeach; ?>
-                        </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -327,6 +365,19 @@ function deleteVideo(videoId) {
     .meta-row strong {
         color: var(--text-primary, #fff);
         font-weight: 600;
+    }
+
+    .module-subtitle {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--text-muted, #b0b0b0);
+        margin-bottom: 0.5rem;
+    }
+
+    .module-subtitle i {
+        color: #00ff88;
     }
 
     .row-list {

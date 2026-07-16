@@ -13,6 +13,56 @@ $totalMinutes = round($course['total_duration'] / 60);
 $hours = floor($totalMinutes / 60);
 $minutes = $totalMinutes % 60;
 $durationText = $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
+
+$modules = $modules ?? [];
+$ungroupedVideos = $ungroupedVideos ?? $videos;
+
+$renderVideoItem = function ($video, $number) use ($isEnrolled, $progress, $course) {
+    $canWatch = $isEnrolled || $video['is_preview'];
+    $isWatched = isset($progress[$video['id']]) && $progress[$video['id']]['completed'];
+    $isInProgress = isset($progress[$video['id']]) && !$progress[$video['id']]['completed'];
+
+    $vMinutes = floor($video['duration_seconds'] / 60);
+    $vSeconds = $video['duration_seconds'] % 60;
+    ?>
+    <div class="row-item align-items-start">
+        <div class="row-item-main">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <?php if ($isWatched): ?>
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                <?php elseif ($isInProgress): ?>
+                    <i class="bi bi-play-circle-fill text-info"></i>
+                <?php elseif ($canWatch): ?>
+                    <i class="bi bi-play-fill text-muted"></i>
+                <?php else: ?>
+                    <i class="bi bi-lock-fill text-warning"></i>
+                <?php endif; ?>
+                <span class="fw-semibold"><?= $number ?>. <?= h($video['title']) ?></span>
+                <?php if ($video['is_preview']): ?>
+                    <span class="badge bg-info">Preview</span>
+                <?php endif; ?>
+            </div>
+            <div class="small text-muted mb-2">
+                <?= sprintf('%d:%02d', $vMinutes, $vSeconds) ?>
+            </div>
+            <?php if ($canWatch): ?>
+                <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $video['id'] ?>"
+                   class="btn btn-outline-primary btn-sm">
+                    <?php if ($isWatched): ?>
+                        <i class="bi bi-arrow-repeat me-1"></i>Assistir Novamente
+                    <?php else: ?>
+                        <i class="bi bi-play me-1"></i>Assistir
+                    <?php endif; ?>
+                </a>
+            <?php else: ?>
+                <small class="text-warning">
+                    <i class="bi bi-lock me-1"></i>Inscreva-se para assistir
+                </small>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php
+};
 ?>
 <div class="courses-students view content fade-in-up">
     <!-- Breadcrumb -->
@@ -52,7 +102,7 @@ $durationText = $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
 
     <div class="row g-3">
         <!-- Informações do Curso -->
-        <div class="col-lg-8">
+        <div class="col-12">
             <div class="card glass mb-3">
                 <div class="card-body">
                     <div class="row g-3">
@@ -118,12 +168,71 @@ $durationText = $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>
+
+                    <?php if ($isEnrolled && !empty($videos)): ?>
+                        <?php
+                        $totalVideos = count($videos);
+                        $watchedVideos = 0;
+                        foreach ($videos as $video) {
+                            if (isset($progress[$video['id']]) && $progress[$video['id']]['completed']) {
+                                $watchedVideos++;
+                            }
+                        }
+                        $progressPercent = $totalVideos > 0 ? round(($watchedVideos / $totalVideos) * 100) : 0;
+                        ?>
+                        <div class="mt-4 pt-3 border-top border-secondary-subtle">
+                            <h6 class="section-title">
+                                <i class="bi bi-graph-up me-2"></i>
+                                Seu Progresso
+                            </h6>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1 small">
+                                    <span>Progresso do Curso</span>
+                                    <span><?= $progressPercent ?>%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: <?= $progressPercent ?>%"></div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 text-center">
+                                <div class="col-6 col-md-3">
+                                    <div class="stat-box">
+                                        <div class="stat-value"><?= $watchedVideos ?>/<?= $totalVideos ?></div>
+                                        <div class="stat-label">Assistidos</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="stat-box">
+                                        <div class="stat-value stat-value-warning"><?= $totalVideos - $watchedVideos ?></div>
+                                        <div class="stat-label">Restantes</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <?php if ($enrollment): ?>
+                                <ul class="meta-list mt-3">
+                                    <li>
+                                        <span>Inscrito em</span>
+                                        <strong><?= date('d/m/Y H:i', strtotime($enrollment['enrolled_at'])) ?></strong>
+                                    </li>
+                                    <?php if ($enrollment['completed_at']): ?>
+                                        <li>
+                                            <span>Concluído em</span>
+                                            <strong><?= date('d/m/Y H:i', strtotime($enrollment['completed_at'])) ?></strong>
+                                        </li>
+                                    <?php endif; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
 
-        <!-- Sidebar -->
-        <div class="col-lg-4">
+        <!-- Conteúdo do Curso -->
+        <div class="col-12">
             <div class="card glass mb-3">
                 <div class="card-body">
                     <h6 class="section-title">
@@ -137,114 +246,36 @@ $durationText = $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
                             <p class="mb-0">Nenhum vídeo disponível</p>
                         </div>
                     <?php else: ?>
-                        <div class="row-list">
-                            <?php foreach ($videos as $index => $video): ?>
-                                <?php
-                                $canWatch = $isEnrolled || $video['is_preview'];
-                                $isWatched = isset($progress[$video['id']]) && $progress[$video['id']]['completed_at'];
-                                $isInProgress = isset($progress[$video['id']]) && !$progress[$video['id']]['completed_at'];
-
-                                $vMinutes = floor($video['duration_seconds'] / 60);
-                                $vSeconds = $video['duration_seconds'] % 60;
-                                ?>
-                                <div class="row-item align-items-start">
-                                    <div class="row-item-main">
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <?php if ($isWatched): ?>
-                                                <i class="bi bi-check-circle-fill text-success"></i>
-                                            <?php elseif ($isInProgress): ?>
-                                                <i class="bi bi-play-circle-fill text-info"></i>
-                                            <?php elseif ($canWatch): ?>
-                                                <i class="bi bi-play-fill text-muted"></i>
-                                            <?php else: ?>
-                                                <i class="bi bi-lock-fill text-warning"></i>
-                                            <?php endif; ?>
-                                            <span class="fw-semibold"><?= $index + 1 ?>. <?= h($video['title']) ?></span>
-                                            <?php if ($video['is_preview']): ?>
-                                                <span class="badge bg-info">Preview</span>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div class="small text-muted mb-2">
-                                            <?= sprintf('%d:%02d', $vMinutes, $vSeconds) ?>
-                                        </div>
-                                        <?php if ($canWatch): ?>
-                                            <a href="/admin/courses/watch-students/<?= $course['id'] ?>/<?= $video['id'] ?>"
-                                               class="btn btn-outline-primary btn-sm">
-                                                <i class="bi bi-play me-1"></i>Assistir
-                                            </a>
-                                        <?php else: ?>
-                                            <small class="text-warning">
-                                                <i class="bi bi-lock me-1"></i>Inscreva-se para assistir
-                                            </small>
-                                        <?php endif; ?>
-                                    </div>
+                        <?php foreach ($modules as $module): ?>
+                            <?php if (!empty($module->course_videos)): ?>
+                                <h6 class="module-subtitle">
+                                    <i class="bi bi-folder2-open me-2"></i>
+                                    <?= h($module->title) ?>
+                                </h6>
+                                <div class="row-list mb-3">
+                                    <?php foreach ($module->course_videos as $i => $video): ?>
+                                        <?= $renderVideoItem($video, $i + 1) ?>
+                                    <?php endforeach; ?>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+
+                        <?php if (!empty($ungroupedVideos)): ?>
+                            <?php if (!empty($modules)): ?>
+                                <h6 class="module-subtitle">
+                                    <i class="bi bi-collection-play me-2"></i>
+                                    Outros Vídeos
+                                </h6>
+                            <?php endif; ?>
+                            <div class="row-list">
+                                <?php foreach ($ungroupedVideos as $i => $video): ?>
+                                    <?= $renderVideoItem($video, $i + 1) ?>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
-
-            <?php if ($isEnrolled && !empty($videos)): ?>
-                <?php
-                $totalVideos = count($videos);
-                $watchedVideos = 0;
-                foreach ($videos as $video) {
-                    if (isset($progress[$video['id']]) && $progress[$video['id']]['completed_at']) {
-                        $watchedVideos++;
-                    }
-                }
-                $progressPercent = $totalVideos > 0 ? round(($watchedVideos / $totalVideos) * 100) : 0;
-                ?>
-                <div class="card glass">
-                    <div class="card-body">
-                        <h6 class="section-title">
-                            <i class="bi bi-graph-up me-2"></i>
-                            Seu Progresso
-                        </h6>
-
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between mb-1 small">
-                                <span>Progresso do Curso</span>
-                                <span><?= $progressPercent ?>%</span>
-                            </div>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: <?= $progressPercent ?>%"></div>
-                            </div>
-                        </div>
-
-                        <div class="row g-2 text-center">
-                            <div class="col-6">
-                                <div class="stat-box">
-                                    <div class="stat-value"><?= $watchedVideos ?>/<?= $totalVideos ?></div>
-                                    <div class="stat-label">Assistidos</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="stat-box">
-                                    <div class="stat-value stat-value-warning"><?= $totalVideos - $watchedVideos ?></div>
-                                    <div class="stat-label">Restantes</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <?php if ($enrollment): ?>
-                            <ul class="meta-list mt-3">
-                                <li>
-                                    <span>Inscrito em</span>
-                                    <strong><?= date('d/m/Y H:i', strtotime($enrollment['enrolled_at'])) ?></strong>
-                                </li>
-                                <?php if ($enrollment['completed_at']): ?>
-                                    <li>
-                                        <span>Concluído em</span>
-                                        <strong><?= date('d/m/Y H:i', strtotime($enrollment['completed_at'])) ?></strong>
-                                    </li>
-                                <?php endif; ?>
-                            </ul>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -284,6 +315,19 @@ $durationText = $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
     .meta-row strong {
         color: var(--text-primary, #fff);
         font-weight: 600;
+    }
+
+    .module-subtitle {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--text-muted, #b0b0b0);
+        margin-bottom: 0.5rem;
+    }
+
+    .module-subtitle i {
+        color: #00ff88;
     }
 
     .row-list {

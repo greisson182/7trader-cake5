@@ -245,7 +245,7 @@ class UsersController extends AppController
 
             if (isset($User->id)) {
 
-                if ($User->blocked || $User->status == 'i') {
+                if ($User->blocked || $User->status == 'i' || $User->status == 'd') {
                     $this->Flash->error(__('Conta inativada ou bloqueada, entre em contato para mais informações.'));
                 } else {
 

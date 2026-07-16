@@ -2,10 +2,12 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\CourseVideo $video
+ * @var array $modules
  */
 $csrfToken = $this->request->getAttribute('csrfToken');
 $durationMinutes = !empty($video['duration_seconds']) ? intdiv((int)$video['duration_seconds'], 60) : '';
 $durationSecondsRemainder = !empty($video['duration_seconds']) ? (int)$video['duration_seconds'] % 60 : '';
+$modules = $modules ?? [];
 ?>
 <div class="add-video content fade-in-up">
     <!-- Header Section -->
@@ -57,6 +59,17 @@ $durationSecondsRemainder = !empty($video['duration_seconds']) ? (int)$video['du
                                            min="0" max="59" placeholder="Seg" value="<?= h($durationSecondsRemainder) ?>">
                                     <span class="input-group-text">seg</span>
                                 </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="module_id" class="form-label fw-semibold">Módulo</label>
+                                <select class="form-select" id="module_id" name="module_id">
+                                    <option value="">Sem módulo</option>
+                                    <?php foreach ($modules as $module): ?>
+                                        <option value="<?= h($module->id) ?>" <?= (int)$video['module_id'] === $module->id ? 'selected' : '' ?>>
+                                            <?= h($module->title) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                             <div class="col-12">
                                 <label for="description" class="form-label fw-semibold">Descrição</label>
