@@ -17,6 +17,9 @@ use Cake\ORM\Entity;
  * @property int|null $order_position
  * @property \Cake\I18n\DateTime|null $created
  * @property \Cake\I18n\DateTime|null $modified
+ *
+ * @property \App\Model\Entity\MentorshipModule[] $mentorship_modules
+ * @property \App\Model\Entity\MentorshipVideo[] $mentorship_videos
  */
 class Mentorship extends Entity
 {
@@ -38,5 +41,7 @@ class Mentorship extends Entity
         'order_position' => true,
         'created' => true,
         'modified' => true,
+        'mentorship_modules' => true,
+        'mentorship_videos' => true,
     ];
 }

@@ -17,6 +17,7 @@ class OrderService
     private Table $_ordersTable;
     private Table $_coursesTable;
     private Table $_mentorshipsTable;
+    private Table $_mentorshipInstancesTable;
     private Table $_usersTable;
     private Table $_courseEnrollmentsTable;
     private StudentService $_studentService;
@@ -27,6 +28,7 @@ class OrderService
         $this->_ordersTable = TableRegistry::getTableLocator()->get('Orders');
         $this->_coursesTable = TableRegistry::getTableLocator()->get('Courses');
         $this->_mentorshipsTable = TableRegistry::getTableLocator()->get('Mentorships');
+        $this->_mentorshipInstancesTable = TableRegistry::getTableLocator()->get('MentorshipInstances');
         $this->_usersTable = TableRegistry::getTableLocator()->get('Users');
         $this->_courseEnrollmentsTable = TableRegistry::getTableLocator()->get('CourseEnrollments');
         $this->_studentService = $studentService ?? new StudentService();
@@ -339,8 +341,31 @@ class OrderService
             }
         }
 
-        // Mentorias (grupo ou particular) não têm entrega automática de conteúdo hoje:
-        // o pedido aprovado fica visível na tela de Orders do admin para acompanhamento manual.
+        // Mentoria em grupo: conteúdo compartilhado (já existe em mentorship_videos
+        // ligado direto ao mentorship_id) — nenhuma ação extra necessária aqui.
+        // Mentoria particular: cada compra é única — cria a instância privada desse
+        // aluno agora, para o admin já poder subir as gravações das sessões nela.
+        if ($order->item_type === 'mentorship' && $studentId) {
+            $mentorship = $this->_mentorshipsTable->find()
+                ->where(['id' => $order->item_id])
+                ->first();
+
+            if ($mentorship && $mentorship->type === 'particular') {
+                $existingInstance = $this->_mentorshipInstancesTable->find()
+                    ->where(['order_id' => $order->id])
+                    ->first();
+
+                if (!$existingInstance) {
+                    $instance = $this->_mentorshipInstancesTable->newEmptyEntity();
+                    $instance = $this->_mentorshipInstancesTable->patchEntity($instance, [
+                        'mentorship_id' => $order->item_id,
+                        'student_id' => $studentId,
+                        'order_id' => $order->id,
+                    ]);
+                    $this->_mentorshipInstancesTable->save($instance);
+                }
+            }
+        }
 
         $this->sendAccessEmail($order);
     }

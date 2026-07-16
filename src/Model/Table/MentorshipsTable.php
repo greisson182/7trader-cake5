@@ -17,6 +17,18 @@ class MentorshipsTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+
+        $this->hasMany('MentorshipModules', [
+            'foreignKey' => 'mentorship_id',
+            'sort' => ['MentorshipModules.order_position' => 'ASC'],
+        ]);
+        $this->hasMany('MentorshipVideos', [
+            'foreignKey' => 'mentorship_id',
+            'sort' => ['MentorshipVideos.order_position' => 'ASC'],
+        ]);
+        $this->hasMany('MentorshipInstances', [
+            'foreignKey' => 'mentorship_id',
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator

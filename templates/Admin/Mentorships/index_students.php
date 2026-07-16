@@ -58,13 +58,18 @@
 
                             <div class="mt-auto">
                                 <?php if ($isAcquired): ?>
-                                    <button type="button" class="btn btn-outline-light btn-sm w-100" disabled>
-                                        <i class="bi bi-hourglass-split me-1"></i>Conteúdo em breve
-                                    </button>
-                                <?php else: ?>
-                                    <a href="/checkout/mentoria/<?= $mentorship->id ?>" class="btn btn-primary btn-sm w-100">
-                                        <i class="bi bi-credit-card me-1"></i>Comprar por R$ <?= number_format($mentorship->price, 2, ',', '.') ?>
+                                    <a href="/admin/mentorships/view-students/<?= $mentorship->id ?>" class="btn btn-success btn-sm w-100">
+                                        <i class="bi bi-play-fill me-1"></i>Assistir
                                     </a>
+                                <?php else: ?>
+                                    <div class="d-grid gap-2">
+                                        <a href="/admin/mentorships/view-students/<?= $mentorship->id ?>" class="btn btn-outline-light btn-sm">
+                                            <i class="bi bi-eye me-1"></i>Ver Detalhes
+                                        </a>
+                                        <a href="/checkout/mentoria/<?= $mentorship->id ?>" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-credit-card me-1"></i>Comprar por R$ <?= number_format($mentorship->price, 2, ',', '.') ?>
+                                        </a>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         </div>

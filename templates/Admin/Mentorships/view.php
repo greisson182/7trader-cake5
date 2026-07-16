@@ -19,6 +19,15 @@
             <?php endif; ?>
         </div>
         <div class="d-flex gap-2">
+            <?php if ($mentorship->type === 'particular'): ?>
+                <a href="/admin/mentorships/instances/<?= $mentorship->id ?>" class="btn btn-outline-primary">
+                    <i class="bi bi-collection-play me-2"></i>Gerenciar Alunos
+                </a>
+            <?php else: ?>
+                <a href="/admin/mentorships/videos/<?= $mentorship->id ?>" class="btn btn-outline-primary">
+                    <i class="bi bi-collection-play me-2"></i>Gerenciar Vídeos
+                </a>
+            <?php endif; ?>
             <a href="/admin/mentorships/edit/<?= $mentorship->id ?>" class="btn btn-outline-warning">
                 <i class="bi bi-pencil me-2"></i>Editar
             </a>

@@ -227,6 +227,97 @@ CREATE TABLE IF NOT EXISTS `mentorships` (
   KEY `idx_active` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Copiando estrutura para tabela 7trader.mentorship_instances
+DROP TABLE IF EXISTS `mentorship_instances`;
+CREATE TABLE IF NOT EXISTS `mentorship_instances` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `mentorship_id` int(11) NOT NULL,
+  `student_id` int(11) NOT NULL,
+  `order_id` int(11) NOT NULL,
+  `created` datetime DEFAULT current_timestamp(),
+  `modified` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_order` (`order_id`),
+  KEY `idx_mentorship` (`mentorship_id`),
+  KEY `idx_student` (`student_id`),
+  CONSTRAINT `mentorship_instances_ibfk_1` FOREIGN KEY (`mentorship_id`) REFERENCES `mentorships` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `mentorship_instances_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `mentorship_instances_ibfk_3` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Copiando estrutura para tabela 7trader.mentorship_modules
+DROP TABLE IF EXISTS `mentorship_modules`;
+CREATE TABLE IF NOT EXISTS `mentorship_modules` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `mentorship_id` int(11) NOT NULL,
+  `instance_id` int(11) DEFAULT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `order_position` int(11) DEFAULT 0,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created` datetime DEFAULT current_timestamp(),
+  `modified` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_mentorship` (`mentorship_id`),
+  KEY `idx_instance` (`instance_id`),
+  KEY `idx_order` (`order_position`),
+  CONSTRAINT `mentorship_modules_ibfk_1` FOREIGN KEY (`mentorship_id`) REFERENCES `mentorships` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `mentorship_modules_ibfk_instance` FOREIGN KEY (`instance_id`) REFERENCES `mentorship_instances` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Copiando estrutura para tabela 7trader.mentorship_videos
+DROP TABLE IF EXISTS `mentorship_videos`;
+CREATE TABLE IF NOT EXISTS `mentorship_videos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `mentorship_id` int(11) NOT NULL,
+  `instance_id` int(11) DEFAULT NULL,
+  `module_id` int(11) DEFAULT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `video_url` varchar(500) NOT NULL,
+  `video_type` enum('youtube','vimeo','direct','embed') DEFAULT 'youtube',
+  `duration_seconds` int(11) DEFAULT 0,
+  `order_position` int(11) DEFAULT 0,
+  `is_preview` tinyint(1) DEFAULT 0,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created` datetime DEFAULT current_timestamp(),
+  `modified` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_mentorship` (`mentorship_id`),
+  KEY `idx_instance` (`instance_id`),
+  KEY `idx_order` (`order_position`),
+  KEY `idx_active` (`is_active`),
+  KEY `idx_module` (`module_id`),
+  CONSTRAINT `mentorship_videos_ibfk_1` FOREIGN KEY (`mentorship_id`) REFERENCES `mentorships` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `mentorship_videos_ibfk_instance` FOREIGN KEY (`instance_id`) REFERENCES `mentorship_instances` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `mentorship_videos_ibfk_module` FOREIGN KEY (`module_id`) REFERENCES `mentorship_modules` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Copiando estrutura para tabela 7trader.mentorship_progress
+DROP TABLE IF EXISTS `mentorship_progress`;
+CREATE TABLE IF NOT EXISTS `mentorship_progress` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `student_id` int(11) NOT NULL,
+  `mentorship_id` int(11) NOT NULL,
+  `video_id` int(11) NOT NULL,
+  `watched_seconds` int(11) DEFAULT 0,
+  `completed` tinyint(1) DEFAULT 0,
+  `last_watched` datetime DEFAULT current_timestamp(),
+  `watched_at` datetime DEFAULT current_timestamp(),
+  `completed_at` datetime DEFAULT NULL,
+  `created` datetime DEFAULT current_timestamp(),
+  `modified` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_progress` (`student_id`,`video_id`),
+  KEY `idx_student` (`student_id`),
+  KEY `idx_mentorship` (`mentorship_id`),
+  KEY `idx_video` (`video_id`),
+  KEY `idx_completed` (`completed`),
+  CONSTRAINT `mentorship_progress_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `mentorship_progress_ibfk_2` FOREIGN KEY (`mentorship_id`) REFERENCES `mentorships` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `mentorship_progress_ibfk_3` FOREIGN KEY (`video_id`) REFERENCES `mentorship_videos` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Copiando estrutura para tabela 7trader.orders
 DROP TABLE IF EXISTS `orders`;
 CREATE TABLE IF NOT EXISTS `orders` (
