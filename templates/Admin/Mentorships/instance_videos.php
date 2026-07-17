@@ -161,7 +161,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
     };
     ?>
 
-    <?php if (empty($videos)): ?>
+    <?php if (empty($videos) && empty($modules)): ?>
         <!-- Nenhum vídeo nesta instância -->
         <div class="card glass">
             <div class="card-body">

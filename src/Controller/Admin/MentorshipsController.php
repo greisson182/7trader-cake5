@@ -743,7 +743,10 @@ class MentorshipsController extends AppController
     public function addInstanceModule($instanceId = null)
     {
         try {
-            $instance = $this->fetchTable('MentorshipInstances')->contain(['Students'])->get($instanceId);
+            $instance = $this->fetchTable('MentorshipInstances')->find()
+                ->contain(['Students'])
+                ->where(['MentorshipInstances.id' => $instanceId])
+                ->firstOrFail();
 
             if ($this->request->is('post')) {
                 $data = $this->request->getData();
@@ -934,7 +937,10 @@ class MentorshipsController extends AppController
     public function addInstanceVideo($instanceId = null)
     {
         try {
-            $instance = $this->fetchTable('MentorshipInstances')->contain(['Students'])->get($instanceId);
+            $instance = $this->fetchTable('MentorshipInstances')->find()
+                ->contain(['Students'])
+                ->where(['MentorshipInstances.id' => $instanceId])
+                ->firstOrFail();
 
             $modules = $this->fetchTable('MentorshipModules')->find()
                 ->where(['instance_id' => $instanceId])
