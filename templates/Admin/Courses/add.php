@@ -93,15 +93,6 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 placeholder="Nome do instrutor">
                         </div>
 
-                        <div class="col-md-6">
-                            <label for="duration_minutes" class="form-label fw-semibold">
-                                <i class="bi bi-clock me-1"></i>
-                                Duração Estimada (minutos)
-                            </label>
-                            <input type="number" class="form-control" id="duration_minutes" name="duration_minutes"
-                                min="0" placeholder="Ex: 120">
-                        </div>
-
                         <!-- Pricing -->
                         <div class="col-12 mt-4">
                             <h5 class="fw-bold mb-3">

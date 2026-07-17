@@ -94,7 +94,14 @@ $renderVideoItem = function ($video, $number) use ($isAcquired, $progress, $ment
             <div class="card glass mb-3">
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-12">
+                        <?php if (!empty($mentorship['thumbnail'])): ?>
+                            <div class="col-md-4">
+                                <img src="<?= h($mentorship['thumbnail']) ?>" alt="<?= h($mentorship['name']) ?>"
+                                     class="img-fluid rounded" style="width: 100%; height: 160px; object-fit: cover;">
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="col-md-<?= !empty($mentorship['thumbnail']) ? '8' : '12' ?>">
                             <h6 class="section-title">
                                 <i class="bi bi-info-circle me-2"></i>
                                 Informações da Mentoria

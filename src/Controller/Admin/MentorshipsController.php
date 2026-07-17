@@ -122,10 +122,16 @@ class MentorshipsController extends AppController
                     'name' => $data['name'],
                     'type' => $data['type'],
                     'description' => $data['description'] ?? '',
+                    'thumbnail' => $data['thumbnail'] ?? '',
                     'price' => (float)($data['price'] ?? 0.00),
                     'is_active' => isset($data['is_active']) ? 1 : 0,
                     'order_position' => $nextPosition,
                 ];
+
+                $uploadedThumbnail = $this->handleThumbnailUpload();
+                if ($uploadedThumbnail !== null) {
+                    $mentorshipData['thumbnail'] = $uploadedThumbnail;
+                }
 
                 $mentorship = $mentorshipsTable->patchEntity($mentorship, $mentorshipData);
 
@@ -162,9 +168,16 @@ class MentorshipsController extends AppController
                     'name' => $data['name'],
                     'type' => $data['type'],
                     'description' => $data['description'] ?? '',
+                    // Mantém a thumbnail atual por padrão: só troca se um novo arquivo for enviado.
+                    'thumbnail' => $mentorship->thumbnail,
                     'price' => (float)($data['price'] ?? 0.00),
                     'is_active' => isset($data['is_active']) ? 1 : 0,
                 ];
+
+                $uploadedThumbnail = $this->handleThumbnailUpload();
+                if ($uploadedThumbnail !== null) {
+                    $mentorshipData['thumbnail'] = $uploadedThumbnail;
+                }
 
                 $mentorship = $mentorshipsTable->patchEntity($mentorship, $mentorshipData);
 
@@ -1409,5 +1422,45 @@ class MentorshipsController extends AppController
         }
 
         return implode(' ', $messages);
+    }
+
+    /**
+     * Processa o upload do campo de arquivo "thumbnail_upload" (se enviado) e devolve
+     * o caminho público da imagem salva em webroot/adm/images/mentorships/, ou null se
+     * nenhum arquivo foi enviado (mantendo o valor de thumbnail já informado).
+     */
+    private function handleThumbnailUpload(): ?string
+    {
+        $file = $this->request->getUploadedFiles()['thumbnail_upload'] ?? null;
+
+        if (!$file || $file->getError() === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+
+        if ($file->getError() !== UPLOAD_ERR_OK) {
+            throw new \Exception('Erro ao enviar a imagem. Tente novamente.');
+        }
+
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        $extension = strtolower(pathinfo($file->getClientFilename(), PATHINFO_EXTENSION));
+
+        if (!in_array($extension, $allowedExtensions, true)) {
+            throw new \Exception('Formato de imagem inválido. Use JPG, PNG, WEBP ou GIF.');
+        }
+
+        $maxSize = 5 * 1024 * 1024;
+        if ($file->getSize() > $maxSize) {
+            throw new \Exception('A imagem deve ter no máximo 5MB.');
+        }
+
+        $uploadDir = WWW_ROOT . 'adm' . DS . 'images' . DS . 'mentorships' . DS;
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $filename = bin2hex(random_bytes(16)) . '.' . $extension;
+        $file->moveTo($uploadDir . $filename);
+
+        return '/adm/images/mentorships/' . $filename;
     }
 }

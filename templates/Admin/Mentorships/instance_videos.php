@@ -303,7 +303,11 @@ document.querySelectorAll('.video-sortable').forEach(function(tbody) {
         animation: 150,
         forceFallback: true,
         filter: '.video-drop-placeholder',
+        onStart: function() {
+            document.body.classList.add('dragging-active');
+        },
         onEnd: function(evt) {
+            document.body.classList.remove('dragging-active');
             const fromTbody = evt.from;
             const toTbody = evt.to;
             const targetModuleId = toTbody.dataset.moduleId || '';
@@ -387,5 +391,11 @@ document.querySelectorAll('.video-sortable').forEach(function(tbody) {
 
 .video-drop-placeholder td {
     border-style: dashed;
+}
+
+body.dragging-active,
+body.dragging-active * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 </style>

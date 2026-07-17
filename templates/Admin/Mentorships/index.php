@@ -24,12 +24,17 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         <div class="row g-3">
             <?php foreach ($mentorships as $mentorship): ?>
                 <div class="col-lg-3 col-md-6">
-                    <div class="card glass h-100">
-                        <div class="card-body d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="badge bg-<?= $mentorship->type === 'particular' ? 'warning text-dark' : 'info' ?>">
-                                    <?= $mentorship->type === 'particular' ? 'Particular' : 'Em grupo' ?>
-                                </span>
+                    <div class="card glass h-100 mentorship-card">
+                        <div class="mentorship-thumbnail">
+                            <?php if (!empty($mentorship->thumbnail)): ?>
+                                <img src="<?= h($mentorship->thumbnail) ?>" class="card-img-top" alt="<?= h($mentorship->name) ?>">
+                            <?php else: ?>
+                                <div class="placeholder-thumbnail">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="mentorship-status">
                                 <?php if ($mentorship->is_active): ?>
                                     <span class="badge bg-success">Ativa</span>
                                 <?php else: ?>
@@ -37,6 +42,14 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 <?php endif; ?>
                             </div>
 
+                            <div class="mentorship-type">
+                                <span class="badge bg-<?= $mentorship->type === 'particular' ? 'warning text-dark' : 'info' ?>">
+                                    <?= $mentorship->type === 'particular' ? 'Particular' : 'Em grupo' ?>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
                             <h6 class="card-title fw-bold mb-1"><?= h($mentorship->name) ?></h6>
                             <p class="card-text text-muted small mb-2 clamp-2">
                                 <?= h(substr((string)$mentorship->description, 0, 120)) ?><?= strlen((string)$mentorship->description) > 120 ? '...' : '' ?>
@@ -92,6 +105,46 @@ $csrfToken = $this->request->getAttribute('csrfToken');
         -webkit-box-orient: vertical;
         overflow: hidden;
         min-height: 2.5em;
+    }
+
+    .mentorship-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 255, 136, 0.15);
+    }
+
+    .mentorship-thumbnail {
+        position: relative;
+        height: 150px;
+        overflow: hidden;
+    }
+
+    .mentorship-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .placeholder-thumbnail {
+        width: 100%;
+        height: 100%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2.5rem;
+    }
+
+    .mentorship-status {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+    }
+
+    .mentorship-type {
+        position: absolute;
+        top: 8px;
+        right: 8px;
     }
 
     .course-actions {

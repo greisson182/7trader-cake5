@@ -50,6 +50,11 @@ class MentorshipsTable extends Table
             ->allowEmptyString('description');
 
         $validator
+            ->scalar('thumbnail')
+            ->maxLength('thumbnail', 500)
+            ->allowEmptyString('thumbnail');
+
+        $validator
             ->decimal('price')
             ->requirePresence('price', 'create')
             ->notEmptyString('price');

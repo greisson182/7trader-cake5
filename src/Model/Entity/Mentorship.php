@@ -12,6 +12,7 @@ use Cake\ORM\Entity;
  * @property string $name
  * @property string $type
  * @property string|null $description
+ * @property string|null $thumbnail
  * @property string $price
  * @property bool|null $is_active
  * @property int|null $order_position
@@ -36,6 +37,7 @@ class Mentorship extends Entity
         'name' => true,
         'type' => true,
         'description' => true,
+        'thumbnail' => true,
         'price' => true,
         'is_active' => true,
         'order_position' => true,

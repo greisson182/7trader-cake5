@@ -28,9 +28,13 @@
                 <div class="col-lg-3 col-md-6">
                     <div class="card glass h-100 mentorship-card">
                         <div class="mentorship-thumbnail">
-                            <div class="placeholder-thumbnail">
-                                <i class="bi bi-people-fill"></i>
-                            </div>
+                            <?php if (!empty($mentorship->thumbnail)): ?>
+                                <img src="<?= h($mentorship->thumbnail) ?>" alt="<?= h($mentorship->name) ?>">
+                            <?php else: ?>
+                                <div class="placeholder-thumbnail">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                            <?php endif; ?>
 
                             <div class="mentorship-price">
                                 <span class="badge bg-warning text-dark">R$ <?= number_format($mentorship->price, 2, ',', '.') ?></span>
@@ -104,6 +108,12 @@
         position: relative;
         height: 150px;
         overflow: hidden;
+    }
+
+    .mentorship-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     .placeholder-thumbnail {

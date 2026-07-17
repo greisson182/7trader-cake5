@@ -217,6 +217,7 @@ CREATE TABLE IF NOT EXISTS `mentorships` (
   `name` varchar(255) NOT NULL,
   `type` enum('grupo','particular') NOT NULL,
   `description` text DEFAULT NULL,
+  `thumbnail` varchar(500) DEFAULT NULL,
   `price` decimal(10,2) NOT NULL DEFAULT 0.00,
   `is_active` tinyint(1) DEFAULT 1,
   `order_position` int(11) DEFAULT 0,

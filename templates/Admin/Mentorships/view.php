@@ -39,6 +39,12 @@
 
     <div class="row g-3">
         <div class="col-md-8">
+            <?php if (!empty($mentorship->thumbnail)): ?>
+                <div class="card glass mb-3">
+                    <img src="<?= h($mentorship->thumbnail) ?>" alt="<?= h($mentorship->name) ?>"
+                         class="rounded" style="width: 100%; max-height: 280px; object-fit: cover;">
+                </div>
+            <?php endif; ?>
             <div class="card glass">
                 <div class="card-body">
                     <h5 class="fw-bold mb-3">Descrição</h5>
