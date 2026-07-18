@@ -1128,6 +1128,10 @@ span.text-danger {
   color: #00ff88;
 }
 
+.card-header .btn i {
+  color: inherit;
+}
+
 .card-body {
   padding: var(--space-lg);
 }

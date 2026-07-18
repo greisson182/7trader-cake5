@@ -109,11 +109,17 @@
                                     <?php endif; ?>
                                     
                                 <?php else: ?>
-                                    <!-- Vídeo direto (MP4, etc.) -->
-                                    <video class="w-100" controls>
-                                        <source src="<?= htmlspecialchars($video['video_url']) ?>" type="video/mp4">
-                                        Seu navegador não suporta o elemento de vídeo.
-                                    </video>
+                                    <!-- Vídeo direto (MP4, etc.) ou embed -->
+                                    <?php if (isset($video['video_type']) && $video['video_type'] === 'embed'): ?>
+                                        <div class="embed-responsive embed-responsive-16by9">
+                                            <iframe class="embed-responsive-item" src="<?= htmlspecialchars($video['video_url']) ?>" allowfullscreen></iframe>
+                                        </div>
+                                    <?php else: ?>
+                                        <video class="w-100" controls>
+                                            <source src="<?= htmlspecialchars($video['video_url']) ?>" type="video/mp4">
+                                            Seu navegador não suporta o elemento de vídeo.
+                                        </video>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                         </div>
